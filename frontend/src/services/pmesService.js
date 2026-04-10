@@ -19,7 +19,7 @@ async function adminLogin(code) {
 
 export const PmesService = {
   async saveRecord(db, appId, user, data) {
-    if (!user) throw new Error("Auth Required");
+    if (!useRest() && !user) throw new Error("Auth Required");
     if (useRest()) {
       const response = await fetch(`${apiBase()}/pmes/submit`, {
         method: "POST",
@@ -52,7 +52,7 @@ export const PmesService = {
   },
 
   async saveLoi(db, appId, user, data) {
-    if (!user) throw new Error("Auth Required");
+    if (!useRest() && !user) throw new Error("Auth Required");
     if (useRest()) {
       const capital = typeof data.initialCapital === "string" ? parseFloat(data.initialCapital) : data.initialCapital;
       const response = await fetch(`${apiBase()}/pmes/loi`, {

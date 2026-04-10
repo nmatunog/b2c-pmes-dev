@@ -313,6 +313,7 @@ export default function App() {
                 title={item.t}
                 outline={item.outline}
                 script={item.script}
+                illustration={item.illustration}
                 isOpen={openCardIndex === index}
                 onClick={() => setOpenCardIndex(index)}
                 courseAudioEnabled={courseAudioEnabled}

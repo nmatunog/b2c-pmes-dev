@@ -1,5 +1,5 @@
 /**
- * Validation bank: 20 items; the exam randomly selects 10 (see App.jsx).
+ * Validation bank; the exam randomly selects 10 (see App.jsx).
  */
 export const questionPool = [
   { q: "Who organized the first PH co-op in 1896 in Dapitan?", a: ["Dr. Jose Rizal", "Andres Bonifacio"], c: 0 },
@@ -22,4 +22,7 @@ export const questionPool = [
   { q: "'Economic Participation' includes fair sharing of?", a: ["Surplus / patronage per rules", "Only board salaries"], c: 0 },
   { q: "'Autonomy and Independence' means the co-op is controlled by?", a: ["Members under the law", "Any outside investor alone"], c: 0 },
   { q: "'Cooperation Among Cooperatives' includes?", a: ["Federations and joint programs", "Refusing to work with other co-ops"], c: 0 },
+  { q: "In PMES, a key member responsibility is to?", a: ["Contribute fairly and meet obligations per policies", "Let only the board run everything"], c: 0 },
+  { q: "Members’ highest authority under RA 9520 / bylaws is usually the?", a: ["General Assembly", "Outside investors"], c: 0 },
+  { q: "The facilitator line “no contribution, no cooperative” stresses?", a: ["Mutual stake from members", "That non-members control capital"], c: 0 },
 ];

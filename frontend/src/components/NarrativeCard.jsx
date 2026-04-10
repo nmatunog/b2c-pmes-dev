@@ -81,6 +81,7 @@ export function NarrativeCard({
   playTts,
   isSpeaking,
   audioLoading,
+  illustration,
 }) {
   const panelId = `narrative-panel-${index}`;
   const headerId = `narrative-header-${index}`;
@@ -161,6 +162,30 @@ export function NarrativeCard({
             }
           >
             <div className={!courseAudioEnabled && isOpen ? "lg:col-span-7" : ""}>
+              {illustration?.src ? (
+                <figure
+                  className={`mb-5 overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm ${
+                    illustration.philippinesDisplay
+                      ? "bg-[#002654] px-6 py-8 md:px-10 md:py-10"
+                      : "bg-slate-50 px-6 py-6"
+                  }`}
+                >
+                  <img
+                    src={illustration.src}
+                    alt={illustration.alt ?? ""}
+                    className={`mx-auto h-auto max-h-[min(8rem,22vw)] w-auto max-w-full object-contain md:max-h-36 ${
+                      illustration.philippinesDisplay ? "brightness-0 invert" : ""
+                    }`}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  {illustration.philippinesDisplay ? (
+                    <figcaption className="mt-4 text-center text-xs font-medium leading-snug text-white/85">
+                      Official Philippines display: white symbol on dark blue (international Co-op identity scheme).
+                    </figcaption>
+                  ) : null}
+                </figure>
+              ) : null}
               <div className="rounded-2xl bg-gradient-to-b from-[#004aad]/[0.06] to-slate-50/80 p-5 md:p-7">
                 <div className="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#004aad]/90 md:text-sm">
                   <LayoutList className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2.5} aria-hidden />
