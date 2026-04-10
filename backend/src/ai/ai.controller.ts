@@ -6,7 +6,7 @@ import { TtsDto } from "./dto/tts.dto";
 export class AiController {
   constructor(private readonly ai: AiService) {}
 
-  /** Proxies TTS so the browser never holds GEMINI_API_KEY. Response matches prior client contract (PCM base64). */
+  /** Proxies TTS so API keys stay server-side. Response: `{ audioBase64, encoding: "pcm16" | "mp3" }`. */
   @Post("tts")
   async tts(@Body() body: TtsDto) {
     return this.ai.synthesizeTts(body);

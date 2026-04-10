@@ -7,16 +7,38 @@ export const envValidationSchema = Joi.object({
   DATABASE_URL: Joi.string().required().messages({
     "any.required": "DATABASE_URL is required (PostgreSQL connection string)",
   }),
-  /** `noop` = no Gemini calls (default for cheap local dev). Set `gemini` in env when you have a key. */
-  AI_PROVIDER: Joi.string().valid("gemini", "noop").default("noop"),
+  /**
+   * TTS backend: `noop` (no paid calls), `gemini`, `openai`, `grok` (xAI Grok TTS at api.x.ai).
+   */
+  AI_PROVIDER: Joi.string().valid("noop", "gemini", "openai", "grok").default("noop"),
   GEMINI_API_KEY: Joi.string().allow(""),
   GEMINI_TTS_MODEL: Joi.string().allow(""),
+  OPENAI_API_KEY: Joi.string().allow(""),
+  OPENAI_TTS_MODEL: Joi.string().allow(""),
+  /** xAI / Grok — https://console.x.ai */
+  XAI_API_KEY: Joi.string().allow(""),
 })
   .custom((value, helpers) => {
-    const v = value as { AI_PROVIDER?: string; GEMINI_API_KEY?: string };
-    if (v.AI_PROVIDER === "gemini" && !String(v.GEMINI_API_KEY ?? "").trim()) {
+    const v = value as {
+      AI_PROVIDER?: string;
+      GEMINI_API_KEY?: string;
+      OPENAI_API_KEY?: string;
+      XAI_API_KEY?: string;
+    };
+    const p = v.AI_PROVIDER;
+    if (p === "gemini" && !String(v.GEMINI_API_KEY ?? "").trim()) {
       return helpers.error("any.custom", {
-        message: "GEMINI_API_KEY is required when AI_PROVIDER=gemini (or set AI_PROVIDER=noop)",
+        message: "GEMINI_API_KEY is required when AI_PROVIDER=gemini (or use noop / openai / grok)",
+      });
+    }
+    if (p === "openai" && !String(v.OPENAI_API_KEY ?? "").trim()) {
+      return helpers.error("any.custom", {
+        message: "OPENAI_API_KEY is required when AI_PROVIDER=openai",
+      });
+    }
+    if (p === "grok" && !String(v.XAI_API_KEY ?? "").trim()) {
+      return helpers.error("any.custom", {
+        message: "XAI_API_KEY is required when AI_PROVIDER=grok",
       });
     }
     return value;

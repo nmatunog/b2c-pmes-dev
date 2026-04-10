@@ -21,7 +21,11 @@ alwaysApply: true
 
 | Variable | Role |
 |----------|------|
-| `AI_PROVIDER` | `noop` (no cost) or `gemini` |
+| `AI_PROVIDER` | `noop` \| `gemini` \| `openai` \| `grok` (xAI Grok TTS) |
 | `GEMINI_API_KEY` | Required if `gemini` |
-| `GEMINI_TTS_MODEL` | Optional override of default TTS model name |
-| `VITE_API_BASE_URL` | Frontend → Nest base URL (e.g. `http://localhost:3000`) |
+| `OPENAI_API_KEY` | Required if `openai` (OpenAI `audio/speech`, MP3) |
+| `XAI_API_KEY` | Required if `grok` (`POST https://api.x.ai/v1/tts`, MP3) |
+| `GEMINI_TTS_MODEL` / `OPENAI_TTS_MODEL` | Optional model overrides |
+| `VITE_API_BASE_URL` | Frontend → Nest (e.g. `http://localhost:3000`) |
+
+Voice names: **Gemini** uses names like `Aoede`. **OpenAI** accepts `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer` (unknown names map to `nova`). **Grok** accepts `eve`, `ara`, `leo`, `rex`, `sal` (unknown → `ara`).

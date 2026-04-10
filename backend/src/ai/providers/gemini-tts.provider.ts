@@ -38,6 +38,6 @@ export class GeminiTtsProvider implements TtsProvider {
     if (!base64) {
       throw new InternalServerErrorException("Gemini returned no TTS audio");
     }
-    return { audioBase64: base64 };
+    return { audioBase64: base64, encoding: "pcm16" };
   }
 }

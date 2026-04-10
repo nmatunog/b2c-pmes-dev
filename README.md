@@ -22,7 +22,7 @@ Full setup, env vars, Firestore paths, Git workflow, and troubleshooting are in 
 
 ## Configuration
 
-Copy `frontend/.env.example` and `backend/.env.example` to `.env` in each project and fill values. Never commit `.env` files.
+Copy `frontend/.env.example` and `backend/.env.example` to `.env` in each project and fill values. Never commit `.env` files. In-app TTS uses `AI_PROVIDER` (`noop` \| `gemini` \| `openai` \| `grok`) plus the matching API key in `backend/.env` — see [DEVELOPMENT.md](./DEVELOPMENT.md).
 
 ## Preserve your work on GitHub
 

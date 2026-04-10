@@ -1,6 +1,9 @@
-/** Provider-agnostic TTS result (Gemini PCM today; same shape if another backend is added). */
+/** PCM16 raw (Gemini); MP3 binary (OpenAI, xAI Grok TTS). */
+export type TtsAudioEncoding = "pcm16" | "mp3";
+
 export interface TtsSynthesisResult {
   audioBase64: string;
+  encoding: TtsAudioEncoding;
 }
 
 export interface TtsProvider {

@@ -1,9 +1,11 @@
 import { createHash } from "node:crypto";
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TtsDto } from "./dto/tts.dto";
 import { GeminiTtsProvider } from "./providers/gemini-tts.provider";
+import { GrokTtsProvider } from "./providers/grok-tts.provider";
 import { NoopTtsProvider } from "./providers/noop-tts.provider";
+import { OpenaiTtsProvider } from "./providers/openai-tts.provider";
 import type { TtsSynthesisResult } from "./interfaces/tts-provider.interface";
 
 const DEFAULT_VOICE = "Aoede";
@@ -16,13 +18,16 @@ export class AiService {
   constructor(
     private readonly config: ConfigService,
     private readonly gemini: GeminiTtsProvider,
+    private readonly openai: OpenaiTtsProvider,
+    private readonly grok: GrokTtsProvider,
     private readonly noop: NoopTtsProvider,
   ) {}
 
   async synthesizeTts(dto: TtsDto): Promise<TtsSynthesisResult> {
     const voice = dto.voice?.trim() || DEFAULT_VOICE;
-    const provider = this.resolveProvider();
-    const key = this.cacheKey(dto.text, voice);
+    const providerId = this.providerId();
+    const provider = this.resolveProvider(providerId);
+    const key = this.cacheKey(providerId, dto.text, voice);
     const hit = this.cache.get(key);
     if (hit) return hit;
 
@@ -35,13 +40,28 @@ export class AiService {
     return out;
   }
 
-  private resolveProvider() {
-    const id = (this.config.get<string>("AI_PROVIDER") ?? "gemini").toLowerCase();
-    if (id === "noop") return this.noop;
-    return this.gemini;
+  private providerId(): string {
+    return (this.config.get<string>("AI_PROVIDER") ?? "noop").toLowerCase();
   }
 
-  private cacheKey(text: string, voice: string): string {
-    return createHash("sha256").update(`${voice}|${text}`).digest("hex");
+  private resolveProvider(id: string) {
+    switch (id) {
+      case "noop":
+        return this.noop;
+      case "gemini":
+        return this.gemini;
+      case "openai":
+        return this.openai;
+      case "grok":
+        return this.grok;
+      default:
+        throw new BadRequestException(
+          `Unknown AI_PROVIDER="${id}". Use: noop, gemini, openai, grok.`,
+        );
+    }
+  }
+
+  private cacheKey(providerId: string, text: string, voice: string): string {
+    return createHash("sha256").update(`${providerId}|${voice}|${text}`).digest("hex");
   }
 }

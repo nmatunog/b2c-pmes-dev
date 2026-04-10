@@ -10,7 +10,7 @@ Use this document to **reload the project on a new machine**, onboard another de
 |------|--------|------|
 | **Frontend** | Vite, React 19, Tailwind 4, Lucide, Firebase (Auth + Firestore) | PMES UI, exam, certificates, LOI, admin views |
 | **Backend** | NestJS-style bootstrap, Prisma 6, PostgreSQL (planned) | Production API scaffold; **business REST endpoints not fully implemented yet** |
-| **AI / TTS** | Google Gemini via **Nest** (`POST /ai/tts`) | Ka-uban voice; **no API key in the browser** — set `VITE_API_BASE_URL` and use `AI_PROVIDER` / `GEMINI_API_KEY` on the server only. |
+| **AI / TTS** | Gemini, OpenAI, or **Grok (xAI)** via **Nest** (`POST /ai/tts`) | Ka-uban voice; keys only in `backend/.env` (`AI_PROVIDER` + provider key). |
 
 **Source of truth for live app data today:** Firebase (Firestore paths under `artifacts/{VITE_APP_ID}/public/data/…`). The Prisma schema in `backend/` models the **target** relational design for a future Nest migration.
 
@@ -112,9 +112,11 @@ Never commit `frontend/.env`. Copy from `.env.example` only.
 |----------|---------|
 | `DATABASE_URL` | PostgreSQL connection string for Prisma. |
 | `PORT` | HTTP port (default 3000). |
-| `AI_PROVIDER` | `noop` (no Gemini calls — default for free local dev) or `gemini`. |
+| `AI_PROVIDER` | `noop` (default) \| `gemini` \| `openai` \| `grok` (xAI Grok TTS). |
 | `GEMINI_API_KEY` | Required when `AI_PROVIDER=gemini`. |
-| `GEMINI_TTS_MODEL` | Optional; overrides default TTS model name. |
+| `OPENAI_API_KEY` | Required when `AI_PROVIDER=openai`. |
+| `XAI_API_KEY` | Required when `AI_PROVIDER=grok`. |
+| `GEMINI_TTS_MODEL` / `OPENAI_TTS_MODEL` | Optional model overrides. |
 
 ---
 

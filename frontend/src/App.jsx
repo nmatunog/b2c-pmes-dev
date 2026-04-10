@@ -72,10 +72,17 @@ export default function App() {
     try {
       const result = await requestTts({ text, voice: VOICE });
       const base64 = result?.audioBase64;
+      const encoding = result?.encoding ?? "pcm16";
       if (!base64) throw new Error("No TTS data");
-      const wavUrl = URL.createObjectURL(
-        pcmToWav(new Int16Array(Uint8Array.from(atob(base64), (char) => char.charCodeAt(0)).buffer)),
-      );
+      let wavUrl;
+      if (encoding === "mp3") {
+        const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        wavUrl = URL.createObjectURL(new Blob([bytes], { type: "audio/mpeg" }));
+      } else {
+        wavUrl = URL.createObjectURL(
+          pcmToWav(new Int16Array(Uint8Array.from(atob(base64), (char) => char.charCodeAt(0)).buffer)),
+        );
+      }
       audioCache.current[cacheKey] = wavUrl;
       const audio = new Audio(wavUrl);
       currentAudio.current = audio;
