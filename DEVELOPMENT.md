@@ -170,7 +170,7 @@ Never commit `frontend/.env`. Copy from `.env.example` only.
 
 ## 6. Firebase / Firestore
 
-Anonymous auth is used from the client. Data paths:
+Authentication is **Email/Password** only (anonymous sign-in is not used). Data paths:
 
 - `artifacts/{VITE_APP_ID}/public/data/pmes_records`
 - `artifacts/{VITE_APP_ID}/public/data/loi_records`
