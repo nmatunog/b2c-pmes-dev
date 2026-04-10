@@ -8,3 +8,52 @@
     @apply antialiased text-stone-800;
   }
 }
+
+/* Frosted surfaces + soft mesh (landing) — use sparingly to avoid visual noise */
+@layer components {
+  .glass-nav {
+    @apply border-b border-white/35 bg-white/45 shadow-sm shadow-stone-900/[0.03] backdrop-blur-xl backdrop-saturate-150;
+  }
+  .glass-nav-scrolled {
+    @apply border-b border-stone-200/70 bg-white/72 shadow-md shadow-stone-900/[0.06] backdrop-blur-2xl backdrop-saturate-150;
+  }
+  .glass-badge {
+    @apply border border-white/50 bg-white/55 shadow-md shadow-blue-900/5 backdrop-blur-xl backdrop-saturate-150;
+  }
+  .glass-card {
+    @apply border border-white/45 bg-white/50 shadow-lg shadow-stone-900/5 ring-1 ring-white/60 backdrop-blur-xl backdrop-saturate-150;
+  }
+  .glass-card-hover {
+    @apply transition duration-300 hover:border-white/70 hover:bg-white/65 hover:shadow-xl hover:shadow-blue-900/[0.04];
+  }
+  .glass-cta-secondary {
+    @apply border border-white/55 bg-white/45 shadow-md shadow-stone-900/5 backdrop-blur-xl backdrop-saturate-150;
+  }
+  .glass-hero-frame {
+    @apply border border-white/50 bg-white/40 shadow-xl shadow-blue-900/10 ring-1 ring-white/70 backdrop-blur-xl backdrop-saturate-150;
+  }
+  .glass-path-card {
+    @apply border border-white/25 bg-white/78 shadow-2xl shadow-blue-950/25 ring-1 ring-white/50 backdrop-blur-2xl backdrop-saturate-150;
+  }
+  .glass-footer {
+    @apply border-t border-white/40 bg-[#f2f0ea]/85 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6)] backdrop-blur-xl backdrop-saturate-150;
+  }
+  .mesh-hero {
+    background-image:
+      radial-gradient(ellipse 90% 55% at 15% -10%, rgba(59, 130, 246, 0.14), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 95% 5%, rgba(45, 212, 191, 0.09), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(251, 191, 36, 0.05), transparent 45%),
+      linear-gradient(180deg, #faf9f6 0%, #f7f5f1 45%, #f3f1ec 100%);
+  }
+  .mesh-stats {
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59, 130, 246, 0.06), transparent 55%),
+      linear-gradient(180deg, #ebe8e2 0%, #f0ede6 50%, #ebe8e2 100%);
+  }
+  .mesh-path {
+    background-image:
+      radial-gradient(ellipse 70% 50% at 0% 30%, rgba(59, 130, 246, 0.12), transparent 55%),
+      radial-gradient(ellipse 55% 45% at 100% 80%, rgba(20, 184, 166, 0.08), transparent 50%),
+      linear-gradient(165deg, #292524 0%, #1c1917 40%, #0c0a09 100%);
+  }
+}

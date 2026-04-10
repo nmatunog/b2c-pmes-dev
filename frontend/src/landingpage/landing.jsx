@@ -523,7 +523,10 @@ export default function LandingPage({
     );
 
   return (
-    <div id="top" className="min-h-screen overflow-x-hidden bg-[#f8f7f4] pb-24 font-sans text-stone-900 sm:pb-28">
+    <div
+      id="top"
+      className="min-h-screen overflow-x-hidden bg-gradient-to-b from-[#f6f4f0] via-[#f8f7f4] to-[#ebe8e2] pb-24 font-sans text-stone-900 sm:pb-28"
+    >
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-white focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-stone-900 focus:shadow-lg focus:ring-2 focus:ring-blue-500"
@@ -537,13 +540,13 @@ export default function LandingPage({
 
       {showNotification && (
         <div className="animate-in slide-in-from-left-full duration-500 fixed bottom-10 left-6 z-[60] max-w-[calc(100vw-3rem)]">
-          <div className="flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 text-white shadow-2xl backdrop-blur-xl">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600">
-              <Users className="h-5 w-5" />
+          <div className="flex items-center gap-4 rounded-2xl border border-white/15 bg-slate-950/88 p-4 text-white shadow-2xl shadow-blue-950/40 backdrop-blur-2xl backdrop-saturate-150">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-600/30">
+              <Users className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
-              <p className="mb-1 text-[10px] font-black uppercase leading-none tracking-widest text-blue-400">Recent Activity</p>
-              <p className="truncate text-sm font-bold">{lastSignup}</p>
+              <p className="mb-1 text-[10px] font-bold uppercase leading-none tracking-widest text-sky-300">Recent Activity</p>
+              <p className="truncate text-sm font-semibold text-white/95">{lastSignup}</p>
             </div>
           </div>
         </div>
@@ -551,19 +554,17 @@ export default function LandingPage({
 
       <nav
         className={`fixed left-0 top-0 z-50 w-full transition-all duration-300 ${
-          scrolled
-            ? "border-b border-stone-200/80 bg-white/85 py-3 shadow-sm shadow-stone-900/5 backdrop-blur-md"
-            : "bg-transparent py-4 sm:py-5"
+          scrolled ? "glass-nav-scrolled py-3" : "glass-nav py-4 sm:py-5"
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a href="#top" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <B2CLogo size="sm" className="shrink-0" />
             <div className="min-w-0 flex flex-col leading-tight">
-              <span className="truncate text-sm font-semibold tracking-tight text-stone-900 sm:text-base lg:text-lg">
+              <span className="truncate text-sm font-bold tracking-tight text-stone-900 sm:text-base lg:text-lg">
                 {COOPERATIVE_NAME}
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-stone-500 sm:text-[11px]">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-600 sm:text-[11px]">
                 {COOPERATIVE_REGION}
               </span>
             </div>
@@ -572,31 +573,31 @@ export default function LandingPage({
             <div className="hidden items-center gap-1.5 text-stone-600 xl:flex">
               <History className="h-4 w-4 shrink-0 text-blue-600/90" aria-hidden />
               <span>
-                <span className="font-semibold text-stone-800">{totalMembers}</span>{" "}
-                <span className="text-stone-500">members · {formattedYesterday}</span>
+                <span className="font-bold text-stone-900">{totalMembers}</span>{" "}
+                <span className="text-stone-600">members · {formattedYesterday}</span>
               </span>
             </div>
             <button
               type="button"
               onClick={() => setLanguage(language === "en" ? "ceb" : "en")}
-              className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone-600 transition-colors hover:bg-stone-100"
+              className="rounded-full border border-white/60 bg-white/50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-stone-700 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/70"
             >
               {language.toUpperCase()}
             </button>
             <button
               type="button"
               onClick={openMemberPortal}
-              className="text-stone-600 transition-colors hover:text-blue-700"
+              className="font-medium text-stone-700 transition-colors hover:text-blue-700"
             >
               Portal
             </button>
             {!authUser && (
-              <button type="button" onClick={() => onLogin?.()} className="text-stone-600 transition-colors hover:text-blue-700">
+              <button type="button" onClick={() => onLogin?.()} className="font-medium text-stone-700 transition-colors hover:text-blue-700">
                 Sign in
               </button>
             )}
             {authUser && (
-              <button type="button" onClick={() => onLogout?.()} className="text-xs font-medium text-stone-500 hover:text-blue-700">
+              <button type="button" onClick={() => onLogout?.()} className="text-xs font-semibold text-stone-500 hover:text-blue-700">
                 Log out
               </button>
             )}
@@ -606,7 +607,7 @@ export default function LandingPage({
                 onJoinUs?.();
                 setIsMenuOpen(false);
               }}
-              className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/15 transition-all hover:bg-blue-700"
+              className="rounded-full bg-gradient-to-b from-blue-600 to-blue-700 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-blue-600"
             >
               {authUser ? "PMES" : "Join us"}
             </button>
@@ -622,7 +623,7 @@ export default function LandingPage({
           </button>
         </div>
         {isMenuOpen && (
-          <div className="border-b border-stone-200/90 bg-white/98 px-4 py-4 shadow-md backdrop-blur-md lg:hidden">
+          <div className="border-b border-white/50 bg-white/80 px-4 py-4 shadow-lg shadow-stone-900/10 backdrop-blur-2xl backdrop-saturate-150 lg:hidden">
             <div className="flex flex-col gap-2 text-sm font-medium">
               <div className="flex items-start gap-2 rounded-xl bg-stone-50 px-3 py-2.5 text-stone-600">
                 <History className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
@@ -665,7 +666,7 @@ export default function LandingPage({
                   onJoinUs?.();
                   setIsMenuOpen(false);
                 }}
-                className="min-h-[48px] rounded-xl bg-blue-600 py-3 font-semibold text-white shadow-md"
+                className="min-h-[48px] rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 py-3 font-bold text-white shadow-lg shadow-blue-600/25"
               >
                 {authUser ? "PMES" : "Join us"}
               </button>
@@ -675,8 +676,12 @@ export default function LandingPage({
       </nav>
 
       <main id="main-content">
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#faf9f6] via-white to-[#f5f3ef] pb-14 pt-[5rem] sm:pb-16 sm:pt-[5.5rem] lg:pt-[6.25rem]">
-        <div className="mx-auto flex max-w-7xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
+      <section className="mesh-hero relative overflow-hidden pb-14 pt-[5rem] sm:pb-16 sm:pt-[5.5rem] lg:pt-[6.25rem]">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-24 top-20 h-64 w-64 rounded-full bg-blue-400/25 blur-3xl sm:h-80 sm:w-80" aria-hidden />
+          <div className="absolute -right-16 top-40 h-56 w-56 rounded-full bg-teal-400/20 blur-3xl sm:h-72 sm:w-72" aria-hidden />
+        </div>
+        <div className="relative mx-auto flex max-w-7xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
           {!isFirebaseConfigured && (
             <div className="mb-6 w-full max-w-4xl rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-left text-sm font-medium text-amber-950 sm:mb-8">
               Member sign-in needs Firebase: add <code className="rounded bg-amber-100/80 px-1">VITE_FIREBASE_*</code> in{" "}
@@ -704,7 +709,7 @@ export default function LandingPage({
             </div>
           )}
 
-          <p className="animate-in fade-in slide-in-from-top-2 duration-700 mb-6 inline-flex max-w-md flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-stone-200/80 bg-white/90 px-4 py-2 text-xs font-medium text-stone-600 shadow-sm shadow-stone-900/5 sm:mb-8 sm:text-sm">
+          <p className="glass-badge animate-in fade-in slide-in-from-top-2 duration-700 mb-6 inline-flex max-w-md flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full px-4 py-2.5 text-xs font-semibold text-stone-700 sm:mb-8 sm:text-sm">
             <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
             <span>CDA-registered co-op</span>
             <span className="text-stone-300" aria-hidden>
@@ -712,11 +717,13 @@ export default function LandingPage({
             </span>
             <span>Cebu · member-owned</span>
           </p>
-          <h1 className="mb-5 max-w-3xl text-[2rem] font-bold leading-[1.12] tracking-tight text-stone-900 sm:mb-6 sm:text-4xl md:text-5xl lg:max-w-4xl lg:text-[3.25rem]">
+          <h1 className="mb-5 max-w-3xl text-[2rem] font-extrabold leading-[1.12] tracking-tight text-stone-900 sm:mb-6 sm:text-4xl md:text-5xl lg:max-w-4xl lg:text-[3.25rem]">
             Shop smarter,{" "}
-            <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">together</span>
+            <span className="bg-gradient-to-r from-blue-600 via-sky-500 to-teal-600 bg-clip-text text-transparent">
+              together
+            </span>
           </h1>
-          <p className="mb-10 max-w-xl text-base leading-relaxed text-stone-600 sm:mb-12 sm:text-lg md:max-w-2xl md:text-xl">
+          <p className="mb-10 max-w-xl text-base font-medium leading-relaxed text-stone-600 sm:mb-12 sm:text-lg md:max-w-2xl md:text-xl">
             We&apos;re a digital-first consumers cooperative in the Visayas — real ownership, fair value, and a community that
             grows with you. No pressure: explore first, join when you&apos;re ready.
           </p>
@@ -727,34 +734,34 @@ export default function LandingPage({
                 setOrientationStep(0);
                 setOrientationActive(true);
               }}
-              className="group flex min-h-[52px] items-center justify-center gap-3 rounded-2xl bg-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:min-h-[56px] sm:px-10 sm:text-lg"
+              className="group flex min-h-[52px] items-center justify-center gap-3 rounded-2xl bg-gradient-to-b from-blue-600 to-blue-700 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-blue-600/30 transition-all hover:from-blue-500 hover:to-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 sm:min-h-[56px] sm:px-10 sm:text-lg"
             >
               <PlayCircle className="h-6 w-6 shrink-0 opacity-95" aria-hidden /> {t.orientationBtn}
             </button>
             <button
               type="button"
               onClick={() => document.getElementById("at-a-glance")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-stone-300 bg-white/90 px-8 py-3.5 text-base font-semibold text-stone-800 shadow-sm transition-all hover:border-stone-400 hover:bg-white sm:min-h-[56px] sm:px-10 sm:text-lg"
+              className="glass-cta-secondary flex min-h-[52px] items-center justify-center gap-2 rounded-2xl px-8 py-3.5 text-base font-bold text-stone-800 transition-all hover:bg-white/60 sm:min-h-[56px] sm:px-10 sm:text-lg"
             >
               {t.shopBtn}
             </button>
           </div>
           <div className="mb-12 w-full sm:mb-14">
             {!authUser ? (
-              <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-2xl border border-stone-200/80 bg-white/60 px-4 py-4 sm:max-w-none sm:flex-row sm:justify-center sm:gap-6 sm:bg-transparent sm:px-0 sm:py-0">
-                <p className="text-sm text-stone-600">Thinking about PMES?</p>
+              <div className="glass-card mx-auto flex max-w-md flex-col items-center gap-3 rounded-2xl px-4 py-4 sm:max-w-none sm:flex-row sm:justify-center sm:gap-6 sm:px-6 sm:py-4">
+                <p className="text-sm font-medium text-stone-700">Thinking about PMES?</p>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
                   <button
                     type="button"
                     onClick={() => onJoinUs?.()}
-                    className="min-h-[44px] rounded-full bg-stone-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-800"
+                    className="min-h-[44px] rounded-full bg-gradient-to-b from-stone-800 to-stone-900 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-stone-900/20 transition hover:from-stone-700 hover:to-stone-800"
                   >
                     Create free account
                   </button>
                   <button
                     type="button"
                     onClick={() => onLogin?.()}
-                    className="min-h-[44px] rounded-full border border-stone-300 bg-white px-6 py-2.5 text-sm font-semibold text-stone-800 transition hover:border-stone-400"
+                    className="min-h-[44px] rounded-full border border-white/60 bg-white/50 px-6 py-2.5 text-sm font-bold text-stone-800 shadow-sm backdrop-blur-sm transition hover:bg-white/70"
                   >
                     I already have one
                   </button>
@@ -762,7 +769,7 @@ export default function LandingPage({
               </div>
             ) : null}
           </div>
-          <div className="w-full max-w-5xl overflow-hidden rounded-2xl border border-stone-200/70 bg-white/50 shadow-lg shadow-stone-900/5 ring-1 ring-stone-100 sm:rounded-3xl">
+          <div className="glass-hero-frame w-full max-w-5xl overflow-hidden rounded-2xl sm:rounded-3xl">
             <img
               src={heroSrc}
               alt="B2C cooperative marketplace — community stalls and the B2C COOP shop"
@@ -776,11 +783,11 @@ export default function LandingPage({
 
       <section
         id="at-a-glance"
-        className="border-y border-stone-200/80 bg-[#f3f1ec]/80 py-14 sm:py-16"
+        className="mesh-stats relative border-y border-white/40 py-14 sm:py-16"
         aria-labelledby="at-a-glance-heading"
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 id="at-a-glance-heading" className="mb-8 text-center text-sm font-semibold text-stone-500 sm:mb-10 sm:text-base">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 id="at-a-glance-heading" className="mb-8 text-center text-sm font-bold tracking-wide text-stone-600 sm:mb-10 sm:text-base">
             At a glance
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -792,13 +799,13 @@ export default function LandingPage({
             ].map((s, i) => (
               <div
                 key={i}
-                className="flex items-start gap-4 rounded-2xl border border-stone-200/70 bg-white p-5 shadow-sm shadow-stone-900/5 transition-transform duration-200 hover:-translate-y-0.5 sm:p-6"
+                className="glass-card glass-card-hover flex items-start gap-4 rounded-2xl p-5 sm:p-6"
               >
-                <div className="shrink-0 rounded-xl bg-blue-50/90 p-3 ring-1 ring-blue-100/80">{s.icon}</div>
+                <div className="shrink-0 rounded-xl bg-gradient-to-br from-blue-50 to-sky-50 p-3 ring-1 ring-blue-100/90">{s.icon}</div>
                 <div className="min-w-0 text-left">
-                  <p className="mb-0.5 text-xs font-medium text-stone-500">{s.label}</p>
-                  <p className="text-2xl font-bold tracking-tight text-stone-900">{s.val}</p>
-                  <p className="mt-1 text-xs leading-snug text-stone-500">{s.sub}</p>
+                  <p className="mb-0.5 text-xs font-semibold text-stone-600">{s.label}</p>
+                  <p className="text-2xl font-extrabold tracking-tight text-stone-950">{s.val}</p>
+                  <p className="mt-1 text-xs font-medium leading-snug text-stone-600">{s.sub}</p>
                 </div>
               </div>
             ))}
@@ -806,13 +813,14 @@ export default function LandingPage({
         </div>
       </section>
 
-      <section id="your-path" className="relative bg-gradient-to-b from-stone-800 to-stone-900 py-16 text-white sm:py-24 lg:py-28" aria-labelledby="path-heading">
+      <section id="your-path" className="mesh-path relative py-16 text-white sm:py-24 lg:py-28" aria-labelledby="path-heading">
         <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-stretch gap-12 px-4 sm:px-6 lg:flex-row lg:items-start lg:gap-16 lg:px-8">
           <div className="lg:w-1/2 lg:pt-2">
-            <h2 id="path-heading" className="mb-6 text-3xl font-bold leading-tight tracking-tight text-white sm:mb-8 sm:text-4xl md:text-5xl">
-              Your path to <span className="text-blue-400">membership</span>
+            <h2 id="path-heading" className="mb-6 text-3xl font-extrabold leading-tight tracking-tight text-white sm:mb-8 sm:text-4xl md:text-5xl">
+              Your path to{" "}
+              <span className="bg-gradient-to-r from-sky-300 to-blue-400 bg-clip-text text-transparent">membership</span>
             </h2>
-            <p className="mb-8 max-w-lg text-base leading-relaxed text-stone-300 sm:text-lg">
+            <p className="mb-8 max-w-lg text-base font-medium leading-relaxed text-stone-300/95 sm:text-lg">
               Three clear steps — we walk you through each one in the app. Take your time; there&apos;s no rush to decide.
             </p>
             <div className="space-y-5">
@@ -822,22 +830,22 @@ export default function LandingPage({
                 { step: "3", title: "Share payment", desc: `Minimum ₱${INITIAL_INVESTMENT} to open your share (details in PMES).` },
               ].map((s, i) => (
                 <div key={i} className="group flex gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-sm font-semibold text-blue-300 transition-colors group-hover:border-blue-400/40 group-hover:bg-blue-600/20">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/12 text-sm font-bold text-sky-200 shadow-inner shadow-blue-950/30 backdrop-blur-sm transition-colors group-hover:border-sky-400/35 group-hover:bg-blue-500/25">
                     {s.step}
                   </div>
                   <div>
-                    <h4 className="mb-0.5 text-lg font-semibold text-white">{s.title}</h4>
-                    <p className="text-sm leading-relaxed text-stone-400">{s.desc}</p>
+                    <h4 className="mb-0.5 text-lg font-bold text-white">{s.title}</h4>
+                    <p className="text-sm font-medium leading-relaxed text-stone-400">{s.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
           <div className="w-full lg:w-1/2">
-            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white p-7 text-stone-900 shadow-2xl shadow-black/20 sm:p-10">
-              <Quote className="pointer-events-none absolute right-6 top-6 h-10 w-10 text-blue-100 sm:h-12 sm:w-12" aria-hidden />
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Pre-membership education</p>
-              <h3 className="mt-2 text-xl font-bold leading-snug text-stone-900 sm:text-2xl">Start when it feels right</h3>
+            <div className="glass-path-card relative overflow-hidden rounded-3xl p-7 text-stone-900 sm:p-10">
+              <Quote className="pointer-events-none absolute right-6 top-6 h-10 w-10 text-blue-200/80 sm:h-12 sm:w-12" aria-hidden />
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-700">Pre-membership education</p>
+              <h3 className="mt-2 text-xl font-extrabold leading-snug text-stone-900 sm:text-2xl">Start when it feels right</h3>
               <p className="mt-3 text-base leading-relaxed text-stone-600">
                 {authUser ? (
                   <>You&apos;re signed in — continue to PMES from here or use the portal anytime.</>
@@ -852,7 +860,7 @@ export default function LandingPage({
                 <button
                   type="button"
                   onClick={continueToPmes}
-                  className="group mt-8 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-stone-900 py-4 text-base font-semibold text-white shadow-lg transition-all hover:bg-stone-800"
+                  className="group mt-8 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-950 py-4 text-base font-bold text-white shadow-xl shadow-stone-900/40 transition-all hover:from-stone-700 hover:to-stone-900"
                 >
                   Continue to PMES <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden />
                 </button>
@@ -862,7 +870,7 @@ export default function LandingPage({
                     <button
                       type="button"
                       onClick={() => onJoinUs?.()}
-                      className="group flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-stone-900 py-3.5 text-base font-semibold text-white shadow-lg transition-all hover:bg-stone-800 sm:py-4"
+                      className="group flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-950 py-3.5 text-base font-bold text-white shadow-xl shadow-stone-900/35 transition-all hover:from-stone-700 hover:to-stone-900 sm:py-4"
                     >
                       <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
                       Create account
@@ -870,7 +878,7 @@ export default function LandingPage({
                     <button
                       type="button"
                       onClick={() => onLogin?.()}
-                      className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-stone-200 bg-white py-3.5 text-base font-semibold text-stone-800 transition-all hover:border-stone-300 sm:py-4"
+                      className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/85 py-3.5 text-base font-bold text-stone-800 shadow-md backdrop-blur-sm transition-all hover:bg-white sm:py-4"
                     >
                       <LogIn className="h-5 w-5 shrink-0" aria-hidden />
                       Log in
@@ -891,20 +899,20 @@ export default function LandingPage({
       </section>
       </main>
 
-      <footer className="border-t border-stone-200/90 bg-[#f0efe9] py-16 sm:py-20">
+      <footer className="glass-footer py-16 sm:py-20">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 md:grid-cols-3 md:gap-14 lg:px-8">
           <div className="col-span-1">
             <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <B2CLogo size="md" className="shrink-0" />
               <div className="min-w-0 flex flex-col leading-tight">
-                <span className="text-lg font-semibold tracking-tight text-stone-900 sm:text-xl">{COOPERATIVE_NAME}</span>
-                <span className="text-xs font-medium uppercase tracking-wide text-stone-500">{COOPERATIVE_REGION}</span>
+                <span className="text-lg font-bold tracking-tight text-stone-900 sm:text-xl">{COOPERATIVE_NAME}</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-stone-600">{COOPERATIVE_REGION}</span>
               </div>
             </div>
             <p className="mb-6 max-w-sm text-base leading-relaxed text-stone-600">
               Better access, fair ownership, and opportunities for our members — online-first, grounded in Cebu.
             </p>
-            <div className="inline-flex items-center gap-2 rounded-xl border border-stone-200/90 bg-white/80 px-3 py-2 text-[11px] font-medium leading-snug text-stone-500">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-white/50 bg-white/55 px-3 py-2 text-[11px] font-semibold leading-snug text-stone-600 shadow-sm backdrop-blur-md">
               <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-hidden /> {t.regNo}
             </div>
           </div>
