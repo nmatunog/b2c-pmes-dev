@@ -5,6 +5,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
 } from "firebase/auth";
 import {
   AlertCircle,
@@ -683,10 +684,17 @@ export default function App() {
     staffSessionEmail && staffRole && appState === "admin_dashboard"
       ? { email: staffSessionEmail, role: staffRole }
       : null;
+  /** Prefer saved profile name; then PMES record; then Firebase displayName (if set); else “Member”. */
+  const memberDisplayNameForBanner =
+    String(formData.fullName || "").trim() ||
+    String(activeRecord?.fullName || "").trim() ||
+    String(user?.displayName || "").trim() ||
+    "Member";
+
   const memberIdentityForBanner =
     user && appState !== "member_auth" && !staffForBanner
       ? {
-          fullName: String(formData.fullName || "").trim() || "Member",
+          fullName: memberDisplayNameForBanner,
           email: user.email || String(formData.email || "").trim() || "",
         }
       : null;
@@ -1440,6 +1448,10 @@ export default function App() {
                   return;
                 }
                 setError(null);
+                const name = String(formData.fullName || "").trim();
+                if (name && user) {
+                  void updateProfile(user, { displayName: name }).catch(() => null);
+                }
                 const from = registrationNavRef.current;
                 registrationNavRef.current = "menu";
                 if (from === "exam") {
