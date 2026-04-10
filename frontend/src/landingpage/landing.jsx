@@ -194,13 +194,13 @@ export default function LandingPage({
 
   const content = {
     en: {
-      shopBtn: "Start Shopping",
-      orientationBtn: "Watch Interactive Intro",
+      shopBtn: "See what we offer",
+      orientationBtn: "Take the 5‑minute intro",
       regNo: "CDA Reg. No. 9520-100700034930",
     },
     ceb: {
-      shopBtn: "Sugod sa Pagpamalit",
-      orientationBtn: "Tan-awa ang Interactive Intro",
+      shopBtn: "Tan-awa ang among storya",
+      orientationBtn: "Sugdi ang mubo nga intro",
       regNo: "CDA Reg. No. 9520-100700034930",
     },
   };
@@ -210,42 +210,45 @@ export default function LandingPage({
   const PrivacyModal = () =>
     privacyActive && (
       <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setPrivacyActive(false)} />
-        <div className="animate-in zoom-in-95 duration-200 relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-[32px] bg-white p-8 shadow-2xl md:p-12">
+        <div className="absolute inset-0 bg-stone-900/50 backdrop-blur-sm" onClick={() => setPrivacyActive(false)} />
+        <div className="animate-in zoom-in-95 duration-200 relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-stone-200/80 bg-white p-8 shadow-2xl shadow-stone-900/10 md:p-10">
           <button
             type="button"
             onClick={() => setPrivacyActive(false)}
-            className="absolute right-6 top-6 rounded-full p-2 transition-colors hover:bg-slate-100"
+            className="absolute right-5 top-5 rounded-full p-2 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800"
+            aria-label="Close"
           >
-            <X />
+            <X className="h-5 w-5" />
           </button>
-          <div className="mb-8 flex items-center gap-3">
-            <ShieldCheck className="h-8 w-8 text-blue-600" />
-            <h2 className="text-3xl font-black tracking-tight text-slate-900">Data Privacy Policy</h2>
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-stone-900 md:text-3xl">Data privacy</h2>
           </div>
-          <div className="space-y-6 font-medium leading-relaxed text-slate-600">
-            <p className="text-xs font-black uppercase tracking-widest text-blue-600">Compliant with RA 10173 (Philippines)</p>
+          <div className="space-y-5 text-[15px] leading-relaxed text-stone-600">
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">RA 10173 (Philippines)</p>
             <p>
-              B2C Consumers Cooperative is committed to protecting your personal data. We collect information voluntarily provided
-              during membership application and digital registration.
+              B2C Consumers Cooperative protects personal data you share during membership and registration. We only collect what we
+              need to serve you and meet legal requirements.
             </p>
-            <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Purpose of Collection</h4>
+            <h4 className="text-sm font-semibold text-stone-900">Why we collect it</h4>
             <p>
-              Your data is used to maintain the Registry of Members required by the CDA, facilitate online shopping, and calculate
-              patronage refunds and dividends.
+              To maintain the CDA Registry of Members, run the co-op store, and calculate patronage refunds and dividends — as the
+              law requires.
             </p>
-            <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Data Sharing</h4>
+            <h4 className="text-sm font-semibold text-stone-900">Who we share with</h4>
             <p>
-              We do not sell your data. Sharing is limited to the Cooperative Development Authority (CDA) as required by law and
-              delivery partners strictly for order fulfillment.
+              We don&apos;t sell your data. We share only with the CDA where required, and with delivery partners when needed to
+              fulfill orders.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setPrivacyActive(false)}
-            className="mt-12 w-full rounded-2xl bg-slate-900 py-4 font-black text-white shadow-xl"
+            className="mt-10 w-full rounded-2xl bg-stone-900 py-3.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-stone-800"
           >
-            Close Policy
+            Close
           </button>
         </div>
       </div>
@@ -254,22 +257,23 @@ export default function LandingPage({
   const MemberPortalModal = () =>
     memberPortalOpen && (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setMemberPortalOpen(false)} />
-        <div className="animate-in zoom-in-95 duration-200 relative w-full max-w-md rounded-[32px] bg-white p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-stone-900/50 backdrop-blur-sm" onClick={() => setMemberPortalOpen(false)} />
+        <div className="animate-in zoom-in-95 duration-200 relative w-full max-w-md rounded-3xl border border-stone-200/80 bg-white p-8 shadow-2xl shadow-stone-900/10">
           <button
             type="button"
             onClick={() => setMemberPortalOpen(false)}
-            className="absolute right-6 top-6 rounded-full p-2 transition-colors hover:bg-slate-100"
+            className="absolute right-5 top-5 rounded-full p-2 text-stone-500 hover:bg-stone-100"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
           <div className="mb-8 text-center">
             <B2CLogo size="sm" align="center" className="mb-5" />
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-              <GraduationCap className="h-8 w-8" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+              <GraduationCap className="h-7 w-7" />
             </div>
-            <h3 className="text-2xl font-black tracking-tight text-slate-900">Member portal</h3>
-            <p className="mt-2 text-sm font-medium text-slate-500">
+            <h3 className="text-xl font-bold tracking-tight text-stone-900 sm:text-2xl">Member portal</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600">
               {authUser ? (
                 <span className="block truncate text-slate-700">{authUser.email}</span>
               ) : (
@@ -287,7 +291,7 @@ export default function LandingPage({
                     setIsMenuOpen(false);
                     onLogin?.();
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
+                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-semibold text-white shadow-md shadow-blue-600/15 transition-all hover:bg-blue-700"
                 >
                   <LogIn className="h-5 w-5 shrink-0" />
                   Sign in or register
@@ -318,7 +322,7 @@ export default function LandingPage({
                   setIsMenuOpen(false);
                   onContinuePmes();
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 font-black text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700"
+                className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-emerald-700"
               >
                 Continue PMES
               </button>
@@ -331,7 +335,7 @@ export default function LandingPage({
                   setIsMenuOpen(false);
                   onMemberProfile();
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white py-4 font-black text-slate-800 transition-all hover:border-[#004aad]/40 hover:text-[#004aad]"
+                className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-stone-200 bg-white py-3.5 text-sm font-semibold text-stone-800 transition-all hover:border-blue-500/50 hover:text-blue-800"
               >
                 <IdCard className="h-5 w-5 shrink-0" />
                 Member profile
@@ -345,7 +349,7 @@ export default function LandingPage({
                   setIsMenuOpen(false);
                   continueToPmes();
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
+                className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-blue-700"
               >
                 <PlayCircle className="h-5 w-5 shrink-0" />
                 Start or restart PMES
@@ -358,7 +362,7 @@ export default function LandingPage({
                 setIsMenuOpen(false);
                 retrieveCertificate();
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white py-4 font-black text-slate-800 transition-all hover:border-blue-600 hover:text-blue-600"
+              className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-stone-200 bg-white py-3.5 text-sm font-semibold text-stone-800 transition-all hover:border-blue-500 hover:text-blue-700"
             >
               <Download className="h-5 w-5 shrink-0" />
               My certificate
@@ -371,7 +375,7 @@ export default function LandingPage({
                   setIsMenuOpen(false);
                   onLogout?.();
                 }}
-                className="rounded-2xl border border-slate-200 py-3 text-sm font-black text-slate-500 hover:bg-slate-50"
+                className="rounded-xl border border-stone-200 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-50"
               >
                 Log out
               </button>
@@ -390,17 +394,17 @@ export default function LandingPage({
 
   const OrientationExperience = () =>
     orientationActive && (
-      <div className="animate-in fade-in duration-300 fixed inset-0 z-[200] flex flex-col overflow-hidden bg-white">
-        <div className="h-1.5 w-full shrink-0 bg-slate-100">
+      <div className="animate-in fade-in duration-300 fixed inset-0 z-[200] flex flex-col overflow-hidden bg-[#faf9f6]">
+        <div className="h-1 w-full shrink-0 bg-stone-200">
           <div
             className="h-full bg-blue-600 transition-all duration-700 ease-out"
             style={{ width: `${((orientationStep + 1) / orientationContent.length) * 100}%` }}
           />
         </div>
-        <div className="flex shrink-0 items-center justify-between px-6 py-6">
+        <div className="flex shrink-0 items-center justify-between px-5 py-5 sm:px-6 sm:py-6">
           <div className="flex items-center gap-3">
             <B2CLogo size="xs" className="h-8 max-w-[100px] shrink-0 sm:h-9" />
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Guided Intro</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-stone-500">Guided intro</span>
           </div>
           <button
             type="button"
@@ -413,15 +417,17 @@ export default function LandingPage({
             <X className="h-6 w-6 text-slate-400" />
           </button>
         </div>
-        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-8 text-center sm:px-6">
           <div key={orientationStep} className="animate-in slide-in-from-right duration-500 w-full max-w-2xl">
-            <div className="mb-8 inline-block rounded-3xl bg-blue-50/50 p-6 text-blue-600">{orientationContent[orientationStep].icon}</div>
-            <h2 className="mb-6 text-4xl font-black leading-tight tracking-tighter text-slate-900 md:text-6xl">
+            <div className="mb-6 inline-block rounded-3xl bg-blue-50 p-5 text-blue-600 sm:mb-8 sm:p-6">
+              {orientationContent[orientationStep].icon}
+            </div>
+            <h2 className="mb-5 text-2xl font-bold leading-tight tracking-tight text-stone-900 sm:mb-6 sm:text-4xl md:text-5xl">
               {orientationContent[orientationStep].title}
             </h2>
             {orientationContent[orientationStep].pathSteps ? (
               <>
-                <p className="mb-6 text-lg font-medium leading-relaxed text-slate-500 md:text-xl">
+                <p className="mb-6 text-base font-normal leading-relaxed text-stone-600 sm:text-lg md:text-xl">
                   {orientationContent[orientationStep].desc}
                 </p>
                 {pathGateMessage ? (
@@ -438,32 +444,32 @@ export default function LandingPage({
                       <button
                         type="button"
                         onClick={() => handleJoiningPathStep(step.id)}
-                        className="group flex w-full gap-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-left transition hover:border-blue-200 hover:bg-blue-50/80 md:px-5 md:py-4"
+                        className="group flex w-full gap-4 rounded-2xl border border-stone-200/80 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-200 hover:bg-blue-50/50 md:px-5 md:py-4"
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-800 transition group-hover:bg-blue-600 group-hover:text-white">
                           {i + 1}
                         </span>
-                        <span className="pt-0.5 text-base font-medium leading-relaxed text-slate-700 md:text-lg">{step.label}</span>
+                        <span className="pt-0.5 text-[15px] leading-relaxed text-stone-700 md:text-base">{step.label}</span>
                       </button>
                     </li>
                   ))}
                 </ol>
               </>
             ) : (
-              <p className="mb-8 text-lg font-medium leading-relaxed text-slate-500 md:text-xl">{orientationContent[orientationStep].desc}</p>
+              <p className="mb-8 text-base leading-relaxed text-stone-600 sm:text-lg md:text-xl">{orientationContent[orientationStep].desc}</p>
             )}
-            <div className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-[10px] font-black uppercase tracking-widest text-white">
+            <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full bg-stone-800/95 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-white/95">
               {orientationContent[orientationStep].highlight}
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-4 border-t border-slate-100 bg-white p-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:p-8">
+        <div className="flex flex-col gap-4 border-t border-stone-200/80 bg-white/95 p-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:p-8">
           <button
             type="button"
             onClick={() => setOrientationStep((s) => Math.max(0, s - 1))}
             disabled={orientationStep === 0}
-            className={`self-start text-sm font-black transition-all ${
-              orientationStep === 0 ? "invisible pointer-events-none h-0 overflow-hidden opacity-0 sm:h-auto" : "text-slate-400 hover:text-slate-700"
+            className={`self-start text-sm font-medium transition-all ${
+              orientationStep === 0 ? "invisible pointer-events-none h-0 overflow-hidden opacity-0 sm:h-auto" : "text-stone-500 hover:text-stone-800"
             }`}
           >
             Back
@@ -477,7 +483,7 @@ export default function LandingPage({
                   setOrientationStep(0);
                   onJoinUs?.();
                 }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-4 text-base font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-[0.99]"
+                className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:bg-blue-700 active:scale-[0.99]"
               >
                 <UserPlus className="h-5 w-5 shrink-0" />
                 Create your account
@@ -489,7 +495,7 @@ export default function LandingPage({
                   setOrientationStep(0);
                   onLogin?.();
                 }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white px-6 py-4 text-base font-black text-slate-800 transition-all hover:border-blue-500 hover:text-blue-700"
+                className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-stone-300 bg-white px-6 py-3.5 text-base font-semibold text-stone-800 transition-all hover:border-blue-400 hover:text-blue-800"
               >
                 <LogIn className="h-5 w-5 shrink-0" />
                 Log in
@@ -507,7 +513,7 @@ export default function LandingPage({
                   setOrientationStep(orientationStep + 1);
                 }
               }}
-              className="w-full transform rounded-2xl bg-blue-600 px-8 py-4 font-black text-white shadow-xl transition-all active:scale-[0.99] sm:ml-auto sm:w-auto sm:rounded-full sm:px-10 sm:py-5"
+              className="w-full rounded-2xl bg-blue-600 px-8 py-4 text-base font-semibold text-white shadow-lg transition-all active:scale-[0.99] sm:ml-auto sm:w-auto sm:rounded-full sm:px-10 sm:py-4"
             >
               {orientationStep === orientationContent.length - 1 ? "Continue to PMES" : "Continue"}
             </button>
@@ -517,21 +523,27 @@ export default function LandingPage({
     );
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white pb-32 font-sans text-slate-900">
+    <div id="top" className="min-h-screen overflow-x-hidden bg-[#f8f7f4] pb-24 font-sans text-stone-900 sm:pb-28">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-white focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-stone-900 focus:shadow-lg focus:ring-2 focus:ring-blue-500"
+      >
+        Skip to main content
+      </a>
       <MemberPortalModal />
       <OrientationExperience />
       <PrivacyModal />
       <BylawsModal active={bylawsActive} onClose={() => setBylawsActive(false)} pdfUrl={BYLAWS_PDF_URL} />
 
       {showNotification && (
-        <div className="animate-in slide-in-from-left-full duration-500 fixed bottom-10 left-6 z-[60]">
-          <div className="flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 text-white shadow-2xl backdrop-blur-xl">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600">
+        <div className="animate-in slide-in-from-bottom-4 fade-in duration-500 fixed bottom-6 left-4 right-4 z-[60] sm:left-auto sm:right-6 sm:max-w-sm">
+          <div className="flex items-center gap-3 rounded-2xl border border-stone-200/90 bg-white/95 p-4 text-stone-800 shadow-lg shadow-stone-900/5 ring-1 ring-stone-100 backdrop-blur-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
               <Users className="h-5 w-5" />
             </div>
-            <div>
-              <p className="mb-1 text-[10px] font-black uppercase leading-none tracking-widest text-blue-400">Recent Activity</p>
-              <p className="text-sm font-bold">{lastSignup}</p>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">Members near you</p>
+              <p className="truncate text-sm font-medium text-stone-800">{lastSignup}</p>
             </div>
           </div>
         </div>
@@ -539,52 +551,53 @@ export default function LandingPage({
 
       <nav
         className={`fixed left-0 top-0 z-50 w-full transition-all duration-300 ${
-          scrolled ? "border-b border-slate-100 bg-white/70 py-3 backdrop-blur-xl" : "bg-transparent py-5"
+          scrolled
+            ? "border-b border-stone-200/80 bg-white/85 py-3 shadow-sm shadow-stone-900/5 backdrop-blur-md"
+            : "bg-transparent py-4 sm:py-5"
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
+          <a href="#top" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <B2CLogo size="sm" className="shrink-0" />
             <div className="min-w-0 flex flex-col leading-tight">
-              <span className="text-sm font-black tracking-tight text-slate-900 sm:text-lg lg:text-xl">
-                {COOPERATIVE_NAME}.
+              <span className="truncate text-sm font-semibold tracking-tight text-stone-900 sm:text-base lg:text-lg">
+                {COOPERATIVE_NAME}
               </span>
-              <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-blue-600 sm:text-[10px] sm:tracking-[0.28em]">
+              <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-stone-500 sm:text-[11px]">
                 {COOPERATIVE_REGION}
               </span>
             </div>
-          </div>
-          <div className="hidden items-center space-x-8 text-sm font-bold lg:flex">
-            <div className="flex items-center gap-2 text-slate-600">
-              <History className="h-4 w-4 text-blue-600" />
-              <span className="text-blue-600">{totalMembers} Members</span> as of {formattedYesterday}
+          </a>
+          <div className="hidden items-center gap-6 text-sm font-medium lg:flex xl:gap-8">
+            <div className="hidden items-center gap-1.5 text-stone-600 xl:flex">
+              <History className="h-4 w-4 shrink-0 text-blue-600/90" aria-hidden />
+              <span>
+                <span className="font-semibold text-stone-800">{totalMembers}</span>{" "}
+                <span className="text-stone-500">members · {formattedYesterday}</span>
+              </span>
             </div>
             <button
               type="button"
               onClick={() => setLanguage(language === "en" ? "ceb" : "en")}
-              className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest"
+              className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone-600 transition-colors hover:bg-stone-100"
             >
               {language.toUpperCase()}
             </button>
-            <button type="button" onClick={openMemberPortal} className="text-slate-500 transition-colors hover:text-blue-600">
+            <button
+              type="button"
+              onClick={openMemberPortal}
+              className="text-stone-600 transition-colors hover:text-blue-700"
+            >
               Portal
             </button>
             {!authUser && (
-              <button
-                type="button"
-                onClick={() => onLogin?.()}
-                className="text-slate-500 transition-colors hover:text-blue-600"
-              >
+              <button type="button" onClick={() => onLogin?.()} className="text-stone-600 transition-colors hover:text-blue-700">
                 Sign in
               </button>
             )}
             {authUser && (
-              <button
-                type="button"
-                onClick={() => onLogout?.()}
-                className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-blue-600"
-              >
-                Out
+              <button type="button" onClick={() => onLogout?.()} className="text-xs font-medium text-stone-500 hover:text-blue-700">
+                Log out
               </button>
             )}
             <button
@@ -593,46 +606,56 @@ export default function LandingPage({
                 onJoinUs?.();
                 setIsMenuOpen(false);
               }}
-              className="transform rounded-2xl bg-blue-600 px-8 py-3 text-sm font-black text-white shadow-xl shadow-blue-100 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
+              className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/15 transition-all hover:bg-blue-700"
             >
-              {authUser ? "PMES" : "Sign up"}
+              {authUser ? "PMES" : "Join us"}
             </button>
           </div>
-          <button type="button" className="p-2 text-slate-600 lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-expanded={isMenuOpen}>
-            <Menu />
+          <button
+            type="button"
+            className="min-h-[44px] min-w-[44px] rounded-lg p-2 text-stone-600 lg:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-expanded={isMenuOpen}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          >
+            <Menu className="mx-auto" />
           </button>
         </div>
         {isMenuOpen && (
-          <div className="border-b border-slate-100 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl lg:hidden">
-            <div className="flex flex-col gap-3 text-sm font-bold">
-              <div className="flex items-center gap-2 text-slate-600">
-                <History className="h-4 w-4 shrink-0 text-blue-600" />
+          <div className="border-b border-stone-200/90 bg-white/98 px-4 py-4 shadow-md backdrop-blur-md lg:hidden">
+            <div className="flex flex-col gap-2 text-sm font-medium">
+              <div className="flex items-start gap-2 rounded-xl bg-stone-50 px-3 py-2.5 text-stone-600">
+                <History className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
                 <span>
-                  <span className="text-blue-600">{totalMembers} Members</span> as of {formattedYesterday}
+                  <span className="font-semibold text-stone-800">{totalMembers}</span> members · {formattedYesterday}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setLanguage(language === "en" ? "ceb" : "en")}
-                className="w-full rounded-lg border border-slate-200 bg-slate-100 py-2 text-[10px] font-black uppercase tracking-widest"
+                className="w-full rounded-full border border-stone-200 bg-stone-50 py-2.5 text-[11px] font-semibold uppercase tracking-wide"
               >
                 {language.toUpperCase()}
               </button>
               <button
                 type="button"
                 onClick={openMemberPortal}
-                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-slate-700"
+                className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-stone-200 py-2.5 text-stone-700"
               >
                 <LogIn className="h-4 w-4" />
                 Portal
               </button>
               {!authUser && (
-                <button type="button" onClick={() => onLogin?.()} className="rounded-xl border border-slate-200 py-3 text-slate-700">
+                <button
+                  type="button"
+                  onClick={() => onLogin?.()}
+                  className="min-h-[44px] rounded-xl border border-stone-200 py-2.5 text-stone-700"
+                >
                   Sign in
                 </button>
               )}
               {authUser && (
-                <button type="button" onClick={() => onLogout?.()} className="rounded-xl border border-slate-200 py-3 text-slate-500">
+                <button type="button" onClick={() => onLogout?.()} className="min-h-[44px] rounded-xl border border-stone-200 py-2.5 text-stone-500">
                   Log out
                 </button>
               )}
@@ -642,36 +665,38 @@ export default function LandingPage({
                   onJoinUs?.();
                   setIsMenuOpen(false);
                 }}
-                className="rounded-xl bg-blue-600 py-3 font-black text-white shadow-lg"
+                className="min-h-[48px] rounded-xl bg-blue-600 py-3 font-semibold text-white shadow-md"
               >
-                {authUser ? "PMES" : "Sign up"}
+                {authUser ? "PMES" : "Join us"}
               </button>
             </div>
           </div>
         )}
       </nav>
 
-      <section className="relative overflow-hidden bg-white pb-12 pt-[5.25rem] sm:pt-24 lg:pt-[6.5rem]">
+      <main id="main-content">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#faf9f6] via-white to-[#f5f3ef] pb-14 pt-[5rem] sm:pb-16 sm:pt-[5.5rem] lg:pt-[6.25rem]">
         <div className="mx-auto flex max-w-7xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
           {!isFirebaseConfigured && (
-            <div className="mb-6 w-full max-w-4xl rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-amber-950 sm:mb-8">
-              Firebase is not configured — add VITE_FIREBASE_* keys in frontend/.env to enable member accounts.
+            <div className="mb-6 w-full max-w-4xl rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-left text-sm font-medium text-amber-950 sm:mb-8">
+              Member sign-in needs Firebase: add <code className="rounded bg-amber-100/80 px-1">VITE_FIREBASE_*</code> in{" "}
+              <code className="rounded bg-amber-100/80 px-1">frontend/.env</code>.
             </div>
           )}
 
           {authUser && resumePmesSuggested && onContinuePmes && (
             <div
-              className="mb-8 w-full max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left shadow-md sm:mb-10 sm:px-5 sm:py-4 lg:mb-12"
+              className="mb-8 w-full max-w-3xl rounded-2xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3.5 text-left shadow-sm sm:mb-10 sm:px-5 sm:py-4 lg:mb-12"
               role="status"
             >
               <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
-                <p className="min-w-0 flex-1 text-sm font-bold leading-snug text-emerald-900 sm:text-base">
-                  You have PMES progress saved. Continue where you left off.
+                <p className="min-w-0 flex-1 text-sm leading-snug text-emerald-900 sm:text-base">
+                  <span className="font-semibold">Pick up where you left off</span> — your PMES progress is saved.
                 </p>
                 <button
                   type="button"
                   onClick={onContinuePmes}
-                  className="shrink-0 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-md transition-colors hover:bg-emerald-700 sm:py-3"
+                  className="shrink-0 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:min-h-[44px] sm:px-6"
                 >
                   Continue PMES
                 </button>
@@ -679,63 +704,69 @@ export default function LandingPage({
             </div>
           )}
 
-          <div className="animate-in slide-in-from-top-4 duration-1000 mb-10 inline-flex items-center gap-2 rounded-full border border-blue-100/50 bg-blue-50 px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 shadow-sm">
-            <ShieldCheck className="h-3.5 w-3.5" /> Established Excellence • Para sa Sugbo
-          </div>
-          <h1 className="mb-8 max-w-5xl text-5xl font-black leading-[0.9] tracking-tighter text-slate-900 drop-shadow-sm md:text-8xl">
-            Shop Smarter. <span className="text-blue-600">Grow Together.</span>
-          </h1>
-          <p className="mb-12 max-w-2xl text-lg font-medium leading-relaxed text-slate-500 md:text-2xl">
-            Join Visayas&apos; first{" "}
-            <span className="font-bold text-slate-900 underline decoration-4 decoration-blue-200">digital-led</span> consumers
-            cooperative. Owned by you, built for the community.
+          <p className="animate-in fade-in slide-in-from-top-2 duration-700 mb-6 inline-flex max-w-md flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-stone-200/80 bg-white/90 px-4 py-2 text-xs font-medium text-stone-600 shadow-sm shadow-stone-900/5 sm:mb-8 sm:text-sm">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+            <span>CDA-registered co-op</span>
+            <span className="text-stone-300" aria-hidden>
+              ·
+            </span>
+            <span>Cebu · member-owned</span>
           </p>
-          <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:justify-center">
+          <h1 className="mb-5 max-w-3xl text-[2rem] font-bold leading-[1.12] tracking-tight text-stone-900 sm:mb-6 sm:text-4xl md:text-5xl lg:max-w-4xl lg:text-[3.25rem]">
+            Shop smarter,{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">together</span>
+          </h1>
+          <p className="mb-10 max-w-xl text-base leading-relaxed text-stone-600 sm:mb-12 sm:text-lg md:max-w-2xl md:text-xl">
+            We&apos;re a digital-first consumers cooperative in the Visayas — real ownership, fair value, and a community that
+            grows with you. No pressure: explore first, join when you&apos;re ready.
+          </p>
+          <div className="mb-10 flex w-full max-w-lg flex-col gap-3 sm:mb-12 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4">
             <button
               type="button"
               onClick={() => {
                 setOrientationStep(0);
                 setOrientationActive(true);
               }}
-              className="group flex transform items-center justify-center gap-4 rounded-[32px] bg-blue-600 px-12 py-6 text-xl font-black text-white shadow-2xl shadow-blue-100 transition-all hover:-translate-y-1 hover:bg-blue-700"
+              className="group flex min-h-[52px] items-center justify-center gap-3 rounded-2xl bg-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:min-h-[56px] sm:px-10 sm:text-lg"
             >
-              <PlayCircle className="h-7 w-7" /> {t.orientationBtn}
+              <PlayCircle className="h-6 w-6 shrink-0 opacity-95" aria-hidden /> {t.orientationBtn}
             </button>
             <button
               type="button"
-              className="flex items-center justify-center gap-2 rounded-[32px] border-2 border-slate-200 bg-white px-12 py-6 text-xl font-black text-slate-900 transition-all hover:border-blue-600 hover:text-blue-600"
+              onClick={() => document.getElementById("at-a-glance")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-stone-300 bg-white/90 px-8 py-3.5 text-base font-semibold text-stone-800 shadow-sm transition-all hover:border-stone-400 hover:bg-white sm:min-h-[56px] sm:px-10 sm:text-lg"
             >
               {t.shopBtn}
             </button>
           </div>
-          <div className="mb-20 w-full">
+          <div className="mb-12 w-full sm:mb-14">
             {!authUser ? (
-              <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-6">
-                <span className="text-sm font-semibold text-slate-500">Ready for PMES?</span>
-                <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-2xl border border-stone-200/80 bg-white/60 px-4 py-4 sm:max-w-none sm:flex-row sm:justify-center sm:gap-6 sm:bg-transparent sm:px-0 sm:py-0">
+                <p className="text-sm text-stone-600">Thinking about PMES?</p>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
                   <button
                     type="button"
                     onClick={() => onJoinUs?.()}
-                    className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-black text-white shadow-md transition hover:bg-slate-800"
+                    className="min-h-[44px] rounded-full bg-stone-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-800"
                   >
-                    Sign up free
+                    Create free account
                   </button>
                   <button
                     type="button"
                     onClick={() => onLogin?.()}
-                    className="rounded-full border-2 border-slate-300 bg-white px-6 py-2.5 text-sm font-black text-slate-800 transition hover:border-blue-500"
+                    className="min-h-[44px] rounded-full border border-stone-300 bg-white px-6 py-2.5 text-sm font-semibold text-stone-800 transition hover:border-stone-400"
                   >
-                    Log in
+                    I already have one
                   </button>
                 </div>
               </div>
             ) : null}
           </div>
-          <div className="animate-in fade-in zoom-in-95 duration-1000 w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-50/50 shadow-inner">
+          <div className="w-full max-w-5xl overflow-hidden rounded-2xl border border-stone-200/70 bg-white/50 shadow-lg shadow-stone-900/5 ring-1 ring-stone-100 sm:rounded-3xl">
             <img
               src={heroSrc}
               alt="B2C cooperative marketplace — community stalls and the B2C COOP shop"
-              className="h-auto max-h-[min(22rem,42vh)] w-full object-contain object-center drop-shadow-xl md:max-h-[26rem]"
+              className="h-auto max-h-[min(20rem,38vh)] w-full object-contain object-center sm:max-h-[min(24rem,42vh)] md:max-h-[26rem]"
               loading="eager"
               decoding="async"
             />
@@ -743,70 +774,77 @@ export default function LandingPage({
         </div>
       </section>
 
-      <section className="border-y border-slate-100 bg-slate-50/50 py-20">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
-          {[
-            { label: "Digital Pioneers", val: "First", sub: "In Visayas", icon: <Rocket className="h-5 w-5 text-blue-600" /> },
-            { label: "Legitimacy", val: "CDA Reg", sub: "Oct 2023", icon: <ShieldCheck className="h-5 w-5 text-blue-600" /> },
-            { label: "Verified Count", val: totalMembers, sub: `As of ${formattedYesterday}`, icon: <History className="h-5 w-5 text-blue-600" /> },
-            { label: "Ownership", val: `₱${INITIAL_INVESTMENT}`, sub: "Minimum Entry", icon: <Building2 className="h-5 w-5 text-blue-600" /> },
-          ].map((s, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-4 rounded-3xl border border-slate-100/50 bg-white p-6 shadow-sm transition-all hover:translate-y-[-4px]"
-            >
-              <div className="shrink-0 rounded-2xl bg-blue-50 p-3">{s.icon}</div>
-              <div>
-                <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-blue-600">{s.label}</p>
-                <p className="text-2xl font-black tracking-tighter text-slate-900">{s.val}</p>
-                <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">{s.sub}</p>
+      <section
+        id="at-a-glance"
+        className="border-y border-stone-200/80 bg-[#f3f1ec]/80 py-14 sm:py-16"
+        aria-labelledby="at-a-glance-heading"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 id="at-a-glance-heading" className="mb-8 text-center text-sm font-semibold text-stone-500 sm:mb-10 sm:text-base">
+            At a glance
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: "Where we lead", val: "First", sub: "Digital-led co-op in Visayas", icon: <Rocket className="h-5 w-5 text-blue-600" /> },
+              { label: "Registered", val: "CDA", sub: "Since Oct 2023", icon: <ShieldCheck className="h-5 w-5 text-blue-600" /> },
+              { label: "Members", val: totalMembers, sub: `Updated ${formattedYesterday}`, icon: <History className="h-5 w-5 text-blue-600" /> },
+              { label: "Starting share + fee", val: `₱${INITIAL_INVESTMENT}`, sub: "Typical first step (see PMES)", icon: <Building2 className="h-5 w-5 text-blue-600" /> },
+            ].map((s, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-4 rounded-2xl border border-stone-200/70 bg-white p-5 shadow-sm shadow-stone-900/5 transition-transform duration-200 hover:-translate-y-0.5 sm:p-6"
+              >
+                <div className="shrink-0 rounded-xl bg-blue-50/90 p-3 ring-1 ring-blue-100/80">{s.icon}</div>
+                <div className="min-w-0 text-left">
+                  <p className="mb-0.5 text-xs font-medium text-stone-500">{s.label}</p>
+                  <p className="text-2xl font-bold tracking-tight text-stone-900">{s.val}</p>
+                  <p className="mt-1 text-xs leading-snug text-stone-500">{s.sub}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="relative bg-slate-900 py-32 text-white">
-        <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-20 px-4 sm:px-6 lg:flex-row lg:px-8">
-          <div className="lg:w-1/2">
-            <h2 className="mb-8 text-4xl font-black leading-tight tracking-tighter md:text-6xl">
-              Ready to become <br />
-              <span className="text-blue-500">an owner?</span>
+      <section id="your-path" className="relative bg-gradient-to-b from-stone-800 to-stone-900 py-16 text-white sm:py-24 lg:py-28" aria-labelledby="path-heading">
+        <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-stretch gap-12 px-4 sm:px-6 lg:flex-row lg:items-start lg:gap-16 lg:px-8">
+          <div className="lg:w-1/2 lg:pt-2">
+            <h2 id="path-heading" className="mb-6 text-3xl font-bold leading-tight tracking-tight text-white sm:mb-8 sm:text-4xl md:text-5xl">
+              Your path to <span className="text-blue-400">membership</span>
             </h2>
-            <div className="space-y-6">
+            <p className="mb-8 max-w-lg text-base leading-relaxed text-stone-300 sm:text-lg">
+              Three clear steps — we walk you through each one in the app. Take your time; there&apos;s no rush to decide.
+            </p>
+            <div className="space-y-5">
               {[
-                { step: "01", title: "Complete PMES", desc: "Watch the online orientation to understand your rights." },
-                { step: "02", title: "Submit LOI", desc: "Submit your digital Letter of Intent through our portal." },
-                { step: "03", title: "Secure Shares", desc: `Invest ₱${INITIAL_INVESTMENT} to unlock dividends and refunds.` },
+                { step: "1", title: "PMES", desc: "Short online orientation so you know your rights and how co-ops work." },
+                { step: "2", title: "Letter of intent", desc: "Submit through the member portal when you are ready." },
+                { step: "3", title: "Share payment", desc: `Minimum ₱${INITIAL_INVESTMENT} to open your share (details in PMES).` },
               ].map((s, i) => (
-                <div key={i} className="group flex gap-6">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 font-black text-blue-500 transition-all group-hover:bg-blue-600 group-hover:text-white">
+                <div key={i} className="group flex gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-sm font-semibold text-blue-300 transition-colors group-hover:border-blue-400/40 group-hover:bg-blue-600/20">
                     {s.step}
                   </div>
                   <div>
-                    <h4 className="mb-1 text-xl font-black">{s.title}</h4>
-                    <p className="text-sm font-medium text-slate-400">{s.desc}</p>
+                    <h4 className="mb-0.5 text-lg font-semibold text-white">{s.title}</h4>
+                    <p className="text-sm leading-relaxed text-stone-400">{s.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
           <div className="w-full lg:w-1/2">
-            <div className="relative overflow-hidden rounded-[48px] bg-white p-8 text-slate-900 shadow-2xl sm:p-12">
-              <Quote className="absolute right-8 top-8 h-12 w-12 text-blue-50 opacity-10" />
-              <p className="text-xs font-black uppercase tracking-widest text-blue-600">Pre-Membership Education</p>
-              <h3 className="mt-3 text-2xl font-black leading-tight tracking-tight text-slate-900 sm:text-3xl">
-                Ready to join now?
-              </h3>
-              <p className="mt-4 text-lg font-medium leading-relaxed text-slate-600">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white p-7 text-stone-900 shadow-2xl shadow-black/20 sm:p-10">
+              <Quote className="pointer-events-none absolute right-6 top-6 h-10 w-10 text-blue-100 sm:h-12 sm:w-12" aria-hidden />
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Pre-membership education</p>
+              <h3 className="mt-2 text-xl font-bold leading-snug text-stone-900 sm:text-2xl">Start when it feels right</h3>
+              <p className="mt-3 text-base leading-relaxed text-stone-600">
                 {authUser ? (
-                  <>
-                    You&apos;re signed in. Continue to the privacy notice and PMES modules, or open the member portal any time.
-                  </>
+                  <>You&apos;re signed in — continue to PMES from here or use the portal anytime.</>
                 ) : (
                   <>
-                    Create your member login, then take the interactive PMES. You&apos;ll accept the privacy notice before the
-                    modules begin.
+                    Create a free login, then take the interactive PMES. You&apos;ll see the privacy notice before the lessons — nothing
+                    hidden, no small print ambush.
                   </>
                 )}
               </p>
@@ -814,9 +852,9 @@ export default function LandingPage({
                 <button
                   type="button"
                   onClick={continueToPmes}
-                  className="group mt-8 flex w-full items-center justify-center gap-2 rounded-3xl bg-slate-900 py-5 text-lg font-black text-white shadow-xl transition-all hover:bg-slate-800"
+                  className="group mt-8 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-stone-900 py-4 text-base font-semibold text-white shadow-lg transition-all hover:bg-stone-800"
                 >
-                  Continue to PMES <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
+                  Continue to PMES <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden />
                 </button>
               ) : (
                 <>
@@ -824,26 +862,26 @@ export default function LandingPage({
                     <button
                       type="button"
                       onClick={() => onJoinUs?.()}
-                      className="group flex flex-1 items-center justify-center gap-2 rounded-3xl bg-slate-900 py-4 text-base font-black text-white shadow-xl transition-all hover:bg-slate-800 sm:py-5 sm:text-lg"
+                      className="group flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-stone-900 py-3.5 text-base font-semibold text-white shadow-lg transition-all hover:bg-stone-800 sm:py-4"
                     >
-                      <UserPlus className="h-5 w-5 shrink-0" />
+                      <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
                       Create account
                     </button>
                     <button
                       type="button"
                       onClick={() => onLogin?.()}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-3xl border-2 border-slate-300 bg-white py-4 text-base font-black text-slate-800 transition-all hover:border-blue-500 sm:py-5 sm:text-lg"
+                      className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-stone-200 bg-white py-3.5 text-base font-semibold text-stone-800 transition-all hover:border-stone-300 sm:py-4"
                     >
-                      <LogIn className="h-5 w-5 shrink-0" />
+                      <LogIn className="h-5 w-5 shrink-0" aria-hidden />
                       Log in
                     </button>
                   </div>
                   <button
                     type="button"
                     onClick={continueToPmes}
-                    className="mt-3 w-full text-center text-sm font-bold text-blue-600 underline-offset-2 hover:underline"
+                    className="mt-4 w-full text-center text-sm font-medium text-blue-700 underline-offset-4 hover:underline"
                   >
-                    Already have an account? Continue to PMES (sign in)
+                    Already registered? Continue to PMES
                   </button>
                 </>
               )}
@@ -851,27 +889,28 @@ export default function LandingPage({
           </div>
         </div>
       </section>
+      </main>
 
-      <footer className="border-t border-slate-100 bg-white py-24">
-        <div className="mx-auto grid max-w-7xl gap-16 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
+      <footer className="border-t border-stone-200/90 bg-[#f0efe9] py-16 sm:py-20">
+        <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 md:grid-cols-3 md:gap-14 lg:px-8">
           <div className="col-span-1">
-            <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <B2CLogo size="md" className="shrink-0" />
               <div className="min-w-0 flex flex-col leading-tight">
-                <span className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">{COOPERATIVE_NAME}.</span>
-                <span className="text-sm font-bold uppercase tracking-widest text-blue-600">{COOPERATIVE_REGION}</span>
+                <span className="text-lg font-semibold tracking-tight text-stone-900 sm:text-xl">{COOPERATIVE_NAME}</span>
+                <span className="text-xs font-medium uppercase tracking-wide text-stone-500">{COOPERATIVE_REGION}</span>
               </div>
             </div>
-            <p className="mb-8 text-lg font-medium leading-relaxed text-slate-500">
-              Elevating standards of living through Access, Ownership, Control, and Opportunities.
+            <p className="mb-6 max-w-sm text-base leading-relaxed text-stone-600">
+              Better access, fair ownership, and opportunities for our members — online-first, grounded in Cebu.
             </p>
-            <div className="inline-flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 px-4 text-[10px] font-black uppercase leading-none tracking-widest text-slate-400">
-              <ShieldCheck className="h-4 w-4 text-blue-600" /> {t.regNo}
+            <div className="inline-flex items-center gap-2 rounded-xl border border-stone-200/90 bg-white/80 px-3 py-2 text-[11px] font-medium leading-snug text-stone-500">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-hidden /> {t.regNo}
             </div>
           </div>
-          <div className="space-y-6">
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Governance</h5>
-            <ul className="space-y-4 text-sm font-bold text-slate-500">
+          <div className="space-y-4">
+            <h5 className="text-xs font-semibold uppercase tracking-wide text-stone-500">Governance</h5>
+            <ul className="space-y-3 text-sm font-medium text-stone-600">
               <li>
                 <button type="button" onClick={() => setPrivacyActive(true)} className="transition-colors hover:text-blue-600">
                   Data Privacy Policy
@@ -896,14 +935,14 @@ export default function LandingPage({
               )}
             </ul>
           </div>
-          <div className="space-y-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <p>© 2026 {COOPERATIVE_NAME}.</p>
-            <p>Cebu City, Philippines.</p>
-            <div className="mt-8 flex gap-4">
-              <button type="button" className="text-blue-600">
+          <div className="space-y-4 text-sm text-stone-600">
+            <p className="text-xs text-stone-500">© {new Date().getFullYear()} {COOPERATIVE_NAME}</p>
+            <p className="text-stone-600">Cebu City, Philippines</p>
+            <div className="flex flex-wrap gap-4 pt-2">
+              <button type="button" className="text-sm font-medium text-blue-700 hover:underline">
                 Facebook
               </button>
-              <button type="button" className="text-blue-600">
+              <button type="button" className="text-sm font-medium text-blue-700 hover:underline">
                 Viber
               </button>
             </div>
