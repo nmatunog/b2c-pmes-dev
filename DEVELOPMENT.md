@@ -69,15 +69,23 @@ Default Nest listen port from `main.ts`: **3000** (override with `PORT` in `.env
 
 **PostgreSQL must be running** at the host in `DATABASE_URL` (default `localhost:5432`). If you see **`P1001` / “Can’t reach database server”**, start Postgres first.
 
-**Option A — Docker (simplest on Mac):** from `backend/`:
+**Option A — Docker (simplest on Mac):** from the repo root:
+
+```bash
+./scripts/verify-local.sh
+```
+
+Or from `backend/` manually — use **`docker compose`** (Compose V2, two words) or the legacy **`docker-compose`** (hyphen), depending on your install:
 
 ```bash
 docker compose up -d
+# if that fails with flag errors, try:
+docker-compose up -d
 npx prisma migrate deploy
 npm run dev
 ```
 
-Wait until the container is healthy (`docker compose ps`), then migrate.
+Wait until the container is healthy (`docker compose ps` or `docker-compose ps`), then migrate.
 
 **Option B — Postgres.app, Homebrew, or a cloud DB:** create database `b2c_pmes`, set `DATABASE_URL` in `backend/.env`, then `npx prisma migrate deploy`.
 
@@ -244,7 +252,8 @@ The root `.gitignore` is configured for these.
 |-------|----------------|
 | Blank Firebase / permission errors | `.env` filled; same `VITE_APP_ID` as data in console; Auth enabled; Firestore API enabled. |
 | TTS silent or errors | Backend running with `VITE_API_BASE_URL` set; if `AI_PROVIDER=noop`, switch to `gemini` + `GEMINI_API_KEY`; check quota and `GEMINI_TTS_MODEL`. |
-| **`P1001` Can’t reach database** | Postgres not running or wrong host/port. Use `docker compose up -d` in `backend/` or start local Postgres; confirm `DATABASE_URL`. |
+| **`P1001` Can’t reach database** | Postgres not running or wrong host/port. Run `./scripts/verify-local.sh` or `docker compose up -d` / `docker-compose up -d` in `backend/`; confirm `DATABASE_URL`. |
+| **`unknown shorthand flag: 'd'`** with Docker | Usually means Compose isn’t available as `docker compose`. Try **`docker-compose up -d`** (hyphen) in `backend/`, or update Docker Desktop so the Compose V2 plugin is installed. |
 | Other Prisma errors | `DATABASE_URL` correct; `npx prisma generate`; migrations applied. |
 | Port already in use | Change Vite port in `vite.config.js` or `PORT` for backend. |
 | **429 Too Many Requests** | Global rate limits apply (see `@nestjs/throttler`). Heavier limits on `/ai/tts` and `/auth/admin/login`. |

@@ -4,8 +4,20 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT/backend"
 
-echo "==> Starting Postgres (docker compose)"
-docker compose up -d
+compose_up() {
+  if docker compose version &>/dev/null; then
+    docker compose up -d
+  elif command -v docker-compose &>/dev/null; then
+    docker-compose up -d
+  else
+    echo "ERROR: Neither 'docker compose' nor 'docker-compose' is available."
+    echo "Install Docker Desktop (https://www.docker.com/products/docker-desktop/) and ensure it is running."
+    exit 1
+  fi
+}
+
+echo "==> Starting Postgres (Docker Compose)"
+compose_up
 
 echo "==> Waiting for Postgres (5s)"
 sleep 5
