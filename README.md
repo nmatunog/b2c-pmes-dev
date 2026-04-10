@@ -18,7 +18,7 @@ Full setup, env vars, Firestore paths, Git workflow, and troubleshooting are in 
 
 **Frontend** (`frontend/`): `npm run dev` · `npm run build` · `npm run preview`
 
-**Backend** (`backend/`): `npm run dev` · `npm run build` · `npm run prisma:generate` · `npm run prisma:migrate`
+**Backend** (`backend/`): `npm run dev` · `npm run build` · `npm run prisma:generate` · `npm run prisma:migrate` · readiness: `GET /health` (needs valid `DATABASE_URL` and PostgreSQL running)
 
 ## Configuration
 

@@ -57,7 +57,7 @@ npx prisma generate
 npm run dev
 ```
 
-Default Nest listen port from `main.ts`: **3000** (override with `PORT` in `.env`).
+Default Nest listen port from `main.ts`: **3000** (override with `PORT` in `.env`). **`DATABASE_URL` is required** — the API validates env at startup and connects Prisma on boot. Check readiness with **`GET /health`** (returns `{ "status": "ok", "database": "connected" }` when PostgreSQL accepts a query).
 
 ### Verify builds
 
