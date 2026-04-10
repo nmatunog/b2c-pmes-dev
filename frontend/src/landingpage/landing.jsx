@@ -496,29 +496,34 @@ export default function LandingPage({
         )}
       </nav>
 
-      {!isFirebaseConfigured && (
-        <div className="mx-4 mt-24 rounded-xl bg-amber-500 px-4 py-2 text-center text-sm font-bold text-amber-950 sm:mx-auto sm:max-w-4xl">
-          Firebase is not configured — add VITE_FIREBASE_* keys in frontend/.env to enable member accounts.
-        </div>
-      )}
-
-      {authUser && pmesPaused && onContinuePmes && (
-        <div className="mx-4 mt-4 max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg sm:mx-auto sm:mt-6">
-          <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-            <p className="text-sm font-bold text-emerald-900">You have PMES progress saved. Continue where you left off.</p>
-            <button
-              type="button"
-              onClick={onContinuePmes}
-              className="shrink-0 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-md hover:bg-emerald-700"
-            >
-              Continue PMES
-            </button>
-          </div>
-        </div>
-      )}
-
-      <section className="relative overflow-hidden bg-white pb-12 pt-32 lg:pt-48">
+      <section className="relative overflow-hidden bg-white pb-12 pt-[5.25rem] sm:pt-24 lg:pt-[6.5rem]">
         <div className="mx-auto flex max-w-7xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
+          {!isFirebaseConfigured && (
+            <div className="mb-6 w-full max-w-4xl rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-amber-950 sm:mb-8">
+              Firebase is not configured — add VITE_FIREBASE_* keys in frontend/.env to enable member accounts.
+            </div>
+          )}
+
+          {authUser && pmesPaused && onContinuePmes && (
+            <div
+              className="mb-8 w-full max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left shadow-md sm:mb-10 sm:px-5 sm:py-4 lg:mb-12"
+              role="status"
+            >
+              <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <p className="min-w-0 flex-1 text-sm font-bold leading-snug text-emerald-900 sm:text-base">
+                  You have PMES progress saved. Continue where you left off.
+                </p>
+                <button
+                  type="button"
+                  onClick={onContinuePmes}
+                  className="shrink-0 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-md transition-colors hover:bg-emerald-700 sm:py-3"
+                >
+                  Continue PMES
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="animate-in slide-in-from-top-4 duration-1000 mb-10 inline-flex items-center gap-2 rounded-full border border-blue-100/50 bg-blue-50 px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 shadow-sm">
             <ShieldCheck className="h-3.5 w-3.5" /> Established Excellence • Para sa Sugbo
           </div>
