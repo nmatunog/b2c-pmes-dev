@@ -67,7 +67,21 @@ npm run dev
 
 Default Nest listen port from `main.ts`: **3000** (override with `PORT` in `.env`). **`DATABASE_URL` is required** — the API validates env at startup and connects Prisma on boot. Check readiness with **`GET /health`** (returns `{ "status": "ok", "database": "connected" }` when PostgreSQL accepts a query).
 
-**First-time database:** from `backend/`, run `npx prisma migrate deploy` (or `npm run prisma:migrate` for dev) so tables exist before using PMES APIs.
+**PostgreSQL must be running** at the host in `DATABASE_URL` (default `localhost:5432`). If you see **`P1001` / “Can’t reach database server”**, start Postgres first.
+
+**Option A — Docker (simplest on Mac):** from `backend/`:
+
+```bash
+docker compose up -d
+npx prisma migrate deploy
+npm run dev
+```
+
+Wait until the container is healthy (`docker compose ps`), then migrate.
+
+**Option B — Postgres.app, Homebrew, or a cloud DB:** create database `b2c_pmes`, set `DATABASE_URL` in `backend/.env`, then `npx prisma migrate deploy`.
+
+**First-time schema:** run `npx prisma migrate deploy` (or `npm run prisma:migrate` for dev) so tables exist before using PMES APIs.
 
 **PMES REST (when `VITE_API_BASE_URL` is set, the frontend uses Postgres via Nest instead of Firestore for these):**
 
@@ -212,7 +226,8 @@ Order is intentional:
 |-------|----------------|
 | Blank Firebase / permission errors | `.env` filled; same `VITE_APP_ID` as data in console; Auth enabled; Firestore API enabled. |
 | TTS silent or errors | Backend running with `VITE_API_BASE_URL` set; if `AI_PROVIDER=noop`, switch to `gemini` + `GEMINI_API_KEY`; check quota and `GEMINI_TTS_MODEL`. |
-| Prisma errors | `DATABASE_URL` correct; `npx prisma generate`; Postgres running. |
+| **`P1001` Can’t reach database** | Postgres not running or wrong host/port. Use `docker compose up -d` in `backend/` or start local Postgres; confirm `DATABASE_URL`. |
+| Other Prisma errors | `DATABASE_URL` correct; `npx prisma generate`; migrations applied. |
 | Port already in use | Change Vite port in `vite.config.js` or `PORT` for backend. |
 
 ---

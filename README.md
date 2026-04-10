@@ -18,7 +18,7 @@ Full setup, env vars, Firestore paths, Git workflow, and troubleshooting are in 
 
 **Frontend** (`frontend/`): `npm run dev` · `npm run build` · `npm run preview`
 
-**Backend** (`backend/`): `npm run dev` · `npm run build` · `npm run prisma:generate` · `npm run prisma:migrate` · `GET /health` · PMES: `POST /pmes/submit`, `POST /pmes/loi`, `GET /pmes/certificate`, `GET /pmes/admin/records` (see [DEVELOPMENT.md](./DEVELOPMENT.md))
+**Backend** (`backend/`): local DB: `docker compose up -d` then `npx prisma migrate deploy` · `npm run dev` · `npm run build` · `npm run prisma:generate` · `npm run prisma:migrate` · `GET /health` · PMES routes — see [DEVELOPMENT.md](./DEVELOPMENT.md)
 
 ## Configuration
 

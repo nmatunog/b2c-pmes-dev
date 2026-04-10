@@ -1,0 +1,24 @@
+# Matches backend/.env.example — Postgres for local PMES API + Prisma.
+# Usage: docker compose up -d
+# Then: npx prisma migrate deploy && npm run dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: b2c-pmes-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: b2c_pmes
+    ports:
+      - "5432:5432"
+    volumes:
+      - b2c_pmes_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d b2c_pmes"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  b2c_pmes_pgdata:
