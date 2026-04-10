@@ -9,7 +9,7 @@ Use this document to **reload the project on a new machine**, onboard another de
 | Area | Stack | Role |
 |------|--------|------|
 | **Frontend** | Vite, React 19, Tailwind 4, Lucide, Firebase (Auth + Firestore) | PMES UI, exam, certificates, LOI, admin views |
-| **Backend** | NestJS-style bootstrap, Prisma 6, PostgreSQL (planned) | Production API scaffold; **business REST endpoints not fully implemented yet** |
+| **Backend** | NestJS, Prisma 6, PostgreSQL | **Health**, **AI/TTS proxy**, **PMES REST** (`/pmes/*`) when DB migrated |
 | **AI / TTS** | Gemini, OpenAI, or **Grok (xAI)** via **Nest** (`POST /ai/tts`) | Ka-uban voice; keys only in `backend/.env` (`AI_PROVIDER` + provider key). |
 
 **Source of truth for live app data today:** Firebase (Firestore paths under `artifacts/{VITE_APP_ID}/public/data/…`). The Prisma schema in `backend/` models the **target** relational design for a future Nest migration.
@@ -59,6 +59,17 @@ npm run dev
 
 Default Nest listen port from `main.ts`: **3000** (override with `PORT` in `.env`). **`DATABASE_URL` is required** — the API validates env at startup and connects Prisma on boot. Check readiness with **`GET /health`** (returns `{ "status": "ok", "database": "connected" }` when PostgreSQL accepts a query).
 
+**First-time database:** from `backend/`, run `npx prisma migrate deploy` (or `npm run prisma:migrate` for dev) so tables exist before using PMES APIs.
+
+**PMES REST (when `VITE_API_BASE_URL` is set, the frontend uses Postgres via Nest instead of Firestore for these):**
+
+| Method | Path | Notes |
+|--------|------|--------|
+| `POST` | `/pmes/submit` | Body: `fullName`, `email`, `phone`, `dob`, `gender`, `score`, `passed` |
+| `POST` | `/pmes/loi` | Body: `email`, `address`, `occupation`, `employer`, `initialCapital` |
+| `GET` | `/pmes/certificate?email=&dob=` | 404 if none; returns flat record for certificate UI |
+| `GET` | `/pmes/admin/records` | Header `x-admin-code: B2Cmmddyyyy` (server local date), same as UI prompt |
+
 ### Verify builds
 
 ```bash
@@ -84,6 +95,7 @@ B2C-PMES/
 │   └── package.json
 ├── backend/
 │   ├── prisma/schema.prisma
+│   ├── src/pmes/     # PMES + LOI REST
 │   ├── src/main.ts, app.module.ts
 │   ├── supabase/schema.sql   # optional SQL artifact from earlier experiments; frontend uses Firebase
 │   └── package.json
@@ -102,7 +114,7 @@ B2C-PMES/
 |----------|---------|
 | `VITE_APP_ID` | Firestore path segment: `artifacts/{appId}/public/data/...`. Use a stable value per environment (e.g. `b2c-pmes`). |
 | `VITE_FIREBASE_*` | From Firebase Console → Project settings → Your apps → Web app config. |
-| `VITE_API_BASE_URL` | Base URL of the Nest API (e.g. `http://localhost:3000`). Used for TTS (`/ai/tts`). **Do not put Gemini keys in Vite.** |
+| `VITE_API_BASE_URL` | Nest API (e.g. `http://localhost:3000`). Enables **TTS** (`/ai/tts`) and **PMES data** (`/pmes/*`) instead of Firestore for saves/list/certificate lookup. Omit to stay Firebase-only for data. |
 
 Never commit `frontend/.env`. Copy from `.env.example` only.
 
@@ -179,10 +191,10 @@ The root `.gitignore` is configured for these.
 Order is intentional:
 
 1. **Git + GitHub** — first safety net (section 7).
-2. **Document and tighten Firebase** — rules + indexes for the `artifacts/...` paths; document admin access model if it stays client-assisted.
-3. **Backend slice** — one Nest module (e.g. health + `participants` read-only) wired to Prisma, with env validation on startup.
-4. **Extend AI module** — e.g. optional text Q&A route with the same provider pattern; add rate limits / Redis cache if traffic grows.
-5. **Tests** — Jest on backend, RTL on critical frontend flows, then e2e when flows stabilize.
+2. **Run Prisma migrations** on every environment; keep `VITE_API_BASE_URL` aligned so the app hits Postgres for PMES data.
+3. **Firestore rules** — still required if anyone uses Firebase-only mode or during cutover.
+4. **Replace weak admin code** — move to real auth (JWT / role) before public launch.
+5. **Extend AI / tests** — optional Q&A route, rate limits; Jest + RTL + e2e.
 
 ---
 

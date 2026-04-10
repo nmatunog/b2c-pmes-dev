@@ -138,6 +138,8 @@ export default function App() {
       } else {
         setError(record ? "Passing record not found." : "Record not found.");
       }
+    } catch {
+      setError("Lookup failed. Check connection or try again.");
     } finally {
       setLoading(false);
     }
@@ -161,7 +163,7 @@ export default function App() {
               const dd = String(new Date().getDate()).padStart(2, "0");
               const pass = prompt("Enter Admin Code:");
               if (pass === `B2C${mm}${dd}${new Date().getFullYear()}`) {
-                PmesService.getAllRecords(db, appId).then(setMasterList);
+                PmesService.getAllRecords(db, appId, pass).then(setMasterList).catch(() => null);
                 setAppState("admin_dashboard");
               }
             }}
