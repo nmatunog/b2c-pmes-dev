@@ -10,7 +10,7 @@ Use this document to **reload the project on a new machine**, onboard another de
 |------|--------|------|
 | **Frontend** | Vite, React 19, Tailwind 4, Lucide, Firebase (Auth + Firestore) | PMES UI, exam, certificates, LOI, admin views |
 | **Backend** | NestJS-style bootstrap, Prisma 6, PostgreSQL (planned) | Production API scaffold; **business REST endpoints not fully implemented yet** |
-| **AI / TTS** | Google Gemini (Generative Language API) | Ka-uban voice from the seminar screens (`VITE_GEMINI_API_KEY`) |
+| **AI / TTS** | Google Gemini via **Nest** (`POST /ai/tts`) | Ka-uban voice; **no API key in the browser** — set `VITE_API_BASE_URL` and use `AI_PROVIDER` / `GEMINI_API_KEY` on the server only. |
 
 **Source of truth for live app data today:** Firebase (Firestore paths under `artifacts/{VITE_APP_ID}/public/data/…`). The Prisma schema in `backend/` models the **target** relational design for a future Nest migration.
 
@@ -21,7 +21,7 @@ Use this document to **reload the project on a new machine**, onboard another de
 - **Node.js** 20 LTS or newer (recommended; matches current ecosystem).
 - **npm** (bundled with Node).
 - **PostgreSQL** — only required when you work on the backend database or run Prisma migrations locally.
-- Accounts: **Firebase** project (web app config), optional **Google AI** key for TTS.
+- Accounts: **Firebase** project (web app config). For paid TTS, a **Google AI** key in **`backend/.env`** (not in Vite) when `AI_PROVIDER=gemini`.
 
 ---
 
@@ -77,7 +77,7 @@ B2C-PMES/
 │   │   ├── App.jsx
 │   │   ├── components/
 │   │   ├── constants/
-│   │   ├── services/   # firebase.js, pmesService.js
+│   │   ├── services/   # firebase.js, pmesService.js, ttsApi.js
 │   │   ├── lib/
 │   │   └── styles/
 │   ├── .env.example
@@ -102,7 +102,7 @@ B2C-PMES/
 |----------|---------|
 | `VITE_APP_ID` | Firestore path segment: `artifacts/{appId}/public/data/...`. Use a stable value per environment (e.g. `b2c-pmes`). |
 | `VITE_FIREBASE_*` | From Firebase Console → Project settings → Your apps → Web app config. |
-| `VITE_GEMINI_API_KEY` | Google AI Studio / Cloud API key for Gemini TTS (`generativelanguage.googleapis.com`). **Bundled to the client** — for production, plan a server-side proxy. |
+| `VITE_API_BASE_URL` | Base URL of the Nest API (e.g. `http://localhost:3000`). Used for TTS (`/ai/tts`). **Do not put Gemini keys in Vite.** |
 
 Never commit `frontend/.env`. Copy from `.env.example` only.
 
@@ -112,6 +112,9 @@ Never commit `frontend/.env`. Copy from `.env.example` only.
 |----------|---------|
 | `DATABASE_URL` | PostgreSQL connection string for Prisma. |
 | `PORT` | HTTP port (default 3000). |
+| `AI_PROVIDER` | `noop` (no Gemini calls — default for free local dev) or `gemini`. |
+| `GEMINI_API_KEY` | Required when `AI_PROVIDER=gemini`. |
+| `GEMINI_TTS_MODEL` | Optional; overrides default TTS model name. |
 
 ---
 
@@ -176,7 +179,7 @@ Order is intentional:
 1. **Git + GitHub** — first safety net (section 7).
 2. **Document and tighten Firebase** — rules + indexes for the `artifacts/...` paths; document admin access model if it stays client-assisted.
 3. **Backend slice** — one Nest module (e.g. health + `participants` read-only) wired to Prisma, with env validation on startup.
-4. **Move Gemini TTS behind the API** — removes API key exposure from the browser.
+4. **Extend AI module** — e.g. optional text Q&A route with the same provider pattern; add rate limits / Redis cache if traffic grows.
 5. **Tests** — Jest on backend, RTL on critical frontend flows, then e2e when flows stabilize.
 
 ---
@@ -186,7 +189,7 @@ Order is intentional:
 | Issue | What to check |
 |-------|----------------|
 | Blank Firebase / permission errors | `.env` filled; same `VITE_APP_ID` as data in console; Auth enabled; Firestore API enabled. |
-| TTS silent or errors | `VITE_GEMINI_API_KEY` set; quota; model name still supported by Google. |
+| TTS silent or errors | Backend running with `VITE_API_BASE_URL` set; if `AI_PROVIDER=noop`, switch to `gemini` + `GEMINI_API_KEY`; check quota and `GEMINI_TTS_MODEL`. |
 | Prisma errors | `DATABASE_URL` correct; `npx prisma generate`; Postgres running. |
 | Port already in use | Change Vite port in `vite.config.js` or `PORT` for backend. |
 

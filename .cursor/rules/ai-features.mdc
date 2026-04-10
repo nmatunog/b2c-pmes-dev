@@ -1,0 +1,27 @@
+---
+description: How to add or change AI (TTS/LLM) features — provider-agnostic, keys server-side
+alwaysApply: true
+---
+
+# AI features in B2C PMES
+
+## Architecture
+
+- **Gemini is the default implementation**, but code is split by **interface** (`backend/src/ai/interfaces/`) and **providers** (`gemini-tts`, `noop`) so another vendor can be added without rewriting the app module.
+- **Never put API keys in the frontend.** TTS goes `browser → POST /ai/tts → Nest → Gemini`. The client only sets `VITE_API_BASE_URL`.
+- **Cost control:** `AI_PROVIDER=noop` disables paid calls (503 on TTS). Server-side **in-memory cache** dedupes identical text+voice (see `AiService`). Tighten further with rate limits or Redis later.
+
+## Developer workflow (Cursor)
+
+- When changing Ka-uban behavior, edit **server** prompts in `gemini-tts.provider.ts` (single place) rather than duplicating in the client.
+- To add a **new** capability (e.g. chat): add a DTO, controller route, and a new provider or method behind the same `AiModule` pattern; keep responses small and validated.
+- Ask for product guardrails: max body size, PII in prompts, and fallbacks when AI is disabled.
+
+## Environment quick reference
+
+| Variable | Role |
+|----------|------|
+| `AI_PROVIDER` | `noop` (no cost) or `gemini` |
+| `GEMINI_API_KEY` | Required if `gemini` |
+| `GEMINI_TTS_MODEL` | Optional override of default TTS model name |
+| `VITE_API_BASE_URL` | Frontend → Nest base URL (e.g. `http://localhost:3000`) |
