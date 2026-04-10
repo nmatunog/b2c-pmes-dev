@@ -272,20 +272,6 @@ export default function LandingPage({
           <div className="flex flex-col gap-3">
             {!authUser && (
               <>
-                <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400">New members</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMemberPortalOpen(false);
-                    setIsMenuOpen(false);
-                    onJoinUs?.();
-                  }}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
-                >
-                  <UserPlus className="h-5 w-5 shrink-0" />
-                  Create your account
-                </button>
-                <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Returning</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -293,14 +279,27 @@ export default function LandingPage({
                     setIsMenuOpen(false);
                     onLogin?.();
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white py-4 font-black text-slate-800 transition-all hover:border-blue-500"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
                 >
                   <LogIn className="h-5 w-5 shrink-0" />
-                  Log in
+                  Sign in or register
                 </button>
-                <p className="pt-1 text-center text-xs leading-snug text-slate-500">
-                  After you&apos;re signed in, use <span className="font-semibold text-slate-700">Start PMES</span> below to open the seminar.
+                <p className="text-center text-xs leading-snug text-slate-500">
+                  Next screen: choose <span className="font-semibold text-slate-700">Sign in</span> or{" "}
+                  <span className="font-semibold text-slate-700">Register</span>. Then use{" "}
+                  <span className="font-semibold text-slate-700">Start PMES</span> when you&apos;re signed in.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMemberPortalOpen(false);
+                    setIsMenuOpen(false);
+                    onJoinUs?.();
+                  }}
+                  className="text-center text-sm font-bold text-blue-600 underline-offset-2 hover:underline"
+                >
+                  New member? Open registration tab
+                </button>
               </>
             )}
             {authUser && resumePmesSuggested && onContinuePmes && (
@@ -563,13 +562,8 @@ export default function LandingPage({
                 onClick={() => onLogin?.()}
                 className="text-slate-500 transition-colors hover:text-blue-600"
               >
-                Log in
+                Sign in
               </button>
-            )}
-            {authUser && (
-              <span className="max-w-[10rem] truncate text-xs text-slate-500" title={authUser.email || ""}>
-                {authUser.email}
-              </span>
             )}
             {authUser && (
               <button
@@ -621,7 +615,7 @@ export default function LandingPage({
               </button>
               {!authUser && (
                 <button type="button" onClick={() => onLogin?.()} className="rounded-xl border border-slate-200 py-3 text-slate-700">
-                  Log in
+                  Sign in
                 </button>
               )}
               {authUser && (

@@ -36,6 +36,7 @@ import { requestTts } from "./services/ttsApi";
 import { globalStyles } from "./styles/globalStyles";
 import { PRIVACY_AGREEMENT_PARAGRAPHS } from "./constants/privacyAgreement";
 import LandingPage from "./landingpage/landing.jsx";
+import { IdentityBanner } from "./components/IdentityBanner.jsx";
 
 /**
  * Gemini prebuilt voices (lively / energetic family): Sadachbia = lively, Zephyr = bright,
@@ -115,6 +116,10 @@ export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [signUp, setSignUp] = useState({ email: "", password: "", confirm: "" });
   const [logIn, setLogIn] = useState({ email: "", password: "" });
+  /** Single screen for member sign-in vs register */
+  const [memberAuthMode, setMemberAuthMode] = useState(/** @type {"signup" | "login"} */ ("login"));
+  /** Staff email after successful admin dashboard login (for identity ribbon). */
+  const [staffSessionEmail, setStaffSessionEmail] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -293,11 +298,11 @@ export default function App() {
               }
             }
           }
-        } else if (appStateRef.current === "login") {
+        } else if (appStateRef.current === "login" || appStateRef.current === "member_auth") {
           setAppState("landing");
         }
       } catch {
-        if (appStateRef.current === "login") {
+        if (appStateRef.current === "login" || appStateRef.current === "member_auth") {
           setAppState("landing");
         }
       } finally {
@@ -322,8 +327,7 @@ export default function App() {
   useEffect(() => {
     if (!authReady || !user || !isFirebaseConfigured) return undefined;
     if (hydratingRef.current) return undefined;
-    if (appState === "signup" || appState === "login" || appState === "admin_login" || appState === "admin_dashboard")
-      return undefined;
+    if (appState === "member_auth" || appState === "admin_login" || appState === "admin_dashboard") return undefined;
 
     const persistStates = new Set([...RESUMABLE_APP_STATES, "landing", "login_retrieval", "payment_portal"]);
     if (!persistStates.has(appState)) return undefined;
@@ -469,6 +473,7 @@ export default function App() {
     setAdminCreds({ email: "", password: "" });
     setStaffRole(null);
     setStaffAccessToken(null);
+    setStaffSessionEmail(null);
     setManagedStaffAdmins([]);
     setNewStaffAdmin({ email: "", password: "" });
     setStaffAdminError(null);
@@ -489,6 +494,7 @@ export default function App() {
       setMasterList(result.records);
       setStaffRole(result.role);
       setStaffAccessToken(result.accessToken);
+      setStaffSessionEmail(adminCreds.email.trim());
       if (result.role === "superuser") {
         try {
           const admins = await PmesService.listStaffAdmins(result.accessToken);
@@ -560,6 +566,17 @@ export default function App() {
     }
     setPmesPaused(false);
     setAppState("landing");
+  };
+
+  const switchMemberAuthMode = (mode) => {
+    if (mode === "signup" && logIn.email.trim()) {
+      setSignUp((s) => ({ ...s, email: logIn.email }));
+    }
+    if (mode === "login" && signUp.email.trim()) {
+      setLogIn((l) => ({ ...l, email: signUp.email }));
+    }
+    setMemberAuthMode(mode);
+    setError(null);
   };
 
   const handleSignUpSubmit = async (event) => {
@@ -661,164 +678,177 @@ export default function App() {
   /** `auth.currentUser` covers the brief window after sign-up before React `user` state updates. */
   const sessionUser = isFirebaseConfigured ? user ?? auth.currentUser : null;
 
+  const staffForBanner =
+    staffSessionEmail && staffRole && appState === "admin_dashboard"
+      ? { email: staffSessionEmail, role: staffRole }
+      : null;
+  const memberIdentityForBanner =
+    user && appState !== "member_auth" && !staffForBanner
+      ? {
+          fullName: String(formData.fullName || "").trim() || "Member",
+          email: user.email || String(formData.email || "").trim() || "",
+        }
+      : null;
+  const identityRibbon = <IdentityBanner member={memberIdentityForBanner} staff={staffForBanner} />;
+
   if (isFirebaseConfigured && !sessionUser && MEMBER_AUTH_REQUIRED_STATES.has(appState)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <div className="card-senior w-full max-w-md space-y-8">
-          <div className="text-center">
-            <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
-            <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Step 1 — your login</p>
-            <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Member access</h1>
-            <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
-              Sign in or create a member account to open PMES (privacy notice, seminar, and exam). One email and password for
-              certificates and future member tools.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+          <div className="card-senior w-full max-w-md space-y-8">
+            <div className="text-center">
+              <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
+              <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Member access</p>
+              <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Continue to PMES</h1>
+              <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
+                Sign in or register once — same email and password for the seminar, exam, and certificates.
+              </p>
+            </div>
             <button
               type="button"
-              onClick={() => setAppState("signup")}
-              className="btn-primary flex flex-1 items-center justify-center gap-2 py-5 text-lg font-black sm:text-xl"
-            >
-              <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
-              Create account
-            </button>
-            <button
-              type="button"
-              onClick={() => setAppState("login")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white py-5 text-lg font-black text-slate-800 transition-colors hover:border-[#004aad] sm:text-xl"
+              onClick={() => {
+                setMemberAuthMode("login");
+                setAppState("member_auth");
+              }}
+              className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg font-black sm:text-xl"
             >
               <LogIn className="h-5 w-5 shrink-0" aria-hidden />
-              Log in
+              Sign in or create account
+            </button>
+            <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
+              Back to home
             </button>
           </div>
-          <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
-            Back to home
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
-  if (appState === "signup") {
+  if (appState === "member_auth") {
+    const isSignup = memberAuthMode === "signup";
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <form onSubmit={handleSignUpSubmit} className="card-senior w-full max-w-md space-y-8">
-          <div className="text-center">
-            <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
-            <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Step 1 — your login</p>
-            <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Create member account</h1>
-            <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
-              One email and password for PMES, certificates, and future member tools. You&apos;ll go to the privacy notice next,
-              then the seminar.
-            </p>
-          </div>
-          {error && <div className="rounded-2xl bg-red-50 p-4 text-center font-bold text-red-700">{error}</div>}
-          <div className="relative">
-            <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-            <input
-              type="email"
-              autoComplete="email"
-              className="input-field pl-12"
-              placeholder="Email"
-              value={signUp.email}
-              onChange={(e) => setSignUp((s) => ({ ...s, email: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-            <input
-              type="password"
-              autoComplete="new-password"
-              className="input-field pl-12"
-              placeholder="Password (min. 6 characters)"
-              value={signUp.password}
-              onChange={(e) => setSignUp((s) => ({ ...s, password: e.target.value }))}
-              required
-              minLength={6}
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-            <input
-              type="password"
-              autoComplete="new-password"
-              className="input-field pl-12"
-              placeholder="Confirm password"
-              value={signUp.confirm}
-              onChange={(e) => setSignUp((s) => ({ ...s, confirm: e.target.value }))}
-              required
-              minLength={6}
-            />
-          </div>
-          <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg sm:text-xl">
-            {loading ? <Loader2 className="animate-spin" /> : null}
-            Create account &amp; continue to privacy
-          </button>
-          <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
-            Back to home
-          </button>
-          <button type="button" onClick={() => setAppState("login")} className="w-full text-sm font-bold text-slate-400 hover:text-[#004aad]">
-            Already have an account? Log in
-          </button>
-        </form>
-      </div>
-    );
-  }
-
-  if (appState === "login") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <form onSubmit={handleLoginSubmit} className="card-senior w-full max-w-md space-y-8">
-          <div className="text-center">
-            <Lock className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
-            <h1 className="mt-4 text-4xl font-black uppercase tracking-tighter text-[#004aad]">Member log in</h1>
-            <p className="mt-2 text-lg font-semibold text-slate-600">Resume your PMES or open your certificate.</p>
-          </div>
-          {error && <div className="rounded-2xl bg-amber-50 p-4 text-center font-bold text-amber-900">{error}</div>}
-          <div className="relative">
-            <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-            <input
-              type="email"
-              autoComplete="email"
-              className="input-field pl-12"
-              placeholder="Email"
-              value={logIn.email}
-              onChange={(e) => setLogIn((s) => ({ ...s, email: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-            <input
-              type="password"
-              autoComplete="current-password"
-              className="input-field pl-12"
-              placeholder="Password"
-              value={logIn.password}
-              onChange={(e) => setLogIn((s) => ({ ...s, password: e.target.value }))}
-              required
-            />
-          </div>
-          <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-xl">
-            {loading ? <Loader2 className="animate-spin" /> : null}
-            Log in
-          </button>
-          <button type="button" onClick={handleForgotPassword} className="w-full text-sm font-bold text-slate-500 hover:text-[#004aad]">
-            Forgot password?
-          </button>
-          <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
-            Back to home
-          </button>
-          <button type="button" onClick={() => setAppState("signup")} className="w-full text-sm font-bold text-slate-400 hover:text-[#004aad]">
-            New member? Create an account
-          </button>
-        </form>
-      </div>
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+          <form
+            onSubmit={isSignup ? handleSignUpSubmit : handleLoginSubmit}
+            className="card-senior w-full max-w-md space-y-8"
+          >
+            <div className="text-center">
+              <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
+              <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Member account</p>
+              <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">
+                {isSignup ? "Create your login" : "Welcome back"}
+              </h1>
+              <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
+                {isSignup
+                  ? "Same credentials for PMES, your certificate, and future member tools. Next step: privacy notice, then the seminar."
+                  : "Continue your PMES, exam, or certificate with your member email and password."}
+              </p>
+            </div>
+            <div className="flex gap-2 rounded-2xl bg-slate-100 p-1">
+              <button
+                type="button"
+                onClick={() => switchMemberAuthMode("login")}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-black transition-all ${
+                  !isSignup ? "bg-white text-[#004aad] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                <LogIn className="h-4 w-4 shrink-0" aria-hidden />
+                Sign in
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMemberAuthMode("signup")}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-black transition-all ${
+                  isSignup ? "bg-white text-[#004aad] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
+                Register
+              </button>
+            </div>
+            {error && (
+              <div
+                className={`rounded-2xl p-4 text-center font-bold ${isSignup ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-900"}`}
+              >
+                {error}
+              </div>
+            )}
+            <div className="relative">
+              <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+              <input
+                type="email"
+                autoComplete="email"
+                className="input-field pl-12"
+                placeholder="Email"
+                value={isSignup ? signUp.email : logIn.email}
+                onChange={(e) =>
+                  isSignup
+                    ? setSignUp((s) => ({ ...s, email: e.target.value }))
+                    : setLogIn((l) => ({ ...l, email: e.target.value }))
+                }
+                required
+              />
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+              <input
+                type="password"
+                autoComplete={isSignup ? "new-password" : "current-password"}
+                className="input-field pl-12"
+                placeholder={isSignup ? "Password (min. 6 characters)" : "Password"}
+                value={isSignup ? signUp.password : logIn.password}
+                onChange={(e) =>
+                  isSignup
+                    ? setSignUp((s) => ({ ...s, password: e.target.value }))
+                    : setLogIn((l) => ({ ...l, password: e.target.value }))
+                }
+                required
+                minLength={6}
+              />
+            </div>
+            {isSignup ? (
+              <div className="relative">
+                <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  className="input-field pl-12"
+                  placeholder="Confirm password"
+                  value={signUp.confirm}
+                  onChange={(e) => setSignUp((s) => ({ ...s, confirm: e.target.value }))}
+                  required
+                  minLength={6}
+                />
+              </div>
+            ) : null}
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg sm:text-xl"
+            >
+              {loading ? <Loader2 className="animate-spin" /> : null}
+              {isSignup ? "Create account & continue" : "Sign in"}
+            </button>
+            {!isSignup ? (
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="w-full text-sm font-bold text-slate-500 hover:text-[#004aad]"
+              >
+                Forgot password?
+              </button>
+            ) : null}
+            <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
+              Back to home
+            </button>
+          </form>
+        </div>
+      </>
     );
   }
 
@@ -835,6 +865,7 @@ export default function App() {
   if (appState === "landing")
     return (
       <>
+        {identityRibbon}
         <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <LandingPage
           isFirebaseConfigured={isFirebaseConfigured}
@@ -848,9 +879,13 @@ export default function App() {
               setAppState("consent");
               return;
             }
-            setAppState("signup");
+            setMemberAuthMode("signup");
+            setAppState("member_auth");
           }}
-          onLogin={() => setAppState("login")}
+          onLogin={() => {
+            setMemberAuthMode("login");
+            setAppState("member_auth");
+          }}
           onLogout={handleLogout}
           onContinuePmes={user && resumePmesSuggested ? continuePmesFromLanding : undefined}
           onStartPmes={() => {
@@ -861,7 +896,8 @@ export default function App() {
               return;
             }
             pendingAfterAuthRef.current = "consent";
-            setAppState("login");
+            setMemberAuthMode("login");
+            setAppState("member_auth");
           }}
           onRetrieveCertificate={() => {
             if (!isFirebaseConfigured) return;
@@ -872,7 +908,8 @@ export default function App() {
               return;
             }
             pendingAfterAuthRef.current = "retrieval";
-            setAppState("login");
+            setMemberAuthMode("login");
+            setAppState("member_auth");
           }}
           onAdminPortal={handleAdminPortal}
           onMemberProfile={() => {
@@ -896,8 +933,10 @@ export default function App() {
 
   if (appState === "seminar")
     return (
-      <div className="min-h-screen px-4 py-8 sm:px-6 md:py-12 lg:px-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="min-h-screen px-4 py-8 sm:px-6 md:py-12 lg:px-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl md:rounded-[2.5rem] lg:rounded-[3rem]">
           <div className="flex flex-col gap-4 bg-[#004aad] p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-6 md:p-10">
             <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-6">
@@ -1009,12 +1048,15 @@ export default function App() {
           </div>
         </div>
       </div>
+      </>
     );
 
   if (appState === "exam")
     return (
-      <div className="min-h-screen px-8 py-16">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="min-h-screen px-8 py-16">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="mx-auto mb-10 flex max-w-5xl justify-end">
           <button
             type="button"
@@ -1057,12 +1099,15 @@ export default function App() {
           </button>
         </div>
       </div>
+      </>
     );
 
   if (appState === "result")
     return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-10 text-center">
           <div className={`mx-auto flex h-40 w-40 items-center justify-center rounded-full border-[12px] sm:h-48 sm:w-48 ${score >= 7 ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>
             {score >= 7 ? <CheckCircle2 className="h-20 w-20 sm:h-24 sm:w-24" /> : <AlertCircle className="h-20 w-20 sm:h-24 sm:w-24" />}
@@ -1098,12 +1143,15 @@ export default function App() {
           </button>
         </div>
       </div>
+      </>
     );
 
   if (appState === "certificate")
     return (
-      <div className="flex min-h-screen flex-col items-center bg-slate-100 p-8 sm:p-20">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen flex-col items-center bg-slate-100 p-8 sm:p-20">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         {!activeRecord?.fullName ? (
           <div className="card-senior w-full max-w-lg space-y-8 text-center">
             <p className="text-xl font-bold text-slate-700">Certificate data is missing. Complete the exam with a passing score, or retrieve your record from “My Certificate.”</p>
@@ -1134,12 +1182,15 @@ export default function App() {
           </>
         )}
       </div>
+      </>
     );
 
   if (appState === "loi_form")
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-12">
           <h1 className="text-center text-5xl font-black uppercase tracking-tighter text-[#004aad]">LETTER OF INTENT</h1>
           <LOIForm
@@ -1153,12 +1204,15 @@ export default function App() {
           />
         </div>
       </div>
+      </>
     );
 
   if (appState === "loi_success")
     return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-10 border-emerald-100 text-center">
           <Sparkles className="mx-auto h-32 w-32 animate-pulse text-emerald-500" />
           <h1 className="text-6xl font-black uppercase tracking-tighter text-[#004aad]">THANK YOU!</h1>
@@ -1181,12 +1235,15 @@ export default function App() {
           </button>
         </div>
       </div>
+      </>
     );
 
   if (appState === "payment_portal")
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-2xl space-y-8 text-center">
           <Coins className="mx-auto h-16 w-16 text-[#004aad]" aria-hidden />
           <h1 className="text-3xl font-black uppercase tracking-tighter text-[#004aad] md:text-4xl">Share capital &amp; membership</h1>
@@ -1199,28 +1256,36 @@ export default function App() {
           </button>
         </div>
       </div>
+      </>
     );
 
   if (appState === "login_retrieval")
     return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <div className="card-senior w-full max-w-2xl space-y-10">
-          <h2 className="text-center text-4xl font-black uppercase tracking-tighter text-[#004aad]">RETRIEVE CERTIFICATE</h2>
-          <div className="space-y-6">
-            <input type="email" placeholder="Email Address" className="input-field" value={retrievalData.email} onChange={(event) => setRetrievalData({ ...retrievalData, email: event.target.value })} />
-            <input type="date" className="input-field" value={retrievalData.dob} onChange={(event) => setRetrievalData({ ...retrievalData, dob: event.target.value })} />
-            {error && <div className="rounded-2xl bg-red-50 p-6 font-bold text-red-600">{error}</div>}
-            <button onClick={handleRetrieval} disabled={loading} className="btn-primary w-full">SEARCH</button>
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+          <div className="card-senior w-full max-w-2xl space-y-10">
+            <h2 className="text-center text-4xl font-black uppercase tracking-tighter text-[#004aad]">RETRIEVE CERTIFICATE</h2>
+            <div className="space-y-6">
+              <input type="email" placeholder="Email Address" className="input-field" value={retrievalData.email} onChange={(event) => setRetrievalData({ ...retrievalData, email: event.target.value })} />
+              <input type="date" className="input-field" value={retrievalData.dob} onChange={(event) => setRetrievalData({ ...retrievalData, dob: event.target.value })} />
+              {error && <div className="rounded-2xl bg-red-50 p-6 font-bold text-red-600">{error}</div>}
+              <button onClick={handleRetrieval} disabled={loading} className="btn-primary w-full">
+                SEARCH
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
 
   if (appState === "consent")
     return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-8">
           <div className="text-center">
             <ShieldAlert className="mx-auto h-20 w-20 animate-bounce text-[#004aad]" />
@@ -1249,13 +1314,16 @@ export default function App() {
           </button>
         </div>
       </div>
+      </>
     );
 
   if (appState === "registration") {
     const regNav = registrationNavRef.current;
     return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-3xl space-y-8">
           <div className="text-center">
             <h1 className="text-4xl font-black uppercase tracking-tighter text-[#004aad] sm:text-5xl">Member profile</h1>
@@ -1325,13 +1393,16 @@ export default function App() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   if (appState === "admin_login")
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <form onSubmit={handleAdminLoginSubmit} className="card-senior w-full max-w-md space-y-8">
           <div className="text-center">
             <Briefcase className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
@@ -1379,12 +1450,15 @@ export default function App() {
           </button>
         </form>
       </div>
+      </>
     );
 
   if (appState === "admin_dashboard")
     return (
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-8 lg:p-12">
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <>
+        {identityRibbon}
+        <div className="min-h-screen bg-slate-50 p-4 sm:p-8 lg:p-12">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl bg-white shadow-xl lg:rounded-[2.5rem]">
           <div className="flex flex-col gap-6 bg-[#004aad] p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-10">
             <div className="flex items-center gap-4">
@@ -1401,6 +1475,7 @@ export default function App() {
                 setAdminCreds({ email: "", password: "" });
                 setStaffRole(null);
                 setStaffAccessToken(null);
+                setStaffSessionEmail(null);
                 setManagedStaffAdmins([]);
                 setNewStaffAdmin({ email: "", password: "" });
                 setStaffAdminError(null);
@@ -1564,6 +1639,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      </>
     );
 
   return null;
