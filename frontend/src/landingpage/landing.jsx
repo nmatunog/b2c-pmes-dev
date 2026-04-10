@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { B2CLogo } from "../components/B2CLogo.jsx";
 import {
   Users,
   ShieldCheck,
@@ -257,6 +258,7 @@ export default function LandingPage({
             <X className="h-5 w-5" />
           </button>
           <div className="mb-8 text-center">
+            <B2CLogo size="sm" align="center" className="mb-5" />
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
               <GraduationCap className="h-8 w-8" />
             </div>
@@ -390,8 +392,8 @@ export default function LandingPage({
           />
         </div>
         <div className="flex shrink-0 items-center justify-between px-6 py-6">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-blue-600 p-1.5 text-xs font-black text-white">B2C</div>
+          <div className="flex items-center gap-3">
+            <B2CLogo size="xs" className="h-8 max-w-[100px] shrink-0 sm:h-9" />
             <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Guided Intro</span>
           </div>
           <button
@@ -535,7 +537,7 @@ export default function LandingPage({
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-blue-600 p-2.5 text-xl font-black text-white shadow-lg shadow-blue-100">B2C</div>
+            <B2CLogo size="sm" className="shrink-0" />
             <div className="flex flex-col leading-none">
               <span className="text-xl font-black tracking-tighter">Cooperative</span>
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-600">Cebu Visayas</span>
@@ -842,8 +844,8 @@ export default function LandingPage({
       <footer className="border-t border-slate-100 bg-white py-24">
         <div className="mx-auto grid max-w-7xl gap-16 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
           <div className="col-span-1">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="rounded-xl bg-blue-600 p-2 text-sm font-black text-white">B2C</div>
+            <div className="mb-8 flex flex-wrap items-center gap-4">
+              <B2CLogo size="md" className="shrink-0" />
               <span className="text-2xl font-black tracking-tighter">Cooperative</span>
             </div>
             <p className="mb-8 text-lg font-medium leading-relaxed text-slate-500">

@@ -1,4 +1,5 @@
 import { BadgeCheck } from "lucide-react";
+import { B2CLogo } from "./B2CLogo.jsx";
 
 function formatCertCode(id) {
   if (id == null || id === "") return "—";
@@ -26,13 +27,7 @@ export function Certificate({ record }) {
       <div className="absolute right-0 top-0 -mr-40 -mt-40 h-80 w-80 rounded-full border-4 border-[#004aad]/10 bg-[#004aad]/5 print:hidden" />
       <div className="relative z-10 space-y-8 sm:space-y-10">
         <div className="flex flex-col items-center gap-4">
-          <img
-            src="/b2c-logo.png"
-            alt="B2C Coop Philippines"
-            className="h-28 w-auto object-contain sm:h-32"
-            width={200}
-            height={128}
-          />
+          <B2CLogo size="xl" align="center" />
           <h2 className="text-2xl font-black uppercase tracking-tighter text-[#004aad] sm:text-3xl">B2C Consumers Cooperative</h2>
           <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">Philippines</p>
         </div>

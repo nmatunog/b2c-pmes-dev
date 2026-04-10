@@ -43,6 +43,7 @@ import { globalStyles } from "./styles/globalStyles";
 import { PRIVACY_AGREEMENT_PARAGRAPHS } from "./constants/privacyAgreement";
 import LandingPage from "./landingpage/landing.jsx";
 import { IdentityBanner } from "./components/IdentityBanner.jsx";
+import { B2CLogo } from "./components/B2CLogo.jsx";
 
 /**
  * Gemini prebuilt voices (lively / energetic family): Sadachbia = lively, Zephyr = bright,
@@ -807,13 +808,7 @@ export default function App() {
             <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" aria-hidden />
             <div className="pointer-events-none absolute -bottom-16 left-10 h-48 w-48 rounded-full bg-blue-400/20 blur-2xl" aria-hidden />
             <div className="relative z-10 mb-8">
-              <img
-                src="/b2c-logo.png"
-                alt="B2C Consumers Cooperative"
-                className="h-12 w-auto max-w-[min(100%,15rem)] object-contain object-left drop-shadow-md sm:h-14 md:h-16"
-                width={180}
-                height={72}
-              />
+              <B2CLogo size="lg" className="max-w-[min(100%,15rem)] drop-shadow-md md:h-16" />
             </div>
             <p className="relative z-10 text-xs font-black uppercase tracking-[0.25em] text-white/70">B2C PMES</p>
             <h1 className="relative z-10 mt-4 max-w-md text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-[2.35rem] md:leading-[1.15]">
@@ -836,13 +831,7 @@ export default function App() {
           <div className="flex flex-1 items-center justify-center bg-slate-100/90 px-5 py-10 sm:px-10 sm:bg-[#f1f5f9] sm:py-12">
             <div className="w-full max-w-2xl rounded-[2rem] border border-slate-200/80 bg-white p-8 shadow-xl shadow-slate-900/5 sm:p-10 sm:rounded-[2.25rem]">
               <div className="mb-6 flex justify-center sm:hidden">
-                <img
-                  src="/b2c-logo.png"
-                  alt="B2C Consumers Cooperative"
-                  className="h-11 w-auto max-w-[13rem] object-contain"
-                  width={168}
-                  height={64}
-                />
+                <B2CLogo size="md" align="center" className="max-w-[13rem]" />
               </div>
               <div className="text-center sm:text-left">
                 <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Member access</p>
@@ -889,13 +878,7 @@ export default function App() {
             <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" aria-hidden />
             <div className="pointer-events-none absolute bottom-0 left-0 h-56 w-56 rounded-full bg-blue-400/15 blur-2xl" aria-hidden />
             <div className="relative z-10 mb-8">
-              <img
-                src="/b2c-logo.png"
-                alt="B2C Consumers Cooperative"
-                className="h-12 w-auto max-w-[min(100%,15rem)] object-contain object-left drop-shadow-md sm:h-14 md:h-16"
-                width={180}
-                height={72}
-              />
+              <B2CLogo size="lg" className="max-w-[min(100%,15rem)] drop-shadow-md md:h-16" />
             </div>
             <p className="relative z-10 text-xs font-black uppercase tracking-[0.25em] text-white/70">Member account</p>
             <h1 className="relative z-10 mt-4 max-w-lg text-3xl font-black leading-[1.12] tracking-tight sm:text-4xl md:text-[2.5rem] xl:text-[2.75rem]">
@@ -923,13 +906,7 @@ export default function App() {
               className="w-full max-w-xl rounded-[1.75rem] border border-slate-200/90 bg-white p-7 shadow-xl shadow-slate-900/[0.06] sm:max-w-2xl sm:rounded-[2rem] sm:p-10"
             >
               <div className="mb-5 flex justify-center sm:hidden">
-                <img
-                  src="/b2c-logo.png"
-                  alt="B2C Consumers Cooperative"
-                  className="h-10 w-auto max-w-[12rem] object-contain"
-                  width={160}
-                  height={64}
-                />
+                <B2CLogo size="md" align="center" className="max-w-[12rem]" />
               </div>
               <div className="text-center sm:text-left">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#004aad]/10 text-[#004aad] sm:mx-0 sm:mb-5 sm:h-14 sm:w-14">
@@ -1245,6 +1222,7 @@ export default function App() {
         <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl md:rounded-[2.5rem] lg:rounded-[3rem]">
           <div className="flex flex-col gap-4 bg-[#004aad] p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-6 md:p-10">
             <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-6">
+              <B2CLogo size="xs" className="shrink-0 drop-shadow-sm sm:h-10 sm:max-w-[170px]" />
               {(() => {
                 const Icon = modules[currentStep].icon;
                 return <Icon className="h-11 w-11 shrink-0 md:h-14 md:w-14" aria-hidden />;
@@ -1362,17 +1340,19 @@ export default function App() {
         {identityRibbon}
         <div className="min-h-screen px-8 py-16">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <div className="mx-auto mb-10 flex max-w-5xl justify-end">
+        <div className="mx-auto mb-10 flex max-w-5xl items-center justify-between gap-4">
+          <B2CLogo size="sm" className="shrink-0" />
           <button
             type="button"
             onClick={goHomeFromPmes}
-            className="btn-secondary inline-flex items-center gap-2 py-3 text-lg font-bold"
+            className="btn-secondary inline-flex shrink-0 items-center gap-2 py-3 text-lg font-bold"
           >
             <House className="h-5 w-5" aria-hidden />
             Save &amp; home
           </button>
         </div>
         <div className="mx-auto w-full max-w-5xl space-y-16 rounded-[4rem] bg-white p-16 shadow-2xl">
+          <B2CLogo size="md" align="center" className="mb-2" />
           <h2 className="text-center text-6xl font-black uppercase tracking-tighter text-[#004aad]">FINAL CHALLENGE</h2>
           <div className="space-y-16">
             {examQuestions.map((question, index) => (
@@ -1414,6 +1394,7 @@ export default function App() {
         <div className="flex min-h-screen items-center justify-center p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-10 text-center">
+          <B2CLogo size="md" align="center" className="mb-2" />
           <div className={`mx-auto flex h-40 w-40 items-center justify-center rounded-full border-[12px] sm:h-48 sm:w-48 ${score >= 7 ? "bg-emerald-100 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>
             {score >= 7 ? <CheckCircle2 className="h-20 w-20 sm:h-24 sm:w-24" /> : <AlertCircle className="h-20 w-20 sm:h-24 sm:w-24" />}
           </div>
@@ -1459,6 +1440,7 @@ export default function App() {
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         {!activeRecord?.fullName ? (
           <div className="card-senior w-full max-w-lg space-y-8 text-center">
+            <B2CLogo size="md" align="center" />
             <p className="text-xl font-bold text-slate-700">Certificate data is missing. Complete the exam with a passing score, or retrieve your record from “My Certificate.”</p>
             <button type="button" onClick={() => setAppState("landing")} className="btn-primary w-full py-6">
               Back to home
@@ -1507,6 +1489,7 @@ export default function App() {
         <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-12">
+          <B2CLogo size="lg" align="center" />
           <h1 className="text-center text-5xl font-black uppercase tracking-tighter text-[#004aad]">LETTER OF INTENT</h1>
           <LOIForm
             formData={formData}
@@ -1529,6 +1512,7 @@ export default function App() {
         <div className="flex min-h-screen items-center justify-center p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-10 border-emerald-100 text-center">
+          <B2CLogo size="md" align="center" />
           <Sparkles className="mx-auto h-32 w-32 animate-pulse text-emerald-500" />
           <h1 className="text-6xl font-black uppercase tracking-tighter text-[#004aad]">THANK YOU!</h1>
           <button
@@ -1560,6 +1544,7 @@ export default function App() {
         <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-2xl space-y-8 text-center">
+          <B2CLogo size="lg" align="center" />
           <Coins className="mx-auto h-16 w-16 text-[#004aad]" aria-hidden />
           <h1 className="text-3xl font-black uppercase tracking-tighter text-[#004aad] md:text-4xl">Share capital &amp; membership</h1>
           <p className="text-lg font-medium leading-relaxed text-slate-600">
@@ -1581,6 +1566,7 @@ export default function App() {
         <div className="flex min-h-screen items-center justify-center p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
           <div className="card-senior w-full max-w-2xl space-y-10">
+            <B2CLogo size="lg" align="center" />
             <h2 className="text-center text-4xl font-black uppercase tracking-tighter text-[#004aad]">RETRIEVE CERTIFICATE</h2>
             <div className="space-y-6">
               <input type="email" placeholder="Email Address" className="input-field" value={retrievalData.email} onChange={(event) => setRetrievalData({ ...retrievalData, email: event.target.value })} />
@@ -1603,6 +1589,7 @@ export default function App() {
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-8">
           <div className="text-center">
+            <B2CLogo size="lg" align="center" className="mb-6" />
             <ShieldAlert className="mx-auto h-20 w-20 animate-bounce text-[#004aad]" />
             <h1 className="mt-4 text-4xl font-black uppercase tracking-tighter text-[#004aad] sm:text-5xl">Privacy &amp; data notice</h1>
             <p className="mt-3 text-lg font-semibold text-slate-600">Please read the following before continuing.</p>
@@ -1641,6 +1628,7 @@ export default function App() {
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-3xl space-y-8">
           <div className="text-center">
+            <B2CLogo size="lg" align="center" className="mb-6" />
             <h1 className="text-4xl font-black uppercase tracking-tighter text-[#004aad] sm:text-5xl">Member profile</h1>
             <p className="mt-3 text-lg font-semibold text-slate-600">
               Confirm or edit your details for your PMES record, certificate, LOI, and retrieval. Sign-up already captured your
@@ -1783,6 +1771,7 @@ export default function App() {
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <form onSubmit={handleAdminLoginSubmit} className="card-senior w-full max-w-md space-y-8">
           <div className="text-center">
+            <B2CLogo size="lg" align="center" className="mb-4" />
             <Briefcase className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
             <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Staff access</p>
             <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Admin sign in</h1>
@@ -1840,7 +1829,7 @@ export default function App() {
         <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl bg-white shadow-xl lg:rounded-[2.5rem]">
           <div className="flex flex-col gap-6 bg-[#004aad] p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-10">
             <div className="flex items-center gap-4">
-              <img src="/b2c-logo.png" alt="" className="h-14 w-auto object-contain sm:h-16" width={80} height={64} />
+              <B2CLogo size="lg" className="shrink-0" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/80">Admin</p>
                 <h1 className="text-2xl font-black uppercase tracking-tight sm:text-3xl">PMES master list</h1>
