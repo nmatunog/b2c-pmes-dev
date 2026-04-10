@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { B2CLogo } from "../components/B2CLogo.jsx";
 import { COOPERATIVE_NAME, COOPERATIVE_REGION } from "../constants/cooperativeBrand.js";
+import { BylawsModal } from "./BylawsModal.jsx";
 import {
   Users,
   ShieldCheck,
@@ -21,7 +22,6 @@ import {
   Download,
   GraduationCap,
   IdCard,
-  FileText,
 } from "lucide-react";
 
 /** Primary bylaws PDF: place file at `frontend/public/documents/b2c-bylaws-primary.pdf`. */
@@ -247,55 +247,6 @@ export default function LandingPage({
           >
             Close Policy
           </button>
-        </div>
-      </div>
-    );
-
-  const BylawsModal = () =>
-    bylawsActive && (
-      <div className="fixed inset-0 z-[251] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setBylawsActive(false)} />
-        <div className="animate-in zoom-in-95 duration-200 relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl">
-          <button
-            type="button"
-            onClick={() => setBylawsActive(false)}
-            className="absolute right-4 top-4 z-10 rounded-full bg-white/90 p-2 shadow-md transition-colors hover:bg-slate-100"
-            aria-label="Close"
-          >
-            <X />
-          </button>
-          <div className="shrink-0 border-b border-slate-100 px-6 pb-4 pt-6 pr-14 md:px-8 md:pt-8">
-            <div className="mb-3 flex items-center gap-3">
-              <FileText className="h-8 w-8 shrink-0 text-blue-600" />
-              <h2 className="text-2xl font-black tracking-tight text-slate-900 md:text-3xl">By-Laws (Primary)</h2>
-            </div>
-            <p className="text-sm font-medium leading-relaxed text-slate-600">
-              Adopted and signed <span className="font-bold text-slate-800">October 2023</span>.{" "}
-              <span className="font-bold text-slate-800">Signed by the Cooperators.</span>
-            </p>
-            <p className="mt-2 text-xs text-slate-500">
-              <a href={BYLAWS_PDF_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:underline">
-                Open or download PDF
-              </a>{" "}
-              if the viewer does not load in your browser.
-            </p>
-          </div>
-          <div className="min-h-0 flex-1 bg-slate-100 px-4 pb-6 pt-2 md:px-8">
-            <iframe
-              title="B2C By-Laws (Primary)"
-              src={`${BYLAWS_PDF_URL}#view=FitH`}
-              className="h-[min(70vh,600px)] w-full rounded-2xl border border-slate-200 bg-white shadow-inner"
-            />
-          </div>
-          <div className="shrink-0 border-t border-slate-100 px-6 py-4 md:px-8">
-            <button
-              type="button"
-              onClick={() => setBylawsActive(false)}
-              className="w-full rounded-2xl bg-slate-900 py-4 font-black text-white shadow-xl"
-            >
-              Close
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -570,7 +521,7 @@ export default function LandingPage({
       <MemberPortalModal />
       <OrientationExperience />
       <PrivacyModal />
-      <BylawsModal />
+      <BylawsModal active={bylawsActive} onClose={() => setBylawsActive(false)} pdfUrl={BYLAWS_PDF_URL} />
 
       {showNotification && (
         <div className="animate-in slide-in-from-left-full duration-500 fixed bottom-10 left-6 z-[60]">
