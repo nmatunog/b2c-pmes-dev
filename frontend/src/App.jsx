@@ -587,11 +587,11 @@ export default function App() {
         <form onSubmit={handleSignUpSubmit} className="card-senior w-full max-w-md space-y-8">
           <div className="text-center">
             <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
-            <h1 className="mt-4 text-4xl font-black uppercase tracking-tighter text-[#004aad]">Create member account</h1>
-            <p className="mt-2 text-lg font-semibold text-slate-600">Use this email across B2C Coop services.</p>
-            <p className="mt-3 text-center text-sm font-medium text-slate-500">
-              After you sign up, use the <span className="font-semibold text-slate-700">same email and password</span> whenever you log
-              in to continue PMES or open your certificate.
+            <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Step 1 — your login</p>
+            <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Create member account</h1>
+            <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
+              One email and password for PMES, certificates, and future member tools. You&apos;ll go to the privacy notice next,
+              then the seminar.
             </p>
           </div>
           {error && <div className="rounded-2xl bg-red-50 p-4 text-center font-bold text-red-700">{error}</div>}
@@ -633,9 +633,9 @@ export default function App() {
               minLength={6}
             />
           </div>
-          <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-xl">
+          <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg sm:text-xl">
             {loading ? <Loader2 className="animate-spin" /> : null}
-            Create account &amp; continue
+            Create account &amp; continue to privacy
           </button>
           <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
             Back to home

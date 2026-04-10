@@ -125,9 +125,14 @@ export default function LandingPage({
     },
     {
       title: "The Correct Path to Joining",
-      desc: "1. Complete our Online PMES orientation. 2. Submit your official Letter of Intent (LOI). 3. Pay your initial Share Capital and membership fee to become an owner.",
+      desc: "Three steps to member-ownership — we guide you through each one in the app.",
+      steps: [
+        "Complete the Pre-Membership Education Seminar (PMES) online.",
+        "Submit your Letter of Intent (LOI) through the member portal.",
+        "Pay your share capital and membership fee to become an owner.",
+      ],
       icon: <Award className="w-12 h-12" />,
-      highlight: "Orientation • Intent • Investment",
+      highlight: "Orientation · Intent · Investment",
     },
   ];
 
@@ -211,25 +216,14 @@ export default function LandingPage({
               {authUser ? (
                 <span className="block truncate text-slate-700">{authUser.email}</span>
               ) : (
-                "Log in with your member email and password to access PMES and your certificate."
+                "Create an account to begin PMES, or log in if you already have one."
               )}
             </p>
           </div>
           <div className="flex flex-col gap-3">
             {!authUser && (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMemberPortalOpen(false);
-                    setIsMenuOpen(false);
-                    onLogin?.();
-                  }}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4 font-black text-white shadow-lg transition-all hover:bg-slate-800"
-                >
-                  <LogIn className="h-5 w-5 shrink-0" />
-                  Log in
-                </button>
+                <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400">New members</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -237,11 +231,27 @@ export default function LandingPage({
                     setIsMenuOpen(false);
                     onJoinUs?.();
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 py-4 font-black text-blue-700 transition-all hover:bg-blue-100"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
                 >
                   <UserPlus className="h-5 w-5 shrink-0" />
-                  Create member account
+                  Create your account
                 </button>
+                <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Returning</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMemberPortalOpen(false);
+                    setIsMenuOpen(false);
+                    onLogin?.();
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white py-4 font-black text-slate-800 transition-all hover:border-blue-500"
+                >
+                  <LogIn className="h-5 w-5 shrink-0" />
+                  Log in
+                </button>
+                <p className="pt-1 text-center text-xs leading-snug text-slate-500">
+                  After you&apos;re signed in, use <span className="font-semibold text-slate-700">Start PMES</span> below to open the seminar.
+                </p>
               </>
             )}
             {authUser && resumePmesSuggested && onContinuePmes && (
@@ -271,18 +281,20 @@ export default function LandingPage({
                 Member profile
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                setMemberPortalOpen(false);
-                setIsMenuOpen(false);
-                startPmes();
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
-            >
-              <UserPlus className="h-5 w-5 shrink-0" />
-              {authUser ? "Start or restart PMES" : "Start PMES (sign in required)"}
-            </button>
+            {authUser ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMemberPortalOpen(false);
+                  setIsMenuOpen(false);
+                  startPmes();
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
+              >
+                <PlayCircle className="h-5 w-5 shrink-0" />
+                Start or restart PMES
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => {
@@ -346,41 +358,90 @@ export default function LandingPage({
           </button>
         </div>
         <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8 text-center">
-          <div key={orientationStep} className="animate-in slide-in-from-right duration-500 max-w-2xl">
+          <div key={orientationStep} className="animate-in slide-in-from-right duration-500 w-full max-w-2xl">
             <div className="mb-8 inline-block rounded-3xl bg-blue-50/50 p-6 text-blue-600">{orientationContent[orientationStep].icon}</div>
             <h2 className="mb-6 text-4xl font-black leading-tight tracking-tighter text-slate-900 md:text-6xl">
               {orientationContent[orientationStep].title}
             </h2>
-            <p className="mb-8 text-lg font-medium leading-relaxed text-slate-500 md:text-xl">{orientationContent[orientationStep].desc}</p>
+            {orientationContent[orientationStep].steps ? (
+              <>
+                <p className="mb-8 text-lg font-medium leading-relaxed text-slate-500 md:text-xl">
+                  {orientationContent[orientationStep].desc}
+                </p>
+                <ol className="mx-auto mb-8 max-w-xl space-y-4 text-left">
+                  {orientationContent[orientationStep].steps.map((line, i) => (
+                    <li key={i} className="flex gap-4">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700">
+                        {i + 1}
+                      </span>
+                      <span className="pt-0.5 text-base font-medium leading-relaxed text-slate-600 md:text-lg">{line}</span>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            ) : (
+              <p className="mb-8 text-lg font-medium leading-relaxed text-slate-500 md:text-xl">{orientationContent[orientationStep].desc}</p>
+            )}
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-[10px] font-black uppercase tracking-widest text-white">
               {orientationContent[orientationStep].highlight}
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-100 bg-white p-8">
+        <div className="flex flex-col gap-4 border-t border-slate-100 bg-white p-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:p-8">
           <button
             type="button"
             onClick={() => setOrientationStep((s) => Math.max(0, s - 1))}
             disabled={orientationStep === 0}
-            className={`text-sm font-black transition-all ${orientationStep === 0 ? "invisible opacity-0" : "text-slate-400"}`}
+            className={`self-start text-sm font-black transition-all ${
+              orientationStep === 0 ? "invisible pointer-events-none h-0 overflow-hidden opacity-0 sm:h-auto" : "text-slate-400 hover:text-slate-700"
+            }`}
           >
             Back
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (orientationStep === orientationContent.length - 1) {
-                setOrientationActive(false);
-                setOrientationStep(0);
-                startPmes();
-              } else {
-                setOrientationStep(orientationStep + 1);
-              }
-            }}
-            className="transform rounded-full bg-blue-600 px-10 py-5 font-black text-white shadow-xl transition-all active:scale-95"
-          >
-            {orientationStep === orientationContent.length - 1 ? "Start PMES" : "Continue"}
-          </button>
+          {orientationStep === orientationContent.length - 1 && !authUser ? (
+            <div className="flex w-full flex-1 flex-col gap-3 sm:max-w-xl sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setOrientationActive(false);
+                  setOrientationStep(0);
+                  onJoinUs?.();
+                }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-4 text-base font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-[0.99]"
+              >
+                <UserPlus className="h-5 w-5 shrink-0" />
+                Create your account
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOrientationActive(false);
+                  setOrientationStep(0);
+                  onLogin?.();
+                }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white px-6 py-4 text-base font-black text-slate-800 transition-all hover:border-blue-500 hover:text-blue-700"
+              >
+                <LogIn className="h-5 w-5 shrink-0" />
+                Log in
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (orientationStep === orientationContent.length - 1) {
+                  setOrientationActive(false);
+                  setOrientationStep(0);
+                  startPmes();
+                } else {
+                  setOrientationStep(orientationStep + 1);
+                }
+              }}
+              className="w-full transform rounded-2xl bg-blue-600 px-8 py-4 font-black text-white shadow-xl transition-all active:scale-[0.99] sm:ml-auto sm:w-auto sm:rounded-full sm:px-10 sm:py-5"
+            >
+              {orientationStep === orientationContent.length - 1 ? "Continue to PMES" : "Continue"}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -464,7 +525,7 @@ export default function LandingPage({
               }}
               className="transform rounded-2xl bg-blue-600 px-8 py-3 text-sm font-black text-white shadow-xl shadow-blue-100 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
             >
-              {authUser ? "PMES" : "Join Us"}
+              {authUser ? "PMES" : "Sign up"}
             </button>
           </div>
           <button type="button" className="p-2 text-slate-600 lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-expanded={isMenuOpen}>
@@ -513,7 +574,7 @@ export default function LandingPage({
                 }}
                 className="rounded-xl bg-blue-600 py-3 font-black text-white shadow-lg"
               >
-                {authUser ? "PMES" : "Join Us"}
+                {authUser ? "PMES" : "Sign up"}
               </button>
             </div>
           </div>
@@ -559,7 +620,7 @@ export default function LandingPage({
             <span className="font-bold text-slate-900 underline decoration-4 decoration-blue-200">digital-led</span> consumers
             cooperative. Owned by you, built for the community.
           </p>
-          <div className="mb-20 flex flex-col gap-5 sm:flex-row">
+          <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:justify-center">
             <button
               type="button"
               onClick={() => {
@@ -576,6 +637,29 @@ export default function LandingPage({
             >
               {t.shopBtn}
             </button>
+          </div>
+          <div className="mb-20 w-full">
+            {!authUser ? (
+              <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-6">
+                <span className="text-sm font-semibold text-slate-500">Ready for PMES?</span>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onJoinUs?.()}
+                    className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-black text-white shadow-md transition hover:bg-slate-800"
+                  >
+                    Sign up free
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onLogin?.()}
+                    className="rounded-full border-2 border-slate-300 bg-white px-6 py-2.5 text-sm font-black text-slate-800 transition hover:border-blue-500"
+                  >
+                    Log in
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="animate-in fade-in zoom-in-95 duration-1000 w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-50/50 shadow-inner">
             <img
@@ -645,16 +729,54 @@ export default function LandingPage({
                 Ready to join now?
               </h3>
               <p className="mt-4 text-lg font-medium leading-relaxed text-slate-600">
-                Start the journey by signing up, then take the interactive Pre-Membership Education Seminar (PMES). You&apos;ll
-                review the privacy notice before the modules begin.
+                {authUser ? (
+                  <>
+                    You&apos;re signed in. Continue to the privacy notice and PMES modules, or open the member portal any time.
+                  </>
+                ) : (
+                  <>
+                    Create your member login, then take the interactive PMES. You&apos;ll accept the privacy notice before the
+                    modules begin.
+                  </>
+                )}
               </p>
-              <button
-                type="button"
-                onClick={startPmes}
-                className="group mt-8 flex w-full items-center justify-center gap-2 rounded-3xl bg-slate-900 py-5 text-lg font-black text-white shadow-xl transition-all hover:bg-slate-800"
-              >
-                Start PMES journey <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
-              </button>
+              {authUser ? (
+                <button
+                  type="button"
+                  onClick={startPmes}
+                  className="group mt-8 flex w-full items-center justify-center gap-2 rounded-3xl bg-slate-900 py-5 text-lg font-black text-white shadow-xl transition-all hover:bg-slate-800"
+                >
+                  Continue to PMES <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
+                </button>
+              ) : (
+                <>
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                    <button
+                      type="button"
+                      onClick={() => onJoinUs?.()}
+                      className="group flex flex-1 items-center justify-center gap-2 rounded-3xl bg-slate-900 py-4 text-base font-black text-white shadow-xl transition-all hover:bg-slate-800 sm:py-5 sm:text-lg"
+                    >
+                      <UserPlus className="h-5 w-5 shrink-0" />
+                      Create account
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onLogin?.()}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-3xl border-2 border-slate-300 bg-white py-4 text-base font-black text-slate-800 transition-all hover:border-blue-500 sm:py-5 sm:text-lg"
+                    >
+                      <LogIn className="h-5 w-5 shrink-0" />
+                      Log in
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={startPmes}
+                    className="mt-3 w-full text-center text-sm font-bold text-blue-600 underline-offset-2 hover:underline"
+                  >
+                    Already have an account? Continue to PMES (sign in)
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
