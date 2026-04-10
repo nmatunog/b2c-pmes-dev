@@ -98,8 +98,8 @@ export default function App() {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const hydratingRef = useRef(false);
-  /** Last PMES flow screen before visiting the marketing home (used when saving `pmesPaused`). */
-  const lastFlowAppStateRef = useRef(/** @type {string} */ ("seminar"));
+  /** Last PMES flow screen (consent, seminar, …) — used for resume snapshot + landing “Continue PMES”. Starts null until user enters a resumable step or progress loads. */
+  const lastFlowAppStateRef = useRef(/** @type {string | null} */ (null));
   /** After email/password auth, jump to this PMES screen (e.g. user tapped Start PMES before signing in). */
   const pendingAfterAuthRef = useRef(/** @type {'consent' | 'retrieval' | null} */ (null));
   const [formData, setFormData] = useState({ fullName: "", gender: "", email: "", phone: "", dob: "" });
@@ -181,6 +181,9 @@ export default function App() {
     if (prog.activeRecord && typeof prog.activeRecord === "object") setActiveRecord(prog.activeRecord);
     if (typeof prog.courseAudioEnabled === "boolean") setCourseAudioEnabledState(prog.courseAudioEnabled);
     if (typeof prog.pmesPaused === "boolean") setPmesPaused(prog.pmesPaused);
+    if (typeof prog.appState === "string" && RESUMABLE_APP_STATES.has(prog.appState)) {
+      lastFlowAppStateRef.current = prog.appState;
+    }
   }, []);
 
   useEffect(() => {
@@ -199,6 +202,7 @@ export default function App() {
       if (!u) {
         hydratingRef.current = false;
         setPmesPaused(false);
+        lastFlowAppStateRef.current = null;
         setAppState("landing");
         setAuthReady(true);
         return;
@@ -267,6 +271,10 @@ export default function App() {
   }, [applyLoadedProgress]);
 
   useEffect(() => {
+    if (appState === "loi_success") {
+      lastFlowAppStateRef.current = null;
+      return;
+    }
     if (RESUMABLE_APP_STATES.has(appState)) {
       lastFlowAppStateRef.current = appState;
     }
@@ -283,7 +291,11 @@ export default function App() {
     const id = window.setTimeout(() => {
       if (hydratingRef.current) return;
       const effectiveAppState =
-        appState === "landing" && pmesPaused ? lastFlowAppStateRef.current || "seminar" : appState;
+        appState === "landing"
+          ? pmesPaused
+            ? lastFlowAppStateRef.current || "seminar"
+            : lastFlowAppStateRef.current || "landing"
+          : appState;
       const snapshot = {
         appState: effectiveAppState,
         pmesPaused: appState === "landing" ? pmesPaused : false,
@@ -465,6 +477,7 @@ export default function App() {
     try {
       await createUserWithEmailAndPassword(auth, email, signUp.password);
       setFormData((prev) => ({ ...prev, email }));
+      setLogIn({ email, password: "" });
       setPmesPaused(false);
       setAppState("consent");
     } catch (err) {
@@ -545,6 +558,10 @@ export default function App() {
             <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
             <h1 className="mt-4 text-4xl font-black uppercase tracking-tighter text-[#004aad]">Create member account</h1>
             <p className="mt-2 text-lg font-semibold text-slate-600">Use this email across B2C Coop services.</p>
+            <p className="mt-3 text-center text-sm font-medium text-slate-500">
+              After you sign up, use the <span className="font-semibold text-slate-700">same email and password</span> whenever you log
+              in to continue PMES or open your certificate.
+            </p>
           </div>
           {error && <div className="rounded-2xl bg-red-50 p-4 text-center font-bold text-red-700">{error}</div>}
           <div className="relative">
@@ -653,6 +670,12 @@ export default function App() {
     );
   }
 
+  /** Show “Continue PMES” on the marketing home when paused mid-flow or any unfinished resumable step is saved. */
+  const resumePmesSuggested =
+    Boolean(user) &&
+    (pmesPaused ||
+      Boolean(lastFlowAppStateRef.current && RESUMABLE_APP_STATES.has(lastFlowAppStateRef.current)));
+
   if (appState === "landing")
     return (
       <>
@@ -660,7 +683,7 @@ export default function App() {
         <LandingPage
           isFirebaseConfigured={isFirebaseConfigured}
           authUser={user}
-          pmesPaused={pmesPaused}
+          resumePmesSuggested={resumePmesSuggested}
           onJoinUs={() => {
             if (!isFirebaseConfigured) return;
             if (user) {
@@ -672,7 +695,7 @@ export default function App() {
           }}
           onLogin={() => setAppState("login")}
           onLogout={handleLogout}
-          onContinuePmes={user && pmesPaused ? continuePmesFromLanding : undefined}
+          onContinuePmes={user && resumePmesSuggested ? continuePmesFromLanding : undefined}
           onStartPmes={() => {
             if (!isFirebaseConfigured) return;
             if (user) {

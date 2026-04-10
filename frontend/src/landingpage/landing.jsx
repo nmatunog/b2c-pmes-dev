@@ -24,12 +24,14 @@ import {
  * B2C marketing landing (Vite: static assets live in `frontend/public/`, e.g. `BaiCommunityhome.webp`).
  *
  * Member access uses Firebase **Email / Password** (configured in Firebase Console). PMES progress syncs to Firestore for resume.
+ *
+ * `resumePmesSuggested` — show “Continue PMES” when the member has unfinished PMES (any saved step) or paused mid-flow.
  */
 export default function LandingPage({
   heroSrc = "/BaiCommunityhome.webp",
   isFirebaseConfigured = true,
   authUser = null,
-  pmesPaused = false,
+  resumePmesSuggested = false,
   onJoinUs,
   onLogin,
   onLogout,
@@ -83,6 +85,16 @@ export default function LandingPage({
 
   const startPmes = () => onStartPmes?.();
   const retrieveCertificate = () => onRetrieveCertificate?.();
+
+  /** Guests go to the full login screen; signed-in members see the portal menu modal. */
+  const openMemberPortal = () => {
+    if (authUser) {
+      setMemberPortalOpen(true);
+    } else {
+      setIsMenuOpen(false);
+      onLogin?.();
+    }
+  };
 
   const orientationContent = [
     {
@@ -230,7 +242,7 @@ export default function LandingPage({
                 </button>
               </>
             )}
-            {authUser && pmesPaused && onContinuePmes && (
+            {authUser && resumePmesSuggested && onContinuePmes && (
               <button
                 type="button"
                 onClick={() => {
@@ -402,11 +414,7 @@ export default function LandingPage({
             >
               {language.toUpperCase()}
             </button>
-            <button
-              type="button"
-              onClick={() => setMemberPortalOpen(true)}
-              className="text-slate-500 transition-colors hover:text-blue-600"
-            >
+            <button type="button" onClick={openMemberPortal} className="text-slate-500 transition-colors hover:text-blue-600">
               Portal
             </button>
             {!authUser && (
@@ -465,7 +473,7 @@ export default function LandingPage({
               </button>
               <button
                 type="button"
-                onClick={() => setMemberPortalOpen(true)}
+                onClick={openMemberPortal}
                 className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-slate-700"
               >
                 <LogIn className="h-4 w-4" />
@@ -504,7 +512,7 @@ export default function LandingPage({
             </div>
           )}
 
-          {authUser && pmesPaused && onContinuePmes && (
+          {authUser && resumePmesSuggested && onContinuePmes && (
             <div
               className="mb-8 w-full max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left shadow-md sm:mb-10 sm:px-5 sm:py-4 lg:mb-12"
               role="status"
