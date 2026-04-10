@@ -9,6 +9,7 @@ import {
 import {
   AlertCircle,
   Briefcase,
+  Check,
   CheckCircle2,
   Coins,
   FileText,
@@ -695,31 +696,59 @@ export default function App() {
     return (
       <>
         {identityRibbon}
-        <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+        <div className="flex min-h-screen flex-col lg:flex-row">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-          <div className="card-senior w-full max-w-md space-y-8">
-            <div className="text-center">
-              <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
-              <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Member access</p>
-              <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Continue to PMES</h1>
-              <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
-                Sign in or register once — same email and password for the seminar, exam, and certificates.
-              </p>
+          <aside className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-12 text-white lg:w-[44%] lg:min-h-screen lg:shrink-0 lg:py-16 lg:pl-12 lg:pr-10 xl:pl-16">
+            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" aria-hidden />
+            <div className="pointer-events-none absolute -bottom-16 left-10 h-48 w-48 rounded-full bg-blue-400/20 blur-2xl" aria-hidden />
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-white/70">B2C PMES</p>
+            <h1 className="mt-4 max-w-md text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15]">
+              Continue your membership journey
+            </h1>
+            <p className="mt-4 max-w-sm text-base font-medium leading-relaxed text-white/85">
+              Sign in or create one account for the seminar, exam, and digital certificate.
+            </p>
+            <ul className="mt-8 max-w-sm space-y-3 text-sm font-semibold text-white/90">
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden />
+                Privacy notice, then interactive modules
+              </li>
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden />
+                Assessment &amp; certificate in one place
+              </li>
+            </ul>
+          </aside>
+          <div className="flex flex-1 items-center justify-center bg-slate-100/90 px-5 py-10 sm:px-10 lg:bg-[#f1f5f9] lg:py-12">
+            <div className="w-full max-w-lg rounded-[2rem] border border-slate-200/80 bg-white p-8 shadow-xl shadow-slate-900/5 sm:p-10 sm:rounded-[2.25rem]">
+              <div className="text-center lg:text-left">
+                <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Member access</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Continue to PMES</h2>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600 sm:text-base">
+                  Use the same email and password you&apos;ll use for certificates and member tools.
+                </p>
+              </div>
+              <div className="mt-8 flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMemberAuthMode("login");
+                    setAppState("member_auth");
+                  }}
+                  className="btn-primary flex w-full items-center justify-center gap-2 py-4 text-base font-black sm:py-5 sm:text-lg"
+                >
+                  <LogIn className="h-5 w-5 shrink-0" aria-hidden />
+                  Sign in or create account
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAppState("landing")}
+                  className="w-full rounded-2xl py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#004aad]"
+                >
+                  Back to home
+                </button>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setMemberAuthMode("login");
-                setAppState("member_auth");
-              }}
-              className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg font-black sm:text-xl"
-            >
-              <LogIn className="h-5 w-5 shrink-0" aria-hidden />
-              Sign in or create account
-            </button>
-            <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
-              Back to home
-            </button>
           </div>
         </div>
       </>
@@ -731,122 +760,152 @@ export default function App() {
     return (
       <>
         {identityRibbon}
-        <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+        <div className="flex min-h-screen flex-col lg:flex-row">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-          <form
-            onSubmit={isSignup ? handleSignUpSubmit : handleLoginSubmit}
-            className="card-senior w-full max-w-md space-y-8"
-          >
-            <div className="text-center">
-              <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
-              <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Member account</p>
-              <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">
-                {isSignup ? "Create your login" : "Welcome back"}
-              </h1>
-              <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
-                {isSignup
-                  ? "Same credentials for PMES, your certificate, and future member tools. Next step: privacy notice, then the seminar."
-                  : "Continue your PMES, exam, or certificate with your member email and password."}
-              </p>
-            </div>
-            <div className="flex gap-2 rounded-2xl bg-slate-100 p-1">
-              <button
-                type="button"
-                onClick={() => switchMemberAuthMode("login")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-black transition-all ${
-                  !isSignup ? "bg-white text-[#004aad] shadow-sm" : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                <LogIn className="h-4 w-4 shrink-0" aria-hidden />
-                Sign in
-              </button>
-              <button
-                type="button"
-                onClick={() => switchMemberAuthMode("signup")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-black transition-all ${
-                  isSignup ? "bg-white text-[#004aad] shadow-sm" : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
-                Register
-              </button>
-            </div>
-            {error && (
-              <div
-                className={`rounded-2xl p-4 text-center font-bold ${isSignup ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-900"}`}
-              >
-                {error}
-              </div>
-            )}
-            <div className="relative">
-              <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-              <input
-                type="email"
-                autoComplete="email"
-                className="input-field pl-12"
-                placeholder="Email"
-                value={isSignup ? signUp.email : logIn.email}
-                onChange={(e) =>
-                  isSignup
-                    ? setSignUp((s) => ({ ...s, email: e.target.value }))
-                    : setLogIn((l) => ({ ...l, email: e.target.value }))
-                }
-                required
-              />
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-              <input
-                type="password"
-                autoComplete={isSignup ? "new-password" : "current-password"}
-                className="input-field pl-12"
-                placeholder={isSignup ? "Password (min. 6 characters)" : "Password"}
-                value={isSignup ? signUp.password : logIn.password}
-                onChange={(e) =>
-                  isSignup
-                    ? setSignUp((s) => ({ ...s, password: e.target.value }))
-                    : setLogIn((l) => ({ ...l, password: e.target.value }))
-                }
-                required
-                minLength={6}
-              />
-            </div>
-            {isSignup ? (
-              <div className="relative">
-                <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  className="input-field pl-12"
-                  placeholder="Confirm password"
-                  value={signUp.confirm}
-                  onChange={(e) => setSignUp((s) => ({ ...s, confirm: e.target.value }))}
-                  required
-                  minLength={6}
-                />
-              </div>
-            ) : null}
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg sm:text-xl"
+          <aside className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-10 text-white sm:py-14 lg:w-[44%] lg:min-h-screen lg:shrink-0 lg:py-16 lg:pl-12 lg:pr-10 xl:pl-16">
+            <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" aria-hidden />
+            <div className="pointer-events-none absolute bottom-0 left-0 h-56 w-56 rounded-full bg-blue-400/15 blur-2xl" aria-hidden />
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-white/70">Member account</p>
+            <h1 className="mt-4 max-w-lg text-3xl font-black leading-[1.12] tracking-tight sm:text-4xl lg:text-[2.5rem] xl:text-[2.75rem]">
+              {isSignup ? "Create your cooperative login" : "Welcome back, member"}
+            </h1>
+            <p className="mt-5 max-w-md text-base font-medium leading-relaxed text-white/88 sm:text-lg">
+              {isSignup
+                ? "One account for PMES modules, your exam, and your certificate. Next: privacy notice, then the seminar."
+                : "Pick up where you left off — modules, exam, certificate, or Letter of Intent."}
+            </p>
+            <ul className="mt-8 hidden max-w-md space-y-3 text-sm font-semibold leading-snug text-white/90 sm:block">
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden />
+                Secure sign-in with email &amp; password
+              </li>
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden />
+                Progress saved so you can resume anytime
+              </li>
+            </ul>
+          </aside>
+          <div className="flex flex-1 items-center justify-center bg-slate-100/90 px-4 py-10 sm:px-8 lg:bg-[#f1f5f9] lg:py-12">
+            <form
+              onSubmit={isSignup ? handleSignUpSubmit : handleLoginSubmit}
+              className="w-full max-w-xl rounded-[1.75rem] border border-slate-200/90 bg-white p-7 shadow-xl shadow-slate-900/[0.06] sm:rounded-[2rem] sm:p-9 lg:max-w-[32rem] lg:p-10"
             >
-              {loading ? <Loader2 className="animate-spin" /> : null}
-              {isSignup ? "Create account & continue" : "Sign in"}
-            </button>
-            {!isSignup ? (
+              <div className="text-center lg:text-left">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#004aad]/10 text-[#004aad] lg:mx-0 lg:mb-5 lg:h-14 lg:w-14">
+                  {isSignup ? <UserPlus className="h-7 w-7" aria-hidden /> : <LogIn className="h-7 w-7" aria-hidden />}
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">
+                  {isSignup ? "New registration" : "Sign in"}
+                </p>
+                <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                  {isSignup ? "Create your login" : "Enter your credentials"}
+                </h2>
+              </div>
+              <div className="mt-8 flex gap-2 rounded-2xl bg-slate-100 p-1.5">
+                <button
+                  type="button"
+                  onClick={() => switchMemberAuthMode("login")}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-black transition-all ${
+                    !isSignup ? "bg-white text-[#004aad] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <LogIn className="h-4 w-4 shrink-0" aria-hidden />
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMemberAuthMode("signup")}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-black transition-all ${
+                    isSignup ? "bg-white text-[#004aad] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
+                  Register
+                </button>
+              </div>
+              {error && (
+                <div
+                  className={`mt-6 rounded-2xl p-4 text-center text-sm font-bold sm:text-base ${isSignup ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-900"}`}
+                >
+                  {error}
+                </div>
+              )}
+              <div className="mt-6 space-y-4 sm:mt-8 sm:space-y-5">
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
+                    placeholder="Email address"
+                    value={isSignup ? signUp.email : logIn.email}
+                    onChange={(e) =>
+                      isSignup
+                        ? setSignUp((s) => ({ ...s, email: e.target.value }))
+                        : setLogIn((l) => ({ ...l, email: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
+                  <input
+                    type="password"
+                    autoComplete={isSignup ? "new-password" : "current-password"}
+                    className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
+                    placeholder={isSignup ? "Password (6+ characters)" : "Password"}
+                    value={isSignup ? signUp.password : logIn.password}
+                    onChange={(e) =>
+                      isSignup
+                        ? setSignUp((s) => ({ ...s, password: e.target.value }))
+                        : setLogIn((l) => ({ ...l, password: e.target.value }))
+                    }
+                    required
+                    minLength={6}
+                  />
+                </div>
+                {isSignup ? (
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
+                      placeholder="Confirm password"
+                      value={signUp.confirm}
+                      onChange={(e) => setSignUp((s) => ({ ...s, confirm: e.target.value }))}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                ) : null}
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary mt-8 flex w-full items-center justify-center gap-2 !py-4 text-base font-black sm:!py-5 sm:text-lg"
+              >
+                {loading ? <Loader2 className="animate-spin" /> : null}
+                {isSignup ? "Create account & continue" : "Sign in"}
+              </button>
+              {!isSignup ? (
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="mt-4 w-full text-sm font-bold text-slate-500 hover:text-[#004aad]"
+                >
+                  Forgot password?
+                </button>
+              ) : null}
               <button
                 type="button"
-                onClick={handleForgotPassword}
-                className="w-full text-sm font-bold text-slate-500 hover:text-[#004aad]"
+                onClick={() => setAppState("landing")}
+                className="mt-6 w-full rounded-2xl py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#004aad]"
               >
-                Forgot password?
+                Back to home
               </button>
-            ) : null}
-            <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
-              Back to home
-            </button>
-          </form>
+            </form>
+          </div>
         </div>
       </>
     );
