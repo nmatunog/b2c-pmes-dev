@@ -1,38 +1,21 @@
 import { MessageCircle, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useTypewriter } from "../hooks/useTypewriter";
+import { KaubanAvatarHead, KaubanSpeechTail } from "./KaubanAvatarHead";
 
 /**
- * 3D avatar sits outside the speech card (above top-right); tail bridges toward the box like the old robot control.
+ * Avatar + tail sit fully above the card (`-translate-y-full`) so the tail is never covered by the white panel.
  */
 function KaUbanAvatarWithTail({ animating }) {
   return (
     <div
-      className={`pointer-events-none absolute bottom-full right-1 z-20 mb-0.5 flex flex-col items-center sm:right-3 md:right-4 ${
+      className={`pointer-events-none absolute right-2 top-0 z-30 flex -translate-y-[calc(100%+6px)] flex-col items-center sm:right-4 ${
         animating ? "animate-[pulse_2s_ease-in-out_infinite]" : ""
       }`}
       aria-hidden
     >
-      <div className="overflow-hidden rounded-full bg-white p-[3px] shadow-md shadow-[#004aad]/25 ring-2 ring-[#004aad] ring-offset-2 ring-offset-white">
-        <img
-          src="/kauban-avatar.png"
-          alt=""
-          width={44}
-          height={44}
-          className="h-9 w-9 rounded-full object-cover sm:h-10 sm:w-10"
-          decoding="async"
-          loading="lazy"
-        />
-      </div>
-      {/* Same speech-tail shape as the legacy robot talking-head */}
-      <svg
-        className="-mt-px w-8 text-[#004aad] sm:w-9"
-        viewBox="0 0 48 16"
-        fill="currentColor"
-        aria-hidden
-      >
-        <path d="M8 0 Q24 14 40 0 Q44 4 40 8 Q24 18 8 8 Q4 4 8 0Z" />
-      </svg>
+      <KaubanAvatarHead sizeClass="h-9 w-9 sm:h-10 sm:w-10" />
+      <KaubanSpeechTail className="mt-0.5 h-4 w-12 sm:h-[18px] sm:w-14" />
     </div>
   );
 }
@@ -46,7 +29,6 @@ export function KaUbanGuide({ script, active }) {
 
   return (
     <div className="relative min-w-0 w-full pt-[3.35rem] sm:pt-[3.15rem]">
-      {/* Top padding reserves space for the avatar+tail (positioned above the card). */}
       <div className="relative rounded-3xl border-2 border-[#004aad]/20 bg-white p-4 shadow-[0_8px_30px_-8px_rgba(0,74,173,0.2)] sm:p-5 md:p-6">
         <KaUbanAvatarWithTail animating={active && !done} />
         <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#004aad]">
