@@ -7,12 +7,13 @@ import { GrokTtsProvider } from "./providers/grok-tts.provider";
 import { NoopTtsProvider } from "./providers/noop-tts.provider";
 import { OpenaiTtsProvider } from "./providers/openai-tts.provider";
 import type { TtsSynthesisResult } from "./interfaces/tts-provider.interface";
+import { normalizeKaubanForTts } from "./utils/tts-kauban-normalize";
 
 /** Gemini: Sadachbia = lively (see Google prebuilt TTS voice list). */
 const DEFAULT_VOICE = "Sadachbia";
 const CACHE_MAX = 64;
 /** Bump when synthesis behavior changes (e.g. prompt text) so old cached audio is not reused. */
-const TTS_CACHE_VERSION = 2;
+const TTS_CACHE_VERSION = 3;
 
 @Injectable()
 export class AiService {
@@ -28,13 +29,14 @@ export class AiService {
 
   async synthesizeTts(dto: TtsDto): Promise<TtsSynthesisResult> {
     const voice = dto.voice?.trim() || DEFAULT_VOICE;
+    const text = normalizeKaubanForTts(dto.text);
     const providerId = this.providerId();
     const provider = this.resolveProvider(providerId);
-    const key = this.cacheKey(providerId, dto.text, voice);
+    const key = this.cacheKey(providerId, text, voice);
     const hit = this.cache.get(key);
     if (hit) return hit;
 
-    const out = await provider.synthesize(dto.text, voice);
+    const out = await provider.synthesize(text, voice);
     if (this.cache.size >= CACHE_MAX) {
       const first = this.cache.keys().next().value as string;
       this.cache.delete(first);

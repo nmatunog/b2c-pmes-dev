@@ -41,7 +41,7 @@ import LandingPage from "./landingpage/landing.jsx";
  */
 const VOICE = "Sadachbia";
 /** Bump when backend TTS output meaningfully changes — avoids replaying stale blob URLs from an old build. */
-const TTS_CLIENT_CACHE_BUST = "2";
+const TTS_CLIENT_CACHE_BUST = "3";
 
 const RESUMABLE_APP_STATES = new Set([
   "consent",
