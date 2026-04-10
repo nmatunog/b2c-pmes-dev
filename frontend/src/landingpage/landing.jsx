@@ -23,14 +23,17 @@ import {
 /**
  * B2C marketing landing (Vite: static assets live in `frontend/public/`, e.g. `BaiCommunityhome.webp`).
  *
- * @param {object} props
- * @param {string} [props.heroSrc]
- * @param {() => void} [props.onStartPmes] — Pre-membership education flow (privacy → registration → seminar).
- * @param {() => void} [props.onRetrieveCertificate] — Certificate lookup by email + DOB.
- * @param {() => void} [props.onAdminPortal] — Opens admin access (e.g. daily code); optional.
+ * Member access uses Firebase **Email / Password** (configured in Firebase Console). PMES progress syncs to Firestore for resume.
  */
 export default function LandingPage({
   heroSrc = "/BaiCommunityhome.webp",
+  isFirebaseConfigured = true,
+  authUser = null,
+  pmesPaused = false,
+  onJoinUs,
+  onLogin,
+  onLogout,
+  onContinuePmes,
   onStartPmes,
   onRetrieveCertificate,
   onAdminPortal,
@@ -78,13 +81,8 @@ export default function LandingPage({
     };
   }, []);
 
-  const startPmes = () => {
-    onStartPmes?.();
-  };
-
-  const retrieveCertificate = () => {
-    onRetrieveCertificate?.();
-  };
+  const startPmes = () => onStartPmes?.();
+  const retrieveCertificate = () => onRetrieveCertificate?.();
 
   const orientationContent = [
     {
@@ -195,9 +193,56 @@ export default function LandingPage({
               <GraduationCap className="h-8 w-8" />
             </div>
             <h3 className="text-2xl font-black tracking-tight text-slate-900">Member portal</h3>
-            <p className="mt-2 text-sm font-medium text-slate-500">Access the official PMES education flow or your certificate.</p>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              {authUser ? (
+                <span className="block truncate text-slate-700">{authUser.email}</span>
+              ) : (
+                "Log in with your member email and password to access PMES and your certificate."
+              )}
+            </p>
           </div>
           <div className="flex flex-col gap-3">
+            {!authUser && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMemberPortalOpen(false);
+                    setIsMenuOpen(false);
+                    onLogin?.();
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4 font-black text-white shadow-lg transition-all hover:bg-slate-800"
+                >
+                  <LogIn className="h-5 w-5 shrink-0" />
+                  Log in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMemberPortalOpen(false);
+                    setIsMenuOpen(false);
+                    onJoinUs?.();
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-blue-200 bg-blue-50 py-4 font-black text-blue-700 transition-all hover:bg-blue-100"
+                >
+                  <UserPlus className="h-5 w-5 shrink-0" />
+                  Create member account
+                </button>
+              </>
+            )}
+            {authUser && pmesPaused && onContinuePmes && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMemberPortalOpen(false);
+                  setIsMenuOpen(false);
+                  onContinuePmes();
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-4 font-black text-white shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-700"
+              >
+                Continue PMES
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -208,7 +253,7 @@ export default function LandingPage({
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
             >
               <UserPlus className="h-5 w-5 shrink-0" />
-              Start PMES
+              {authUser ? "Start or restart PMES" : "Start PMES (sign in required)"}
             </button>
             <button
               type="button"
@@ -222,6 +267,19 @@ export default function LandingPage({
               <Download className="h-5 w-5 shrink-0" />
               My certificate
             </button>
+            {authUser && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMemberPortalOpen(false);
+                  setIsMenuOpen(false);
+                  onLogout?.();
+                }}
+                className="rounded-2xl border border-slate-200 py-3 text-sm font-black text-slate-500 hover:bg-slate-50"
+              >
+                Log out
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setMemberPortalOpen(false)}
@@ -351,15 +409,38 @@ export default function LandingPage({
             >
               Portal
             </button>
+            {!authUser && (
+              <button
+                type="button"
+                onClick={() => onLogin?.()}
+                className="text-slate-500 transition-colors hover:text-blue-600"
+              >
+                Log in
+              </button>
+            )}
+            {authUser && (
+              <span className="max-w-[10rem] truncate text-xs text-slate-500" title={authUser.email || ""}>
+                {authUser.email}
+              </span>
+            )}
+            {authUser && (
+              <button
+                type="button"
+                onClick={() => onLogout?.()}
+                className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-blue-600"
+              >
+                Out
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
-                startPmes();
+                onJoinUs?.();
                 setIsMenuOpen(false);
               }}
               className="transform rounded-2xl bg-blue-600 px-8 py-3 text-sm font-black text-white shadow-xl shadow-blue-100 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
             >
-              Join Us
+              {authUser ? "PMES" : "Join Us"}
             </button>
           </div>
           <button type="button" className="p-2 text-slate-600 lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-expanded={isMenuOpen}>
@@ -390,20 +471,51 @@ export default function LandingPage({
                 <LogIn className="h-4 w-4" />
                 Portal
               </button>
+              {!authUser && (
+                <button type="button" onClick={() => onLogin?.()} className="rounded-xl border border-slate-200 py-3 text-slate-700">
+                  Log in
+                </button>
+              )}
+              {authUser && (
+                <button type="button" onClick={() => onLogout?.()} className="rounded-xl border border-slate-200 py-3 text-slate-500">
+                  Log out
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  startPmes();
+                  onJoinUs?.();
                   setIsMenuOpen(false);
                 }}
                 className="rounded-xl bg-blue-600 py-3 font-black text-white shadow-lg"
               >
-                Join Us
+                {authUser ? "PMES" : "Join Us"}
               </button>
             </div>
           </div>
         )}
       </nav>
+
+      {!isFirebaseConfigured && (
+        <div className="mx-4 mt-24 rounded-xl bg-amber-500 px-4 py-2 text-center text-sm font-bold text-amber-950 sm:mx-auto sm:max-w-4xl">
+          Firebase is not configured — add VITE_FIREBASE_* keys in frontend/.env to enable member accounts.
+        </div>
+      )}
+
+      {authUser && pmesPaused && onContinuePmes && (
+        <div className="mx-4 mt-4 max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg sm:mx-auto sm:mt-6">
+          <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+            <p className="text-sm font-bold text-emerald-900">You have PMES progress saved. Continue where you left off.</p>
+            <button
+              type="button"
+              onClick={onContinuePmes}
+              className="shrink-0 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-md hover:bg-emerald-700"
+            >
+              Continue PMES
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="relative overflow-hidden bg-white pb-12 pt-32 lg:pt-48">
         <div className="mx-auto flex max-w-7xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">

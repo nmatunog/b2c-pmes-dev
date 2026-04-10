@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 import {
   AlertCircle,
   Briefcase,
   CheckCircle2,
   FileText,
+  House,
   Loader2,
   Lock,
+  Mail,
   Printer,
   ShieldAlert,
   Sparkles,
+  UserPlus,
 } from "lucide-react";
 import { modules } from "./constants/modules";
 import { questionPool } from "./constants/questionPool";
@@ -20,6 +29,7 @@ import { LOIForm } from "./components/LOIForm";
 import { pcmToWav, preloadAudioUrl } from "./lib/audio";
 import { auth, db, appId, isFirebaseConfigured } from "./services/firebase";
 import { PmesService } from "./services/pmesService";
+import { clearPmesProgress, loadPmesProgress, savePmesProgress } from "./services/pmesProgressService";
 import { requestTts } from "./services/ttsApi";
 import { globalStyles } from "./styles/globalStyles";
 import { PRIVACY_AGREEMENT_PARAGRAPHS } from "./constants/privacyAgreement";
@@ -32,6 +42,35 @@ import LandingPage from "./landingpage/landing.jsx";
 const VOICE = "Sadachbia";
 /** Bump when backend TTS output meaningfully changes — avoids replaying stale blob URLs from an old build. */
 const TTS_CLIENT_CACHE_BUST = "2";
+
+const RESUMABLE_APP_STATES = new Set([
+  "consent",
+  "registration",
+  "seminar",
+  "exam",
+  "result",
+  "certificate",
+  "loi_form",
+]);
+
+function mapFirebaseAuthError(code) {
+  switch (code) {
+    case "auth/email-already-in-use":
+      return "This email is already registered. Try logging in instead.";
+    case "auth/invalid-email":
+      return "Enter a valid email address.";
+    case "auth/weak-password":
+      return "Use at least 6 characters for your password.";
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "Incorrect email or password.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Try again later.";
+    default:
+      return "Something went wrong. Check your connection and try again.";
+  }
+}
 
 function formatTtsError(err) {
   const raw = err instanceof Error ? err.message : String(err);
@@ -46,9 +85,23 @@ function formatTtsError(err) {
 
 export default function App() {
   const [appState, setAppState] = useState("landing");
+  const appStateRef = useRef(appState);
+  useEffect(() => {
+    appStateRef.current = appState;
+  }, [appState]);
+
+  const [authReady, setAuthReady] = useState(false);
+  const [signUp, setSignUp] = useState({ email: "", password: "", confirm: "" });
+  const [logIn, setLogIn] = useState({ email: "", password: "" });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const hydratingRef = useRef(false);
+  /** Last PMES flow screen before visiting the marketing home (used when saving `pmesPaused`). */
+  const lastFlowAppStateRef = useRef(/** @type {string} */ ("seminar"));
+  /** After email/password auth, jump to this PMES screen (e.g. user tapped Start PMES before signing in). */
+  const pendingAfterAuthRef = useRef(/** @type {'consent' | 'retrieval' | null} */ (null));
   const [formData, setFormData] = useState({ fullName: "", gender: "", email: "", phone: "", dob: "" });
   const [loiData, setLoiData] = useState({ address: "", occupation: "", employer: "", initialCapital: "", agreement: false });
   const [retrievalData, setRetrievalData] = useState({ email: "", dob: "" });
@@ -64,6 +117,8 @@ export default function App() {
   const [answers, setAnswers] = useState({});
   const [score, setScore] = useState(0);
   const [courseAudioEnabled, setCourseAudioEnabledState] = useState(readCourseAudioPreference);
+  /** True when the member left PMES for the marketing home but has not finished the flow (resume later). */
+  const [pmesPaused, setPmesPaused] = useState(false);
   const audioCache = useRef({});
   const inflightTts = useRef({});
   const currentAudio = useRef(null);
@@ -107,25 +162,167 @@ export default function App() {
     [ensureTtsUrl],
   );
 
+  const applyLoadedProgress = useCallback((prog) => {
+    if (!prog || typeof prog !== "object") return;
+    if (prog.formData && typeof prog.formData === "object") {
+      setFormData((prev) => ({ ...prev, ...prog.formData }));
+    }
+    if (prog.loiData && typeof prog.loiData === "object") {
+      setLoiData((prev) => ({ ...prev, ...prog.loiData }));
+    }
+    if (prog.retrievalData && typeof prog.retrievalData === "object") {
+      setRetrievalData((prev) => ({ ...prev, ...prog.retrievalData }));
+    }
+    if (typeof prog.currentStep === "number") setCurrentStep(prog.currentStep);
+    if (typeof prog.openCardIndex === "number") setOpenCardIndex(prog.openCardIndex);
+    if (Array.isArray(prog.examQuestions)) setExamQuestions(prog.examQuestions);
+    if (prog.answers && typeof prog.answers === "object") setAnswers(prog.answers);
+    if (typeof prog.score === "number") setScore(prog.score);
+    if (prog.activeRecord && typeof prog.activeRecord === "object") setActiveRecord(prog.activeRecord);
+    if (typeof prog.courseAudioEnabled === "boolean") setCourseAudioEnabledState(prog.courseAudioEnabled);
+    if (typeof prog.pmesPaused === "boolean") setPmesPaused(prog.pmesPaused);
+  }, []);
+
   useEffect(() => {
     if (!isFirebaseConfigured) {
       if (import.meta.env.DEV) {
         console.info(
-          "[PMES] Set VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID in frontend/.env for Firestore and anonymous auth.",
+          "[PMES] Set VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID in frontend/.env for Email/Password auth and Firestore.",
         );
       }
-    } else {
-      signInAnonymously(auth).catch((err) => {
-        if (import.meta.env.DEV) {
-          console.warn(
-            "[PMES] Anonymous sign-in failed (Identity Toolkit 400 often means: enable Anonymous in Firebase Auth → Sign-in method, and add localhost to Authentication → Settings → Authorized domains).",
-            err?.code ?? err,
-          );
-        }
-      });
+      setAuthReady(true);
+      return undefined;
     }
-    return onAuthStateChanged(auth, setUser);
-  }, []);
+
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (!u) {
+        hydratingRef.current = false;
+        setPmesPaused(false);
+        setAppState("landing");
+        setAuthReady(true);
+        return;
+      }
+
+      hydratingRef.current = true;
+
+      const pending = pendingAfterAuthRef.current;
+      if (pending === "consent") {
+        pendingAfterAuthRef.current = null;
+        applyLoadedProgress({
+          formData: {
+            fullName: "",
+            gender: "",
+            email: u.email || "",
+            phone: "",
+            dob: "",
+          },
+        });
+        setPmesPaused(false);
+        setAppState("consent");
+        hydratingRef.current = false;
+        setAuthReady(true);
+        return;
+      }
+      if (pending === "retrieval") {
+        pendingAfterAuthRef.current = null;
+        setRetrievalData((d) => ({ ...d, email: u.email || d.email }));
+        setPmesPaused(false);
+        setAppState("login_retrieval");
+        hydratingRef.current = false;
+        setAuthReady(true);
+        return;
+      }
+
+      try {
+        const prog = await loadPmesProgress(db, appId, u.uid);
+        if (prog && typeof prog === "object") {
+          applyLoadedProgress(prog);
+          const saved = prog.appState;
+          if (prog.pmesPaused && typeof saved === "string" && RESUMABLE_APP_STATES.has(saved)) {
+            setAppState("landing");
+          } else if (typeof saved === "string") {
+            if (saved === "login_retrieval") {
+              setAppState("login_retrieval");
+            } else if (saved === "landing") {
+              setAppState("landing");
+            } else if (RESUMABLE_APP_STATES.has(saved)) {
+              setAppState(saved);
+            }
+          }
+        } else if (appStateRef.current === "login") {
+          setAppState("landing");
+        }
+      } catch {
+        if (appStateRef.current === "login") {
+          setAppState("landing");
+        }
+      } finally {
+        hydratingRef.current = false;
+        setAuthReady(true);
+      }
+    });
+
+    return unsub;
+  }, [applyLoadedProgress]);
+
+  useEffect(() => {
+    if (RESUMABLE_APP_STATES.has(appState)) {
+      lastFlowAppStateRef.current = appState;
+    }
+  }, [appState]);
+
+  useEffect(() => {
+    if (!authReady || !user || !isFirebaseConfigured) return undefined;
+    if (hydratingRef.current) return undefined;
+    if (appState === "signup" || appState === "login" || appState === "admin_dashboard") return undefined;
+
+    const persistStates = new Set([...RESUMABLE_APP_STATES, "landing", "login_retrieval"]);
+    if (!persistStates.has(appState)) return undefined;
+
+    const id = window.setTimeout(() => {
+      if (hydratingRef.current) return;
+      const effectiveAppState =
+        appState === "landing" && pmesPaused ? lastFlowAppStateRef.current || "seminar" : appState;
+      const snapshot = {
+        appState: effectiveAppState,
+        pmesPaused: appState === "landing" ? pmesPaused : false,
+        currentStep,
+        openCardIndex,
+        formData,
+        loiData,
+        retrievalData,
+        examQuestions,
+        answers,
+        score,
+        activeRecord,
+        courseAudioEnabled,
+        accountEmail: user.email || null,
+      };
+      void savePmesProgress(db, appId, user.uid, snapshot);
+    }, 700);
+    return () => window.clearTimeout(id);
+  }, [
+    authReady,
+    user,
+    appState,
+    currentStep,
+    openCardIndex,
+    formData,
+    loiData,
+    retrievalData,
+    examQuestions,
+    answers,
+    score,
+    activeRecord,
+    courseAudioEnabled,
+    pmesPaused,
+  ]);
+
+  useEffect(() => {
+    if (appState !== "registration" || !user?.email) return;
+    setFormData((prev) => ({ ...prev, email: user.email || prev.email }));
+  }, [appState, user]);
 
   useEffect(() => {
     if (!ttsError) return undefined;
@@ -219,7 +416,7 @@ export default function App() {
     setError(null);
     const useApi = Boolean((import.meta.env.VITE_API_BASE_URL || "").trim());
     if (!useApi && !user) {
-      setError("Please wait for sign-in, then try again.");
+      setError("Sign in with your member email and password, then try again.");
       setLoading(false);
       return;
     }
@@ -238,13 +435,265 @@ export default function App() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch {
+      /* ignore */
+    }
+    setPmesPaused(false);
+    setAppState("landing");
+  };
+
+  const handleSignUpSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+    if (!isFirebaseConfigured) {
+      setError("Firebase is not configured. Add VITE_FIREBASE_* keys in frontend/.env.");
+      return;
+    }
+    const email = signUp.email.trim();
+    if (!email || !signUp.password) {
+      setError("Email and password are required.");
+      return;
+    }
+    if (signUp.password !== signUp.confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await createUserWithEmailAndPassword(auth, email, signUp.password);
+      setFormData((prev) => ({ ...prev, email }));
+      setPmesPaused(false);
+      setAppState("consent");
+    } catch (err) {
+      setError(mapFirebaseAuthError(err?.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+    if (!isFirebaseConfigured) {
+      setError("Firebase is not configured.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, logIn.email.trim(), logIn.password);
+    } catch (err) {
+      setError(mapFirebaseAuthError(err?.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = logIn.email.trim();
+    if (!email) {
+      setError("Enter your email above, then tap Forgot password again.");
+      return;
+    }
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setError(null);
+      alert("Password reset email sent. Check your inbox.");
+    } catch (err) {
+      setError(mapFirebaseAuthError(err?.code));
+    }
+  };
+
+  const goHomeFromPmes = () => {
+    setPmesPaused(true);
+    setAppState("landing");
+  };
+
+  const continuePmesFromLanding = () => {
+    if (!user) return;
+    hydratingRef.current = true;
+    setPmesPaused(false);
+    void loadPmesProgress(db, appId, user.uid).then((prog) => {
+      if (prog?.appState && RESUMABLE_APP_STATES.has(prog.appState)) {
+        applyLoadedProgress({ ...prog, pmesPaused: false });
+        setAppState(prog.appState);
+      } else {
+        setAppState(lastFlowAppStateRef.current || "seminar");
+      }
+      hydratingRef.current = false;
+    });
+  };
+
+  if (!authReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        <Loader2 className="h-12 w-12 animate-spin text-[#004aad]" aria-hidden />
+      </div>
+    );
+  }
+
+  if (appState === "signup") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        <form onSubmit={handleSignUpSubmit} className="card-senior w-full max-w-md space-y-8">
+          <div className="text-center">
+            <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
+            <h1 className="mt-4 text-4xl font-black uppercase tracking-tighter text-[#004aad]">Create member account</h1>
+            <p className="mt-2 text-lg font-semibold text-slate-600">Use this email across B2C Coop services.</p>
+          </div>
+          {error && <div className="rounded-2xl bg-red-50 p-4 text-center font-bold text-red-700">{error}</div>}
+          <div className="relative">
+            <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+            <input
+              type="email"
+              autoComplete="email"
+              className="input-field pl-12"
+              placeholder="Email"
+              value={signUp.email}
+              onChange={(e) => setSignUp((s) => ({ ...s, email: e.target.value }))}
+              required
+            />
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+            <input
+              type="password"
+              autoComplete="new-password"
+              className="input-field pl-12"
+              placeholder="Password (min. 6 characters)"
+              value={signUp.password}
+              onChange={(e) => setSignUp((s) => ({ ...s, password: e.target.value }))}
+              required
+              minLength={6}
+            />
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+            <input
+              type="password"
+              autoComplete="new-password"
+              className="input-field pl-12"
+              placeholder="Confirm password"
+              value={signUp.confirm}
+              onChange={(e) => setSignUp((s) => ({ ...s, confirm: e.target.value }))}
+              required
+              minLength={6}
+            />
+          </div>
+          <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-xl">
+            {loading ? <Loader2 className="animate-spin" /> : null}
+            Create account &amp; continue
+          </button>
+          <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
+            Back to home
+          </button>
+          <button type="button" onClick={() => setAppState("login")} className="w-full text-sm font-bold text-slate-400 hover:text-[#004aad]">
+            Already have an account? Log in
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  if (appState === "login") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        <form onSubmit={handleLoginSubmit} className="card-senior w-full max-w-md space-y-8">
+          <div className="text-center">
+            <Lock className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
+            <h1 className="mt-4 text-4xl font-black uppercase tracking-tighter text-[#004aad]">Member log in</h1>
+            <p className="mt-2 text-lg font-semibold text-slate-600">Resume your PMES or open your certificate.</p>
+          </div>
+          {error && <div className="rounded-2xl bg-amber-50 p-4 text-center font-bold text-amber-900">{error}</div>}
+          <div className="relative">
+            <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+            <input
+              type="email"
+              autoComplete="email"
+              className="input-field pl-12"
+              placeholder="Email"
+              value={logIn.email}
+              onChange={(e) => setLogIn((s) => ({ ...s, email: e.target.value }))}
+              required
+            />
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+            <input
+              type="password"
+              autoComplete="current-password"
+              className="input-field pl-12"
+              placeholder="Password"
+              value={logIn.password}
+              onChange={(e) => setLogIn((s) => ({ ...s, password: e.target.value }))}
+              required
+            />
+          </div>
+          <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-xl">
+            {loading ? <Loader2 className="animate-spin" /> : null}
+            Log in
+          </button>
+          <button type="button" onClick={handleForgotPassword} className="w-full text-sm font-bold text-slate-500 hover:text-[#004aad]">
+            Forgot password?
+          </button>
+          <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
+            Back to home
+          </button>
+          <button type="button" onClick={() => setAppState("signup")} className="w-full text-sm font-bold text-slate-400 hover:text-[#004aad]">
+            New member? Create an account
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   if (appState === "landing")
     return (
       <>
         <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <LandingPage
-          onStartPmes={() => setAppState("consent")}
-          onRetrieveCertificate={() => setAppState("login_retrieval")}
+          isFirebaseConfigured={isFirebaseConfigured}
+          authUser={user}
+          pmesPaused={pmesPaused}
+          onJoinUs={() => {
+            if (!isFirebaseConfigured) return;
+            if (user) {
+              setPmesPaused(false);
+              setAppState("consent");
+              return;
+            }
+            setAppState("signup");
+          }}
+          onLogin={() => setAppState("login")}
+          onLogout={handleLogout}
+          onContinuePmes={user && pmesPaused ? continuePmesFromLanding : undefined}
+          onStartPmes={() => {
+            if (!isFirebaseConfigured) return;
+            if (user) {
+              setPmesPaused(false);
+              setAppState("consent");
+              return;
+            }
+            pendingAfterAuthRef.current = "consent";
+            setAppState("login");
+          }}
+          onRetrieveCertificate={() => {
+            if (!isFirebaseConfigured) return;
+            if (user) {
+              setRetrievalData((d) => ({ ...d, email: user.email || d.email }));
+              setPmesPaused(false);
+              setAppState("login_retrieval");
+              return;
+            }
+            pendingAfterAuthRef.current = "retrieval";
+            setAppState("login");
+          }}
           onAdminPortal={handleAdminPortal}
         />
       </>
@@ -256,7 +705,7 @@ export default function App() {
         <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl md:rounded-[2.5rem] lg:rounded-[3rem]">
           <div className="flex flex-col gap-4 bg-[#004aad] p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-6 md:p-10">
-            <div className="flex min-w-0 items-center gap-4 md:gap-6">
+            <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-6">
               {(() => {
                 const Icon = modules[currentStep].icon;
                 return <Icon className="h-11 w-11 shrink-0 md:h-14 md:w-14" aria-hidden />;
@@ -268,8 +717,18 @@ export default function App() {
                 </h2>
               </div>
             </div>
-            <div className="shrink-0 self-start rounded-full bg-black/20 px-4 py-2 text-lg font-bold tabular-nums sm:self-auto md:px-6 md:text-xl">
-              {currentStep + 1} / {modules.length}
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={goHomeFromPmes}
+                className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/25"
+              >
+                <House className="h-4 w-4 shrink-0" aria-hidden />
+                Save &amp; home
+              </button>
+              <div className="rounded-full bg-black/20 px-4 py-2 text-lg font-bold tabular-nums md:px-6 md:text-xl">
+                {currentStep + 1} / {modules.length}
+              </div>
             </div>
           </div>
 
@@ -351,6 +810,16 @@ export default function App() {
     return (
       <div className="min-h-screen px-8 py-16">
         <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        <div className="mx-auto mb-10 flex max-w-5xl justify-end">
+          <button
+            type="button"
+            onClick={goHomeFromPmes}
+            className="btn-secondary inline-flex items-center gap-2 py-3 text-lg font-bold"
+          >
+            <House className="h-5 w-5" aria-hidden />
+            Save &amp; home
+          </button>
+        </div>
         <div className="mx-auto w-full max-w-5xl space-y-16 rounded-[4rem] bg-white p-16 shadow-2xl">
           <h2 className="text-center text-6xl font-black uppercase tracking-tighter text-[#004aad]">FINAL CHALLENGE</h2>
           <div className="space-y-16">
@@ -453,7 +922,7 @@ export default function App() {
                 <Briefcase aria-hidden />
                 Letter of Intent
               </button>
-              <button type="button" onClick={() => setAppState("landing")} className="btn-secondary flex-1 py-8 text-lg font-bold">
+              <button type="button" onClick={goHomeFromPmes} className="btn-secondary flex-1 py-8 text-lg font-bold">
                 Home
               </button>
             </div>
@@ -488,7 +957,23 @@ export default function App() {
         <div className="card-senior w-full max-w-4xl space-y-10 border-emerald-100 text-center">
           <Sparkles className="mx-auto h-32 w-32 animate-pulse text-emerald-500" />
           <h1 className="text-6xl font-black uppercase tracking-tighter text-[#004aad]">THANK YOU!</h1>
-          <button onClick={() => setAppState("landing")} className="btn-primary w-full py-10 text-3xl">FINISH</button>
+          <button
+            type="button"
+            onClick={async () => {
+              if (user && isFirebaseConfigured) {
+                try {
+                  await clearPmesProgress(db, appId, user.uid);
+                } catch {
+                  /* ignore */
+                }
+              }
+              setPmesPaused(false);
+              setAppState("landing");
+            }}
+            className="btn-primary w-full py-10 text-3xl"
+          >
+            FINISH
+          </button>
         </div>
       </div>
     );
@@ -508,6 +993,21 @@ export default function App() {
         </div>
       </div>
     );
+
+  if (appState === "consent" && isFirebaseConfigured && !user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#004aad]/5 p-8">
+        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        <p className="max-w-md text-center text-xl font-bold text-slate-700">Sign in with your member account to continue the PMES privacy step.</p>
+        <button type="button" onClick={() => setAppState("login")} className="btn-primary px-10 py-4 text-lg">
+          Log in
+        </button>
+        <button type="button" onClick={() => setAppState("landing")} className="font-bold text-slate-500 hover:text-[#004aad]">
+          Back to home
+        </button>
+      </div>
+    );
+  }
 
   if (appState === "consent")
     return (
@@ -553,7 +1053,15 @@ export default function App() {
                 <option value="Female">Female</option>
               </select>
             </div>
-            <input type="email" className="input-field" placeholder="Email Address" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} />
+            <input
+              type="email"
+              className="input-field"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={(event) => setFormData({ ...formData, email: event.target.value })}
+              readOnly={Boolean(user?.email)}
+              title={user?.email ? "Email is tied to your member login." : undefined}
+            />
             <input type="tel" className="input-field" placeholder="Phone Number" value={formData.phone} onChange={(event) => setFormData({ ...formData, phone: event.target.value })} />
             <button
               onClick={() => {

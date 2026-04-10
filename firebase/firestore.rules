@@ -9,6 +9,14 @@ rules_version = '2';
  */
 service cloud.firestore {
   match /databases/{database}/documents {
+    /** Per-user PMES session (resume, form draft). Document id must equal auth uid. */
+    match /artifacts/{appId}/public/data/pmes_progress/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.userId == uid;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /artifacts/{appId}/public/data/{collection}/{docId} {
       allow create: if request.auth != null
         && request.resource.data.userId == request.auth.uid;
