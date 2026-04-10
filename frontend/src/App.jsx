@@ -698,17 +698,26 @@ export default function App() {
         {identityRibbon}
         <div className="flex min-h-screen flex-col md:flex-row">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-          <aside className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-12 text-white md:w-[42%] md:min-h-screen md:shrink-0 md:py-14 md:pl-10 md:pr-8 xl:py-16 xl:pl-14 xl:pr-10">
+          <aside className="relative flex flex-col justify-start overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-12 text-white md:w-[42%] md:min-h-screen md:shrink-0 md:py-14 md:pl-10 md:pr-8 xl:py-16 xl:pl-14 xl:pr-10">
             <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" aria-hidden />
             <div className="pointer-events-none absolute -bottom-16 left-10 h-48 w-48 rounded-full bg-blue-400/20 blur-2xl" aria-hidden />
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-white/70">B2C PMES</p>
-            <h1 className="mt-4 max-w-md text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-[2.35rem] md:leading-[1.15]">
+            <div className="relative z-10 mb-8">
+              <img
+                src="/b2c-logo.png"
+                alt="B2C Consumers Cooperative"
+                className="h-12 w-auto max-w-[min(100%,15rem)] object-contain object-left drop-shadow-md sm:h-14 md:h-16"
+                width={180}
+                height={72}
+              />
+            </div>
+            <p className="relative z-10 text-xs font-black uppercase tracking-[0.25em] text-white/70">B2C PMES</p>
+            <h1 className="relative z-10 mt-4 max-w-md text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-[2.35rem] md:leading-[1.15]">
               Continue your membership journey
             </h1>
-            <p className="mt-4 max-w-sm text-base font-medium leading-relaxed text-white/85">
+            <p className="relative z-10 mt-4 max-w-sm text-base font-medium leading-relaxed text-white/85">
               Sign in or create one account for the seminar, exam, and digital certificate.
             </p>
-            <ul className="mt-8 max-w-sm space-y-3 text-sm font-semibold text-white/90">
+            <ul className="relative z-10 mt-8 max-w-sm space-y-3 text-sm font-semibold text-white/90">
               <li className="flex gap-3">
                 <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden />
                 Privacy notice, then interactive modules
@@ -762,19 +771,28 @@ export default function App() {
         {identityRibbon}
         <div className="flex min-h-screen flex-col md:flex-row">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-          <aside className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-10 text-white sm:py-14 md:w-[42%] md:min-h-screen md:shrink-0 md:py-14 md:pl-10 md:pr-8 xl:py-16 xl:pl-14 xl:pr-12">
+          <aside className="relative flex flex-col justify-start overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-10 text-white sm:py-14 md:w-[42%] md:min-h-screen md:shrink-0 md:py-14 md:pl-10 md:pr-8 xl:py-16 xl:pl-14 xl:pr-12">
             <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" aria-hidden />
             <div className="pointer-events-none absolute bottom-0 left-0 h-56 w-56 rounded-full bg-blue-400/15 blur-2xl" aria-hidden />
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-white/70">Member account</p>
-            <h1 className="mt-4 max-w-lg text-3xl font-black leading-[1.12] tracking-tight sm:text-4xl md:text-[2.5rem] xl:text-[2.75rem]">
+            <div className="relative z-10 mb-8">
+              <img
+                src="/b2c-logo.png"
+                alt="B2C Consumers Cooperative"
+                className="h-12 w-auto max-w-[min(100%,15rem)] object-contain object-left drop-shadow-md sm:h-14 md:h-16"
+                width={180}
+                height={72}
+              />
+            </div>
+            <p className="relative z-10 text-xs font-black uppercase tracking-[0.25em] text-white/70">Member account</p>
+            <h1 className="relative z-10 mt-4 max-w-lg text-3xl font-black leading-[1.12] tracking-tight sm:text-4xl md:text-[2.5rem] xl:text-[2.75rem]">
               {isSignup ? "Create your cooperative login" : "Welcome back, member"}
             </h1>
-            <p className="mt-5 max-w-md text-base font-medium leading-relaxed text-white/88 sm:text-lg">
+            <p className="relative z-10 mt-5 max-w-md text-base font-medium leading-relaxed text-white/88 sm:text-lg">
               {isSignup
                 ? "One account for PMES modules, your exam, and your certificate. Next: privacy notice, then the seminar."
                 : "Pick up where you left off — modules, exam, certificate, or Letter of Intent."}
             </p>
-            <ul className="mt-8 hidden max-w-md space-y-3 text-sm font-semibold leading-snug text-white/90 sm:block">
+            <ul className="relative z-10 mt-8 hidden max-w-md space-y-3 text-sm font-semibold leading-snug text-white/90 sm:block">
               <li className="flex gap-3">
                 <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden />
                 Secure sign-in with email &amp; password
