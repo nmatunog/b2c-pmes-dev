@@ -1,0 +1,569 @@
+import { useState, useEffect } from "react";
+import {
+  Users,
+  ShieldCheck,
+  Menu,
+  X,
+  ArrowRight,
+  LogIn,
+  UserPlus,
+  PlayCircle,
+  Award,
+  HeartHandshake,
+  Coins,
+  Quote,
+  Building2,
+  Rocket,
+  History,
+  Wallet,
+  Download,
+  GraduationCap,
+} from "lucide-react";
+
+/**
+ * B2C marketing landing (Vite: static assets live in `frontend/public/`, e.g. `BaiCommunityhome.webp`).
+ *
+ * @param {object} props
+ * @param {string} [props.heroSrc]
+ * @param {() => void} [props.onStartPmes] — Pre-membership education flow (privacy → registration → seminar).
+ * @param {() => void} [props.onRetrieveCertificate] — Certificate lookup by email + DOB.
+ * @param {() => void} [props.onAdminPortal] — Opens admin access (e.g. daily code); optional.
+ */
+export default function LandingPage({
+  heroSrc = "/BaiCommunityhome.webp",
+  onStartPmes,
+  onRetrieveCertificate,
+  onAdminPortal,
+}) {
+  const ACTUAL_MEMBER_COUNT = 27;
+  const INITIAL_INVESTMENT = 1500;
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [language, setLanguage] = useState("en");
+  const [memberPortalOpen, setMemberPortalOpen] = useState(false);
+  const [orientationActive, setOrientationActive] = useState(false);
+  const [orientationStep, setOrientationStep] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+  const [privacyActive, setPrivacyActive] = useState(false);
+
+  const [totalMembers] = useState(ACTUAL_MEMBER_COUNT);
+  const [showNotification, setShowNotification] = useState(false);
+  const [lastSignup, setLastSignup] = useState("Talamban, Cebu City");
+  const [formattedYesterday, setFormattedYesterday] = useState("");
+
+  useEffect(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    setFormattedYesterday(
+      yesterday.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    );
+
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+
+    const timer = setTimeout(() => {
+      setShowNotification(true);
+      const locations = ["Mandaue City", "Banilad", "Guadalupe", "Liloan", "Consolacion"];
+      setLastSignup(locations[Math.floor(Math.random() * locations.length)]);
+      setTimeout(() => setShowNotification(false), 5000);
+    }, 20000);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const startPmes = () => {
+    onStartPmes?.();
+  };
+
+  const retrieveCertificate = () => {
+    onRetrieveCertificate?.();
+  };
+
+  const orientationContent = [
+    {
+      title: "Redefine Your Experience",
+      desc: "Welcome to B2C Consumers Cooperative. Imagine a world where you have the power to access, own, and control the best value products and services.",
+      icon: <Users className="w-12 h-12" />,
+      highlight: "Access • Ownership • Control",
+    },
+    {
+      title: "The Rewards of Ownership",
+      desc: "As a member, you aren't just a shopper. You enjoy Patronage Refunds on every purchase, Super Discounts, and annual Dividends on your share capital.",
+      icon: <Wallet className="w-12 h-12" />,
+      highlight: "Your Investment Grows for You",
+    },
+    {
+      title: "Sustainable & Ethical",
+      desc: "Our ambition goes beyond commerce. We source products with ethics in mind, ensuring a seamless shopping experience that makes a positive impact.",
+      icon: <HeartHandshake className="w-12 h-12" />,
+      highlight: "Leading Online Consumer Co-op",
+    },
+    {
+      title: "Investment for Impact",
+      desc: `To start, you'll need ₱500 for the annual fee and a minimum of ₱1,000 for your share capital. That's a ₱${INITIAL_INVESTMENT} total to kickstart your journey.`,
+      icon: <Coins className="w-12 h-12" />,
+      highlight: "Minimum 10 Shares (₱100/share)",
+    },
+    {
+      title: "The Correct Path to Joining",
+      desc: "1. Complete our Online PMES orientation. 2. Submit your official Letter of Intent (LOI). 3. Pay your initial Share Capital and membership fee to become an owner.",
+      icon: <Award className="w-12 h-12" />,
+      highlight: "Orientation • Intent • Investment",
+    },
+  ];
+
+  const content = {
+    en: {
+      shopBtn: "Start Shopping",
+      orientationBtn: "Watch Interactive Intro",
+      regNo: "CDA Reg. No. 9520-100700034930",
+    },
+    ceb: {
+      shopBtn: "Sugod sa Pagpamalit",
+      orientationBtn: "Tan-awa ang Interactive Intro",
+      regNo: "CDA Reg. No. 9520-100700034930",
+    },
+  };
+
+  const t = content[language];
+
+  const PrivacyModal = () =>
+    privacyActive && (
+      <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setPrivacyActive(false)} />
+        <div className="animate-in zoom-in-95 duration-200 relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-[32px] bg-white p-8 shadow-2xl md:p-12">
+          <button
+            type="button"
+            onClick={() => setPrivacyActive(false)}
+            className="absolute right-6 top-6 rounded-full p-2 transition-colors hover:bg-slate-100"
+          >
+            <X />
+          </button>
+          <div className="mb-8 flex items-center gap-3">
+            <ShieldCheck className="h-8 w-8 text-blue-600" />
+            <h2 className="text-3xl font-black tracking-tight text-slate-900">Data Privacy Policy</h2>
+          </div>
+          <div className="space-y-6 font-medium leading-relaxed text-slate-600">
+            <p className="text-xs font-black uppercase tracking-widest text-blue-600">Compliant with RA 10173 (Philippines)</p>
+            <p>
+              B2C Consumers Cooperative is committed to protecting your personal data. We collect information voluntarily provided
+              during membership application and digital registration.
+            </p>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Purpose of Collection</h4>
+            <p>
+              Your data is used to maintain the Registry of Members required by the CDA, facilitate online shopping, and calculate
+              patronage refunds and dividends.
+            </p>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Data Sharing</h4>
+            <p>
+              We do not sell your data. Sharing is limited to the Cooperative Development Authority (CDA) as required by law and
+              delivery partners strictly for order fulfillment.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPrivacyActive(false)}
+            className="mt-12 w-full rounded-2xl bg-slate-900 py-4 font-black text-white shadow-xl"
+          >
+            Close Policy
+          </button>
+        </div>
+      </div>
+    );
+
+  const MemberPortalModal = () =>
+    memberPortalOpen && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setMemberPortalOpen(false)} />
+        <div className="animate-in zoom-in-95 duration-200 relative w-full max-w-md rounded-[32px] bg-white p-8 shadow-2xl">
+          <button
+            type="button"
+            onClick={() => setMemberPortalOpen(false)}
+            className="absolute right-6 top-6 rounded-full p-2 transition-colors hover:bg-slate-100"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
+              <GraduationCap className="h-8 w-8" />
+            </div>
+            <h3 className="text-2xl font-black tracking-tight text-slate-900">Member portal</h3>
+            <p className="mt-2 text-sm font-medium text-slate-500">Access the official PMES education flow or your certificate.</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setMemberPortalOpen(false);
+                setIsMenuOpen(false);
+                startPmes();
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 font-black text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700"
+            >
+              <UserPlus className="h-5 w-5 shrink-0" />
+              Start PMES
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMemberPortalOpen(false);
+                setIsMenuOpen(false);
+                retrieveCertificate();
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white py-4 font-black text-slate-800 transition-all hover:border-blue-600 hover:text-blue-600"
+            >
+              <Download className="h-5 w-5 shrink-0" />
+              My certificate
+            </button>
+            <button
+              type="button"
+              onClick={() => setMemberPortalOpen(false)}
+              className="py-2 text-center text-sm font-bold text-slate-400 hover:text-slate-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+  const OrientationExperience = () =>
+    orientationActive && (
+      <div className="animate-in fade-in duration-300 fixed inset-0 z-[200] flex flex-col overflow-hidden bg-white">
+        <div className="h-1.5 w-full shrink-0 bg-slate-100">
+          <div
+            className="h-full bg-blue-600 transition-all duration-700 ease-out"
+            style={{ width: `${((orientationStep + 1) / orientationContent.length) * 100}%` }}
+          />
+        </div>
+        <div className="flex shrink-0 items-center justify-between px-6 py-6">
+          <div className="flex items-center gap-2">
+            <div className="rounded-lg bg-blue-600 p-1.5 text-xs font-black text-white">B2C</div>
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Guided Intro</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setOrientationActive(false);
+              setOrientationStep(0);
+            }}
+            className="rounded-full p-2 transition-colors hover:bg-slate-100"
+          >
+            <X className="h-6 w-6 text-slate-400" />
+          </button>
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8 text-center">
+          <div key={orientationStep} className="animate-in slide-in-from-right duration-500 max-w-2xl">
+            <div className="mb-8 inline-block rounded-3xl bg-blue-50/50 p-6 text-blue-600">{orientationContent[orientationStep].icon}</div>
+            <h2 className="mb-6 text-4xl font-black leading-tight tracking-tighter text-slate-900 md:text-6xl">
+              {orientationContent[orientationStep].title}
+            </h2>
+            <p className="mb-8 text-lg font-medium leading-relaxed text-slate-500 md:text-xl">{orientationContent[orientationStep].desc}</p>
+            <div className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-[10px] font-black uppercase tracking-widest text-white">
+              {orientationContent[orientationStep].highlight}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-slate-100 bg-white p-8">
+          <button
+            type="button"
+            onClick={() => setOrientationStep((s) => Math.max(0, s - 1))}
+            disabled={orientationStep === 0}
+            className={`text-sm font-black transition-all ${orientationStep === 0 ? "invisible opacity-0" : "text-slate-400"}`}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (orientationStep === orientationContent.length - 1) {
+                setOrientationActive(false);
+                setOrientationStep(0);
+                startPmes();
+              } else {
+                setOrientationStep(orientationStep + 1);
+              }
+            }}
+            className="transform rounded-full bg-blue-600 px-10 py-5 font-black text-white shadow-xl transition-all active:scale-95"
+          >
+            {orientationStep === orientationContent.length - 1 ? "Start PMES" : "Continue"}
+          </button>
+        </div>
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen overflow-x-hidden bg-white pb-32 font-sans text-slate-900">
+      <MemberPortalModal />
+      <OrientationExperience />
+      <PrivacyModal />
+
+      {showNotification && (
+        <div className="animate-in slide-in-from-left-full duration-500 fixed bottom-10 left-6 z-[60]">
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 text-white shadow-2xl backdrop-blur-xl">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="mb-1 text-[10px] font-black uppercase leading-none tracking-widest text-blue-400">Recent Activity</p>
+              <p className="text-sm font-bold">{lastSignup}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <nav
+        className={`fixed left-0 top-0 z-50 w-full transition-all duration-300 ${
+          scrolled ? "border-b border-slate-100 bg-white/70 py-3 backdrop-blur-xl" : "bg-transparent py-5"
+        }`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl bg-blue-600 p-2.5 text-xl font-black text-white shadow-lg shadow-blue-100">B2C</div>
+            <div className="flex flex-col leading-none">
+              <span className="text-xl font-black tracking-tighter">Cooperative</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-600">Cebu Visayas</span>
+            </div>
+          </div>
+          <div className="hidden items-center space-x-8 text-sm font-bold lg:flex">
+            <div className="flex items-center gap-2 text-slate-600">
+              <History className="h-4 w-4 text-blue-600" />
+              <span className="text-blue-600">{totalMembers} Members</span> as of {formattedYesterday}
+            </div>
+            <button
+              type="button"
+              onClick={() => setLanguage(language === "en" ? "ceb" : "en")}
+              className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest"
+            >
+              {language.toUpperCase()}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMemberPortalOpen(true)}
+              className="text-slate-500 transition-colors hover:text-blue-600"
+            >
+              Portal
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                startPmes();
+                setIsMenuOpen(false);
+              }}
+              className="transform rounded-2xl bg-blue-600 px-8 py-3 text-sm font-black text-white shadow-xl shadow-blue-100 transition-all hover:-translate-y-0.5 hover:bg-blue-700"
+            >
+              Join Us
+            </button>
+          </div>
+          <button type="button" className="p-2 text-slate-600 lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-expanded={isMenuOpen}>
+            <Menu />
+          </button>
+        </div>
+        {isMenuOpen && (
+          <div className="border-b border-slate-100 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl lg:hidden">
+            <div className="flex flex-col gap-3 text-sm font-bold">
+              <div className="flex items-center gap-2 text-slate-600">
+                <History className="h-4 w-4 shrink-0 text-blue-600" />
+                <span>
+                  <span className="text-blue-600">{totalMembers} Members</span> as of {formattedYesterday}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLanguage(language === "en" ? "ceb" : "en")}
+                className="w-full rounded-lg border border-slate-200 bg-slate-100 py-2 text-[10px] font-black uppercase tracking-widest"
+              >
+                {language.toUpperCase()}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMemberPortalOpen(true)}
+                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-slate-700"
+              >
+                <LogIn className="h-4 w-4" />
+                Portal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  startPmes();
+                  setIsMenuOpen(false);
+                }}
+                className="rounded-xl bg-blue-600 py-3 font-black text-white shadow-lg"
+              >
+                Join Us
+              </button>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      <section className="relative overflow-hidden bg-white pb-12 pt-32 lg:pt-48">
+        <div className="mx-auto flex max-w-7xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
+          <div className="animate-in slide-in-from-top-4 duration-1000 mb-10 inline-flex items-center gap-2 rounded-full border border-blue-100/50 bg-blue-50 px-5 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 shadow-sm">
+            <ShieldCheck className="h-3.5 w-3.5" /> Established Excellence • Para sa Sugbo
+          </div>
+          <h1 className="mb-8 max-w-5xl text-5xl font-black leading-[0.9] tracking-tighter text-slate-900 drop-shadow-sm md:text-8xl">
+            Shop Smarter. <span className="text-blue-600">Grow Together.</span>
+          </h1>
+          <p className="mb-12 max-w-2xl text-lg font-medium leading-relaxed text-slate-500 md:text-2xl">
+            Join Visayas&apos; first{" "}
+            <span className="font-bold text-slate-900 underline decoration-4 decoration-blue-200">digital-led</span> consumers
+            cooperative. Owned by you, built for the community.
+          </p>
+          <div className="mb-20 flex flex-col gap-5 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => {
+                setOrientationStep(0);
+                setOrientationActive(true);
+              }}
+              className="group flex transform items-center justify-center gap-4 rounded-[32px] bg-blue-600 px-12 py-6 text-xl font-black text-white shadow-2xl shadow-blue-100 transition-all hover:-translate-y-1 hover:bg-blue-700"
+            >
+              <PlayCircle className="h-7 w-7" /> {t.orientationBtn}
+            </button>
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 rounded-[32px] border-2 border-slate-200 bg-white px-12 py-6 text-xl font-black text-slate-900 transition-all hover:border-blue-600 hover:text-blue-600"
+            >
+              {t.shopBtn}
+            </button>
+          </div>
+          <div className="animate-in fade-in zoom-in-95 duration-1000 w-full max-w-5xl">
+            <img src={heroSrc} alt="B2C Market" className="max-h-[500px] w-full object-contain drop-shadow-2xl" />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-slate-100 bg-slate-50/50 py-20">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
+          {[
+            { label: "Digital Pioneers", val: "First", sub: "In Visayas", icon: <Rocket className="h-5 w-5 text-blue-600" /> },
+            { label: "Legitimacy", val: "CDA Reg", sub: "Oct 2023", icon: <ShieldCheck className="h-5 w-5 text-blue-600" /> },
+            { label: "Verified Count", val: totalMembers, sub: `As of ${formattedYesterday}`, icon: <History className="h-5 w-5 text-blue-600" /> },
+            { label: "Ownership", val: `₱${INITIAL_INVESTMENT}`, sub: "Minimum Entry", icon: <Building2 className="h-5 w-5 text-blue-600" /> },
+          ].map((s, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-4 rounded-3xl border border-slate-100/50 bg-white p-6 shadow-sm transition-all hover:translate-y-[-4px]"
+            >
+              <div className="shrink-0 rounded-2xl bg-blue-50 p-3">{s.icon}</div>
+              <div>
+                <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-blue-600">{s.label}</p>
+                <p className="text-2xl font-black tracking-tighter text-slate-900">{s.val}</p>
+                <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">{s.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="relative bg-slate-900 py-32 text-white">
+        <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-20 px-4 sm:px-6 lg:flex-row lg:px-8">
+          <div className="lg:w-1/2">
+            <h2 className="mb-8 text-4xl font-black leading-tight tracking-tighter md:text-6xl">
+              Ready to become <br />
+              <span className="text-blue-500">an owner?</span>
+            </h2>
+            <div className="space-y-6">
+              {[
+                { step: "01", title: "Complete PMES", desc: "Watch the online orientation to understand your rights." },
+                { step: "02", title: "Submit LOI", desc: "Submit your digital Letter of Intent through our portal." },
+                { step: "03", title: "Secure Shares", desc: `Invest ₱${INITIAL_INVESTMENT} to unlock dividends and refunds.` },
+              ].map((s, i) => (
+                <div key={i} className="group flex gap-6">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 font-black text-blue-500 transition-all group-hover:bg-blue-600 group-hover:text-white">
+                    {s.step}
+                  </div>
+                  <div>
+                    <h4 className="mb-1 text-xl font-black">{s.title}</h4>
+                    <p className="text-sm font-medium text-slate-400">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="w-full lg:w-1/2">
+            <div className="relative overflow-hidden rounded-[48px] bg-white p-12 text-slate-900 shadow-2xl">
+              <Quote className="absolute right-8 top-8 h-12 w-12 text-blue-50 opacity-10" />
+              <p className="mb-8 text-2xl font-bold leading-relaxed text-slate-800">
+                &quot;Being part of B2C Coop is more than just discounts. It&apos;s knowing that every cent I spend supports my
+                community.&quot;
+              </p>
+              <button
+                type="button"
+                onClick={startPmes}
+                className="group mt-10 flex w-full items-center justify-center gap-2 rounded-3xl bg-slate-900 py-5 text-lg font-black text-white shadow-xl transition-all hover:bg-slate-800"
+              >
+                Apply Now <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-100 bg-white py-24">
+        <div className="mx-auto grid max-w-7xl gap-16 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
+          <div className="col-span-1">
+            <div className="mb-8 flex items-center gap-3">
+              <div className="rounded-xl bg-blue-600 p-2 text-sm font-black text-white">B2C</div>
+              <span className="text-2xl font-black tracking-tighter">Cooperative</span>
+            </div>
+            <p className="mb-8 text-lg font-medium leading-relaxed text-slate-500">
+              Elevating standards of living through Access, Ownership, Control, and Opportunities.
+            </p>
+            <div className="inline-flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 px-4 text-[10px] font-black uppercase leading-none tracking-widest text-slate-400">
+              <ShieldCheck className="h-4 w-4 text-blue-600" /> {t.regNo}
+            </div>
+          </div>
+          <div className="space-y-6">
+            <h5 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Governance</h5>
+            <ul className="space-y-4 text-sm font-bold text-slate-500">
+              <li>
+                <button type="button" onClick={() => setPrivacyActive(true)} className="transition-colors hover:text-blue-600">
+                  Data Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button type="button" className="transition-colors hover:text-blue-600">
+                  By-Laws
+                </button>
+              </li>
+              <li>
+                <button type="button" className="transition-colors hover:text-blue-600">
+                  Member Charter
+                </button>
+              </li>
+              {onAdminPortal && (
+                <li>
+                  <button type="button" onClick={() => onAdminPortal()} className="transition-colors hover:text-blue-600">
+                    Admin portal
+                  </button>
+                </li>
+              )}
+            </ul>
+          </div>
+          <div className="space-y-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <p>© 2026 B2C Consumers Cooperative.</p>
+            <p>Cebu City, Philippines.</p>
+            <div className="mt-8 flex gap-4">
+              <button type="button" className="text-blue-600">
+                Facebook
+              </button>
+              <button type="button" className="text-blue-600">
+                Viber
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

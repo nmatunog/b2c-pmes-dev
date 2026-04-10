@@ -4,15 +4,12 @@ import {
   AlertCircle,
   Briefcase,
   CheckCircle2,
-  Download,
   FileText,
   Loader2,
   Lock,
   Printer,
-  ShieldCheck as AdminIcon,
   ShieldAlert,
   Sparkles,
-  UserPlus,
 } from "lucide-react";
 import { modules } from "./constants/modules";
 import { questionPool } from "./constants/questionPool";
@@ -26,6 +23,7 @@ import { PmesService } from "./services/pmesService";
 import { requestTts } from "./services/ttsApi";
 import { globalStyles } from "./styles/globalStyles";
 import { PRIVACY_AGREEMENT_PARAGRAPHS } from "./constants/privacyAgreement";
+import LandingPage from "./landingpage/landing.jsx";
 
 /**
  * Gemini prebuilt voices (lively / energetic family): Sadachbia = lively, Zephyr = bright,
@@ -206,6 +204,16 @@ export default function App() {
     }
   };
 
+  const handleAdminPortal = () => {
+    const mm = String(new Date().getMonth() + 1).padStart(2, "0");
+    const dd = String(new Date().getDate()).padStart(2, "0");
+    const pass = prompt("Enter Admin Code:");
+    if (pass === `B2C${mm}${dd}${new Date().getFullYear()}`) {
+      PmesService.getAllRecords(db, appId, pass).then(setMasterList).catch(() => null);
+      setAppState("admin_dashboard");
+    }
+  };
+
   const handleRetrieval = async () => {
     setLoading(true);
     setError(null);
@@ -232,38 +240,14 @@ export default function App() {
 
   if (appState === "landing")
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#004aad]/5 p-8">
+      <>
         <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <div className="card-senior w-full max-w-4xl space-y-12 text-center">
-          <img
-            src="/b2c-logo.png"
-            alt="B2C Coop Philippines"
-            className="mx-auto h-36 w-auto object-contain drop-shadow-sm sm:h-44"
-            width={220}
-            height={176}
-          />
-          <h1 className="text-5xl font-black uppercase tracking-tighter text-[#004aad] sm:text-6xl">B2C Consumers Cooperative</h1>
-          <p className="px-10 text-3xl font-bold text-slate-600">Official Member Education Portal</p>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <button onClick={() => setAppState("consent")} className="btn-primary py-10 text-2xl"><UserPlus className="h-10 w-10" />START PMES</button>
-            <button onClick={() => setAppState("login_retrieval")} className="btn-secondary py-10 text-2xl"><Download className="h-10 w-10" />MY CERTIFICATE</button>
-          </div>
-          <button
-            onClick={() => {
-              const mm = String(new Date().getMonth() + 1).padStart(2, "0");
-              const dd = String(new Date().getDate()).padStart(2, "0");
-              const pass = prompt("Enter Admin Code:");
-              if (pass === `B2C${mm}${dd}${new Date().getFullYear()}`) {
-                PmesService.getAllRecords(db, appId, pass).then(setMasterList).catch(() => null);
-                setAppState("admin_dashboard");
-              }
-            }}
-            className="mx-auto flex items-center gap-2 font-bold text-slate-400 hover:text-[#004aad]"
-          >
-            <AdminIcon className="h-5 w-5" /> Admin Portal
-          </button>
-        </div>
-      </div>
+        <LandingPage
+          onStartPmes={() => setAppState("consent")}
+          onRetrieveCertificate={() => setAppState("login_retrieval")}
+          onAdminPortal={handleAdminPortal}
+        />
+      </>
     );
 
   if (appState === "seminar")
