@@ -601,29 +601,40 @@ export default function App() {
 
   if (isFirebaseConfigured && !sessionUser && MEMBER_AUTH_REQUIRED_STATES.has(appState)) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#004aad]/5 p-8">
+      <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
         <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <ShieldAlert className="h-16 w-16 text-[#004aad]" aria-hidden />
-        <p className="max-w-md text-center text-xl font-bold text-slate-700">
-          Sign in or create a member account to access PMES and member steps.
-        </p>
-        <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
-          <button type="button" onClick={() => setAppState("signup")} className="btn-primary flex flex-1 items-center justify-center gap-2 py-4 text-lg font-black">
-            <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
-            Create account
-          </button>
-          <button
-            type="button"
-            onClick={() => setAppState("login")}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white py-4 text-lg font-black text-slate-800 hover:border-[#004aad]"
-          >
-            <LogIn className="h-5 w-5 shrink-0" aria-hidden />
-            Log in
+        <div className="card-senior w-full max-w-md space-y-8">
+          <div className="text-center">
+            <UserPlus className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
+            <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Step 1 — your login</p>
+            <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Member access</h1>
+            <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
+              Sign in or create a member account to open PMES (privacy notice, seminar, and exam). One email and password for
+              certificates and future member tools.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <button
+              type="button"
+              onClick={() => setAppState("signup")}
+              className="btn-primary flex flex-1 items-center justify-center gap-2 py-5 text-lg font-black sm:text-xl"
+            >
+              <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
+              Create account
+            </button>
+            <button
+              type="button"
+              onClick={() => setAppState("login")}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-slate-300 bg-white py-5 text-lg font-black text-slate-800 transition-colors hover:border-[#004aad] sm:text-xl"
+            >
+              <LogIn className="h-5 w-5 shrink-0" aria-hidden />
+              Log in
+            </button>
+          </div>
+          <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
+            Back to home
           </button>
         </div>
-        <button type="button" onClick={() => setAppState("landing")} className="font-bold text-slate-500 hover:text-[#004aad]">
-          Back to home
-        </button>
       </div>
     );
   }
