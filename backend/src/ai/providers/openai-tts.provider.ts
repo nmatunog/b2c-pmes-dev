@@ -15,7 +15,7 @@ export class OpenaiTtsProvider implements TtsProvider {
       throw new InternalServerErrorException("OPENAI_API_KEY is not configured");
     }
     const model = this.config.get<string>("OPENAI_TTS_MODEL") ?? "tts-1";
-    const mapped = OPENAI_VOICES.has(voice.toLowerCase()) ? voice.toLowerCase() : "nova";
+    const mapped = OPENAI_VOICES.has(voice.toLowerCase()) ? voice.toLowerCase() : "shimmer";
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
       headers: {
@@ -24,7 +24,7 @@ export class OpenaiTtsProvider implements TtsProvider {
       },
       body: JSON.stringify({
         model,
-        input: `Speak as Ka-uban, warm and clear. Script: ${text}`,
+        input: text,
         voice: mapped,
         response_format: "mp3",
       }),

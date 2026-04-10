@@ -35,7 +35,8 @@ export const PmesService = {
         }),
       });
       if (!response.ok) {
-        throw new Error((await response.text()) || "PMES save failed");
+        const detail = await response.text();
+        throw new Error(detail?.trim() || `PMES save failed (${response.status})`);
       }
       const row = await response.json();
       return { success: true, id: row.id };

@@ -1,4 +1,73 @@
+import { useEffect } from "react";
 import { ChevronDown, LayoutList, Loader2, Volume2, Zap } from "lucide-react";
+import { KaUbanGuide } from "./KaUbanGuide";
+
+/** Turn module outline strings into lists and paragraphs for scanability and lower cognitive load. */
+function OutlineBody({ outline }) {
+  const rawLines = outline.split("\n");
+  const chunks = [];
+  let bulletBuf = [];
+
+  const flushBullets = () => {
+    if (bulletBuf.length === 0) return;
+    chunks.push({ kind: "bullets", items: [...bulletBuf] });
+    bulletBuf = [];
+  };
+
+  for (const line of rawLines) {
+    const t = line.trim();
+    const bulletMatch = t.match(/^[•\-\*]\s*(.+)$/);
+    if (bulletMatch) {
+      bulletBuf.push(bulletMatch[1]);
+      continue;
+    }
+    flushBullets();
+    if (!t) continue;
+    const numMatch = t.match(/^(\d+)\.\s*(.+)$/);
+    if (numMatch) {
+      chunks.push({ kind: "ordered", n: numMatch[1], text: numMatch[2] });
+    } else {
+      chunks.push({ kind: "text", text: t });
+    }
+  }
+  flushBullets();
+
+  return (
+    <div className="space-y-5">
+      {chunks.map((chunk, i) => {
+        if (chunk.kind === "bullets") {
+          return (
+            <ul key={i} className="list-none space-y-3.5 border-l-2 border-[#004aad]/25 pl-5">
+              {chunk.items.map((text, j) => (
+                <li key={j} className="text-[1.0625rem] font-normal leading-relaxed text-slate-700 md:text-lg">
+                  {text}
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        if (chunk.kind === "ordered") {
+          return (
+            <div
+              key={i}
+              className="flex gap-3 text-[1.0625rem] font-normal leading-relaxed text-slate-700 md:text-lg"
+            >
+              <span className="mt-0.5 min-w-[2rem] font-semibold tabular-nums text-[#004aad]" aria-hidden>
+                {chunk.n}.
+              </span>
+              <span>{chunk.text}</span>
+            </div>
+          );
+        }
+        return (
+          <p key={i} className="text-[1.0625rem] font-medium leading-relaxed text-slate-800 md:text-lg">
+            {chunk.text}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 export function NarrativeCard({
   title,
@@ -7,80 +76,150 @@ export function NarrativeCard({
   onClick,
   index,
   script,
+  courseAudioEnabled,
+  prefetchTts,
   playTts,
   isSpeaking,
   audioLoading,
 }) {
+  const panelId = `narrative-panel-${index}`;
+  const headerId = `narrative-header-${index}`;
+  const ttsKey = `${index}-${title}`;
+
+  /** Prefetch TTS only when voice mode is on. */
+  useEffect(() => {
+    if (!courseAudioEnabled || !isOpen || !script?.trim() || !prefetchTts) return;
+    prefetchTts(script, ttsKey);
+  }, [courseAudioEnabled, isOpen, script, prefetchTts, ttsKey]);
+
   return (
     <div
-      className={`mb-6 overflow-hidden rounded-[2.5rem] border-4 transition-all duration-300 ${
+      className={`mb-5 overflow-hidden rounded-3xl border-2 transition-all duration-300 md:rounded-[2rem] ${
         isOpen
-          ? "scale-[1.01] border-[#004aad] bg-white shadow-xl"
-          : "border-slate-100 bg-slate-50 hover:border-[#004aad]/30"
+          ? "border-[#004aad] bg-white shadow-[0_12px_40px_-12px_rgba(0,74,173,0.25)]"
+          : "border-slate-200/90 bg-slate-50/80 hover:border-[#004aad]/35 hover:bg-white"
       }`}
     >
-      <button onClick={onClick} className="flex w-full items-center justify-between p-8 text-left">
-        <span
-          className={`flex items-center gap-6 text-2xl font-extrabold md:text-3xl ${
-            isOpen ? "text-[#004aad]" : "text-slate-700"
-          }`}
-        >
+      <button
+        type="button"
+        id={headerId}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={onClick}
+        className="flex w-full items-start justify-between gap-4 p-5 text-left md:items-center md:p-7"
+      >
+        <span className="flex min-w-0 flex-1 items-start gap-4 md:items-center md:gap-5">
           <span
-            className={`flex h-14 w-14 items-center justify-center rounded-full border-4 text-lg font-black ${
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold md:h-12 md:w-12 md:text-base ${
               isOpen
-                ? "border-[#004aad] bg-[#004aad] text-white"
-                : "border-slate-100 bg-white text-slate-400"
+                ? "bg-[#004aad] text-white shadow-md shadow-[#004aad]/30"
+                : "border-2 border-slate-200 bg-white text-slate-500"
             }`}
+            aria-hidden
           >
             {index + 1}
           </span>
-          {title}
+          <span className="min-w-0">
+            <span
+              className={`block text-lg font-bold leading-snug tracking-tight md:text-xl ${
+                isOpen ? "text-[#004aad]" : "text-slate-800"
+              }`}
+            >
+              {title}
+            </span>
+            <span className="mt-1 block text-sm font-medium text-slate-500">
+              {isOpen
+                ? "Tap to collapse"
+                : courseAudioEnabled
+                  ? "Tap to read key points & listen"
+                  : "Tap to read key points (text guide beside slide)"}
+            </span>
+          </span>
         </span>
         <ChevronDown
-          className={`h-8 w-8 transition-transform duration-500 ${
-            isOpen ? "rotate-180 text-[#004aad]" : "text-slate-300"
+          className={`mt-1 h-6 w-6 shrink-0 transition-transform duration-300 md:h-7 md:w-7 ${
+            isOpen ? "rotate-180 text-[#004aad]" : "text-slate-400"
           }`}
+          aria-hidden
         />
       </button>
 
       <div
-        className={`transition-all duration-500 ease-in-out ${
-          isOpen ? "max-h-[5000px] opacity-100" : "max-h-0 overflow-hidden opacity-0"
+        id={panelId}
+        role="region"
+        aria-labelledby={headerId}
+        className={`transition-all duration-300 ease-out ${
+          isOpen ? "max-h-[8000px] opacity-100" : "max-h-0 overflow-hidden opacity-0"
         }`}
       >
-        <div className="bg-white px-10 pb-12">
-          <div className="mb-10 rounded-3xl border-2 border-[#004aad]/10 bg-[#004aad]/5 p-8">
-            <div className="mb-4 flex items-center gap-3 text-xl font-black uppercase tracking-widest text-[#004aad]">
-              <LayoutList /> Key Outline
+        <div className="border-t border-slate-100 bg-white px-5 pb-6 pt-2 md:px-8 md:pb-8">
+          <div
+            className={
+              !courseAudioEnabled && isOpen
+                ? "lg:grid lg:grid-cols-12 lg:items-start lg:gap-6"
+                : ""
+            }
+          >
+            <div className={!courseAudioEnabled && isOpen ? "lg:col-span-7" : ""}>
+              <div className="rounded-2xl bg-gradient-to-b from-[#004aad]/[0.06] to-slate-50/80 p-5 md:p-7">
+                <div className="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#004aad]/90 md:text-sm">
+                  <LayoutList className="h-4 w-4 shrink-0 opacity-80" strokeWidth={2.5} aria-hidden />
+                  <span>Key points</span>
+                </div>
+                <OutlineBody outline={outline} />
+              </div>
             </div>
-            <div className="whitespace-pre-line text-2xl font-bold leading-relaxed text-slate-800 md:text-3xl">
-              {outline}
-            </div>
+
+            {!courseAudioEnabled && isOpen ? (
+              <div className="mt-6 min-w-0 lg:col-span-5 lg:mt-0">
+                <div className="lg:sticky lg:top-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Your guide (no sound)
+                  </p>
+                  <KaUbanGuide key={ttsKey} script={script} active={isOpen} />
+                </div>
+              </div>
+            ) : null}
           </div>
 
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              playTts(script, `${index}-${title}`);
-            }}
-            disabled={isSpeaking || audioLoading}
-            className={`flex w-full items-center justify-center gap-5 rounded-[2rem] px-10 py-6 text-2xl font-black transition-all md:w-auto ${
-              isSpeaking
-                ? "animate-pulse bg-emerald-500 text-white shadow-lg"
-                : audioLoading
-                  ? "bg-amber-100 text-amber-600"
-                  : "bg-[#004aad] text-white shadow-xl active:scale-95 hover:bg-[#003380]"
-            }`}
-          >
-            {isSpeaking ? (
-              <Zap className="animate-bounce" />
-            ) : audioLoading ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Volume2 />
-            )}
-            {isSpeaking ? "Ka-uban is Speaking..." : audioLoading ? "Preparing voice..." : "HEAR FROM KA-UBAN"}
-          </button>
+          {courseAudioEnabled ? (
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  playTts(script, ttsKey);
+                }}
+                disabled={isSpeaking || audioLoading}
+                aria-busy={audioLoading}
+                className={`flex min-h-[3.25rem] w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 text-base font-semibold tracking-wide transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004aad] md:w-auto md:min-w-[min(100%,20rem)] md:px-8 md:text-lg ${
+                  isSpeaking
+                    ? "animate-pulse bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
+                    : audioLoading
+                      ? "cursor-wait bg-sky-50 text-sky-900 ring-1 ring-sky-200"
+                      : "bg-[#004aad] text-white shadow-lg shadow-[#004aad]/25 hover:bg-[#003d99] active:scale-[0.99]"
+                } disabled:opacity-60`}
+              >
+                {isSpeaking ? (
+                  <Zap className="h-5 w-5 shrink-0 animate-pulse" aria-hidden />
+                ) : audioLoading ? (
+                  <Loader2 className="h-5 w-5 shrink-0 animate-spin" aria-hidden />
+                ) : (
+                  <Volume2 className="h-5 w-5 shrink-0" aria-hidden />
+                )}
+                <span>
+                  {isSpeaking
+                    ? "Ka-uban is speaking…"
+                    : audioLoading
+                      ? "Getting voice ready…"
+                      : "Hear from Ka-uban"}
+                </span>
+              </button>
+              <p className="text-center text-xs text-slate-500 md:text-left">
+                First play may take a few seconds; replay is instant. Audio loads in the background when you open a section.
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

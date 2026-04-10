@@ -8,8 +8,11 @@ import { NoopTtsProvider } from "./providers/noop-tts.provider";
 import { OpenaiTtsProvider } from "./providers/openai-tts.provider";
 import type { TtsSynthesisResult } from "./interfaces/tts-provider.interface";
 
-const DEFAULT_VOICE = "Aoede";
+/** Gemini: Sadachbia = lively (see Google prebuilt TTS voice list). */
+const DEFAULT_VOICE = "Sadachbia";
 const CACHE_MAX = 64;
+/** Bump when synthesis behavior changes (e.g. prompt text) so old cached audio is not reused. */
+const TTS_CACHE_VERSION = 2;
 
 @Injectable()
 export class AiService {
@@ -62,6 +65,8 @@ export class AiService {
   }
 
   private cacheKey(providerId: string, text: string, voice: string): string {
-    return createHash("sha256").update(`${providerId}|${voice}|${text}`).digest("hex");
+    return createHash("sha256")
+      .update(`${TTS_CACHE_VERSION}|${providerId}|${voice}|${text}`)
+      .digest("hex");
   }
 }

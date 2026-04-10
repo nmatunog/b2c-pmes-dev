@@ -11,6 +11,9 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
 };
 
+/** False when .env is missing keys — skip anonymous sign-in to avoid Identity Toolkit noise. */
+export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey?.trim() && firebaseConfig.projectId?.trim());
+
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);

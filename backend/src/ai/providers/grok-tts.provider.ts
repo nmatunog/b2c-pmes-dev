@@ -14,7 +14,7 @@ export class GrokTtsProvider implements TtsProvider {
     if (!apiKey?.trim()) {
       throw new InternalServerErrorException("XAI_API_KEY is not configured");
     }
-    const voiceId = XAI_VOICES.has(voice.toLowerCase()) ? voice.toLowerCase() : "ara";
+    const voiceId = XAI_VOICES.has(voice.toLowerCase()) ? voice.toLowerCase() : "eve";
     const response = await fetch("https://api.x.ai/v1/tts", {
       method: "POST",
       headers: {
@@ -22,7 +22,7 @@ export class GrokTtsProvider implements TtsProvider {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        text: `Speak as Ka-uban. Script: ${text}`,
+        text,
         voice_id: voiceId,
         language: "en",
         output_format: {

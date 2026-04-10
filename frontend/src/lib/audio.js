@@ -1,3 +1,38 @@
+/**
+ * Wait until the browser can start playback without stalling (reduces silent gaps after fetch).
+ */
+export function preloadAudioUrl(url) {
+  return new Promise((resolve, reject) => {
+    const audio = new Audio();
+    audio.preload = "auto";
+    let settled = false;
+    const cleanup = () => {
+      audio.removeEventListener("canplay", onReady);
+      audio.removeEventListener("error", onErr);
+    };
+    const onReady = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(audio);
+    };
+    const onErr = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("Audio failed to decode"));
+    };
+    audio.addEventListener("canplay", onReady, { once: true });
+    audio.addEventListener("error", onErr, { once: true });
+    audio.src = url;
+    if (audio.readyState >= 3) {
+      queueMicrotask(onReady);
+    } else {
+      audio.load();
+    }
+  });
+}
+
 export function pcmToWav(pcmData, sampleRate = 24000) {
   const buffer = new ArrayBuffer(44 + pcmData.length * 2);
   const view = new DataView(buffer);

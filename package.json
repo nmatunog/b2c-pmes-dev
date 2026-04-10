@@ -1,0 +1,9 @@
+{
+  "name": "b2c-pmes",
+  "private": true,
+  "description": "Workspace helper scripts (backend and frontend live in subfolders).",
+  "scripts": {
+    "restart": "bash scripts/restart-dev.sh",
+    "dev": "bash scripts/restart-dev.sh"
+  }
+}
