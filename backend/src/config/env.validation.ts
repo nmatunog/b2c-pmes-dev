@@ -20,8 +20,9 @@ export const envValidationSchema = Joi.object({
 
   /** HS256 secret for POST /auth/admin/login tokens (min 32 chars). */
   ADMIN_JWT_SECRET: Joi.string().min(32).required(),
-  /** Optional fixed code (e.g. CI) — if set, accepted in addition to daily B2Cmmddyyyy. */
-  ADMIN_STATIC_CODE: Joi.string().allow(""),
+  /** Admin dashboard sign-in (bcrypt hash). Generate: `node scripts/hash-admin-password.js 'your-password'`. */
+  ADMIN_EMAIL: Joi.string().email().required(),
+  ADMIN_PASSWORD_HASH: Joi.string().min(20).required(),
 })
   .custom((value, helpers) => {
     const v = value as {

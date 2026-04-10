@@ -129,6 +129,7 @@ export default function App() {
   const [formData, setFormData] = useState({ fullName: "", gender: "", email: "", phone: "", dob: "" });
   const [loiData, setLoiData] = useState({ address: "", occupation: "", employer: "", initialCapital: "", agreement: false });
   const [retrievalData, setRetrievalData] = useState({ email: "", dob: "" });
+  const [adminCreds, setAdminCreds] = useState({ email: "", password: "" });
   const [currentStep, setCurrentStep] = useState(0);
   const [openCardIndex, setOpenCardIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -315,7 +316,8 @@ export default function App() {
   useEffect(() => {
     if (!authReady || !user || !isFirebaseConfigured) return undefined;
     if (hydratingRef.current) return undefined;
-    if (appState === "signup" || appState === "login" || appState === "admin_dashboard") return undefined;
+    if (appState === "signup" || appState === "login" || appState === "admin_login" || appState === "admin_dashboard")
+      return undefined;
 
     const persistStates = new Set([...RESUMABLE_APP_STATES, "landing", "login_retrieval", "payment_portal"]);
     if (!persistStates.has(appState)) return undefined;
@@ -457,12 +459,28 @@ export default function App() {
   };
 
   const handleAdminPortal = () => {
-    const mm = String(new Date().getMonth() + 1).padStart(2, "0");
-    const dd = String(new Date().getDate()).padStart(2, "0");
-    const pass = prompt("Enter Admin Code:");
-    if (pass === `B2C${mm}${dd}${new Date().getFullYear()}`) {
-      PmesService.getAllRecords(db, appId, pass).then(setMasterList).catch(() => null);
+    setError(null);
+    setAdminCreds({ email: "", password: "" });
+    setAppState("admin_login");
+  };
+
+  const handleAdminLoginSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+    const useApi = Boolean((import.meta.env.VITE_API_BASE_URL || "").trim());
+    if (!useApi) {
+      setError("Set VITE_API_BASE_URL (e.g. http://localhost:3000) in frontend/.env for admin sign-in.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const list = await PmesService.getAllRecords(db, appId, adminCreds);
+      setMasterList(Array.isArray(list) ? list : []);
       setAppState("admin_dashboard");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Admin sign-in failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1266,6 +1284,56 @@ export default function App() {
     );
   }
 
+  if (appState === "admin_login")
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        <form onSubmit={handleAdminLoginSubmit} className="card-senior w-full max-w-md space-y-8">
+          <div className="text-center">
+            <Briefcase className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
+            <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Staff access</p>
+            <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Admin sign in</h1>
+            <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
+              Use the admin email and password configured on the API server (backend/.env).
+            </p>
+          </div>
+          {error && <div className="rounded-2xl bg-amber-50 p-4 text-center font-bold text-amber-900">{error}</div>}
+          <div className="relative">
+            <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+            <input
+              type="email"
+              autoComplete="username"
+              className="input-field pl-12"
+              placeholder="Admin email"
+              value={adminCreds.email}
+              onChange={(e) => setAdminCreds((c) => ({ ...c, email: e.target.value }))}
+              required
+            />
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+            <input
+              type="password"
+              autoComplete="current-password"
+              className="input-field pl-12"
+              placeholder="Password"
+              value={adminCreds.password}
+              onChange={(e) => setAdminCreds((c) => ({ ...c, password: e.target.value }))}
+              required
+              minLength={6}
+            />
+          </div>
+          <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg sm:text-xl">
+            {loading ? <Loader2 className="animate-spin" /> : null}
+            Open master list
+          </button>
+          <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
+            Back to home
+          </button>
+        </form>
+      </div>
+    );
+
   if (appState === "admin_dashboard")
     return (
       <div className="min-h-screen bg-slate-50 p-4 sm:p-8 lg:p-12">
@@ -1283,6 +1351,7 @@ export default function App() {
               type="button"
               onClick={() => {
                 setMasterList([]);
+                setAdminCreds({ email: "", password: "" });
                 setAppState("landing");
               }}
               className="shrink-0 rounded-xl bg-white/20 px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-white/30"
@@ -1306,7 +1375,7 @@ export default function App() {
                 {masterList.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-12 text-center text-lg font-semibold text-slate-500">
-                      No records loaded. Close and use Admin Portal with a valid code again.
+                      No records loaded. Sign in again from Admin portal or check the API.
                     </td>
                   </tr>
                 ) : (

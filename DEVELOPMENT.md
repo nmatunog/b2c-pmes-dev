@@ -95,7 +95,7 @@ Wait until the container is healthy (`docker compose ps` or `docker-compose ps`)
 
 | Method | Path | Notes |
 |--------|------|--------|
-| `POST` | `/auth/admin/login` | Body: `{ "code": "B2Cmmddyyyy" }` (or `ADMIN_STATIC_CODE`) → `{ accessToken }` |
+| `POST` | `/auth/admin/login` | Body: `{ "email", "password" }` (must match `ADMIN_EMAIL` + bcrypt `ADMIN_PASSWORD_HASH` in `backend/.env`) → `{ accessToken }` |
 | `POST` | `/pmes/submit` | Body: `fullName`, `email`, `phone`, `dob`, `gender`, `score`, `passed` |
 | `POST` | `/pmes/loi` | Body: `email`, `address`, `occupation`, `employer`, `initialCapital` |
 | `GET` | `/pmes/certificate?email=&dob=` | 404 if none; returns flat record for certificate UI |
@@ -164,7 +164,8 @@ Never commit `frontend/.env`. Copy from `.env.example` only.
 | `XAI_API_KEY` | Required when `AI_PROVIDER=grok`. |
 | `GEMINI_TTS_MODEL` / `OPENAI_TTS_MODEL` | Optional model overrides. |
 | `ADMIN_JWT_SECRET` | **Required** (min 32 chars). Signs tokens from `POST /auth/admin/login`. |
-| `ADMIN_STATIC_CODE` | Optional; if set, accepted as admin login code (e.g. automation) in addition to daily `B2Cmmddyyyy`. |
+| `ADMIN_EMAIL` | **Required.** Admin dashboard sign-in email (checked server-side only). |
+| `ADMIN_PASSWORD_HASH` | **Required.** Bcrypt hash of the admin password. Generate: `cd backend && npm run hash-admin-password -- 'YourPassword'` and paste the line into `.env`. |
 
 ---
 

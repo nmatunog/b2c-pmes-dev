@@ -4,11 +4,11 @@ const apiBase = () => (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "
 
 const useRest = () => Boolean(apiBase());
 
-async function adminLogin(code) {
+async function adminLogin(email, password) {
   const response = await fetch(`${apiBase()}/auth/admin/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ email, password }),
   });
   if (!response.ok) {
     throw new Error((await response.text()) || "Admin login failed");
@@ -104,10 +104,12 @@ export const PmesService = {
     return records.find((record) => record.passed) || records[0] || null;
   },
 
-  async getAllRecords(db, appId, adminCode) {
+  async getAllRecords(db, appId, credentials) {
     if (useRest()) {
-      if (!adminCode?.trim()) throw new Error("Admin code required");
-      const accessToken = await adminLogin(adminCode.trim());
+      if (!credentials?.email?.trim() || credentials.password === undefined || credentials.password === "") {
+        throw new Error("Admin email and password required");
+      }
+      const accessToken = await adminLogin(credentials.email.trim(), credentials.password);
       const response = await fetch(`${apiBase()}/pmes/admin/records`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -116,8 +118,6 @@ export const PmesService = {
       }
       return response.json();
     }
-    const pmesRef = collection(db, "artifacts", appId, "public", "data", "pmes_records");
-    const snapshot = await getDocs(pmesRef);
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    throw new Error("Admin master list requires VITE_API_BASE_URL and Nest API with admin credentials in backend/.env");
   },
 };

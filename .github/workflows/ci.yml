@@ -39,6 +39,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/b2c_pmes
       ADMIN_JWT_SECRET: ci-test-jwt-secret-minimum-32-characters-x
+      ADMIN_EMAIL: admin-ci@example.com
+      # bcrypt hash of password: ci-admin-password
+      ADMIN_PASSWORD_HASH: '$2b$04$B8DwCqlPiCTsU8JVQ803KedcHcsEEud/H.Jud1Yznn1AsOGZ0I1ie'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
