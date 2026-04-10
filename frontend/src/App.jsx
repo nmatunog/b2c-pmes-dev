@@ -28,6 +28,7 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
+import { queueSignupLiveActivityFromDevice } from "./lib/signupLiveActivity.js";
 import { modules } from "./constants/modules";
 import { questionPool } from "./constants/questionPool";
 import { CourseAudioPreference, readCourseAudioPreference, writeCourseAudioPreference } from "./components/CourseAudioPreference";
@@ -704,6 +705,7 @@ export default function App() {
       }));
       setLogIn({ email, password: "" });
       setPmesPaused(false);
+      queueSignupLiveActivityFromDevice();
       setAppState("consent");
     } catch (err) {
       setError(mapFirebaseAuthError(err?.code));
