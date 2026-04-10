@@ -8,7 +8,8 @@ services:
     container_name: b2c-pmes-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      # Loaded from backend/.env (same file as Prisma). Default matches .env.example.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: b2c_pmes
     ports:
       - "5432:5432"
