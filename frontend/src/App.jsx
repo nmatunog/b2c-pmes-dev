@@ -1006,7 +1006,7 @@ export default function App() {
                           name="additional-name"
                           autoComplete="additional-name"
                           className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
-                          placeholder="Middle name (optional)"
+                          placeholder="Optional middle name"
                           value={signUp.middleName}
                           onChange={(e) => setSignUp((s) => ({ ...s, middleName: e.target.value }))}
                         />
@@ -1692,7 +1692,7 @@ export default function App() {
               <input
                 type="text"
                 className="input-field"
-                placeholder="Middle name (optional)"
+                placeholder="Optional middle name"
                 value={formData.middleName}
                 onChange={(event) =>
                   setFormData((prev) => {
