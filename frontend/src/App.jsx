@@ -48,6 +48,7 @@ import {
 } from "./constants/privacyAgreement";
 import LandingPage from "./landingpage/landing.jsx";
 import { IdentityBanner } from "./components/IdentityBanner.jsx";
+import { PortalHomeBar } from "./components/PortalHomeBar.jsx";
 import { B2CLogo } from "./components/B2CLogo.jsx";
 import { ReferralEngine } from "./components/ReferralEngine.jsx";
 import { PIONEER_POINTS_PER_JOIN } from "./lib/referralTiers.js";
@@ -826,11 +827,14 @@ export default function App() {
         }
       : null;
   const identityRibbon = <IdentityBanner member={memberIdentityForBanner} staff={staffForBanner} />;
+  /** Fixed Home control on every flow screen except the marketing homepage. */
+  const portalHomeBar =
+    appState !== "landing" ? <PortalHomeBar onGoHome={() => setAppState("landing")} /> : null;
 
   if (isFirebaseConfigured && !sessionUser && MEMBER_AUTH_REQUIRED_STATES.has(appState)) {
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen flex-col sm:flex-row">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
           <aside className="relative flex flex-col justify-start overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-12 text-white sm:w-[42%] sm:min-h-screen sm:shrink-0 sm:py-12 sm:pl-8 sm:pr-6 md:py-14 md:pl-10 md:pr-8 xl:py-16 xl:pl-14 xl:pr-10">
@@ -900,7 +904,7 @@ export default function App() {
     const isSignup = memberAuthMode === "signup";
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen flex-col sm:flex-row">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
           <aside className="relative flex flex-col justify-start overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-10 text-white sm:w-[42%] sm:min-h-screen sm:shrink-0 sm:py-14 sm:pl-8 sm:pr-6 md:pl-10 md:pr-8 xl:py-16 xl:pl-14 xl:pr-12">
@@ -1172,7 +1176,7 @@ export default function App() {
   if (appState === "landing")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <LandingPage
           isFirebaseConfigured={isFirebaseConfigured}
@@ -1245,7 +1249,7 @@ export default function App() {
   if (appState === "seminar")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="min-h-screen px-4 py-8 sm:px-6 md:py-12 lg:px-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl md:rounded-[2.5rem] lg:rounded-[3rem]">
@@ -1366,7 +1370,7 @@ export default function App() {
   if (appState === "exam")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="min-h-screen px-8 py-16">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="mx-auto mb-10 flex max-w-5xl items-center justify-between gap-4">
@@ -1419,7 +1423,7 @@ export default function App() {
   if (appState === "result")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen items-center justify-center p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-10 text-center">
@@ -1464,7 +1468,7 @@ export default function App() {
   if (appState === "certificate")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen flex-col items-center bg-slate-100 p-8 sm:p-20">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         {!activeRecord?.fullName ? (
@@ -1514,7 +1518,7 @@ export default function App() {
   if (appState === "loi_form")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-12">
@@ -1537,7 +1541,7 @@ export default function App() {
   if (appState === "loi_success")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen items-center justify-center p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-10 border-emerald-100 text-center">
@@ -1569,7 +1573,7 @@ export default function App() {
   if (appState === "payment_portal")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-2xl space-y-8 text-center">
@@ -1591,7 +1595,7 @@ export default function App() {
   if (appState === "login_retrieval")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen items-center justify-center p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
           <div className="card-senior w-full max-w-2xl space-y-10">
@@ -1613,7 +1617,7 @@ export default function App() {
   if (appState === "consent")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen items-center justify-center p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-4xl space-y-8">
@@ -1658,7 +1662,7 @@ export default function App() {
     const pioneerPoints = pioneerReferral.successfulJoinCount * PIONEER_POINTS_PER_JOIN;
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen flex-col items-center justify-center gap-10 p-4 pb-16 pt-8 sm:p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-3xl space-y-8">
@@ -1810,7 +1814,7 @@ export default function App() {
   if (appState === "admin_login")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <form onSubmit={handleAdminLoginSubmit} className="card-senior w-full max-w-md space-y-8">
@@ -1867,7 +1871,7 @@ export default function App() {
   if (appState === "admin_dashboard")
     return (
       <>
-        {identityRibbon}
+        {identityRibbon}{portalHomeBar}
         <div className="min-h-screen bg-slate-50 p-4 sm:p-8 lg:p-12">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl bg-white shadow-xl lg:rounded-[2.5rem]">
