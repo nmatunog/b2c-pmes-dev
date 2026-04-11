@@ -41,7 +41,11 @@ import { PmesService } from "./services/pmesService";
 import { clearPmesProgress, loadPmesProgress, savePmesProgress } from "./services/pmesProgressService";
 import { requestTts } from "./services/ttsApi";
 import { globalStyles } from "./styles/globalStyles";
-import { PRIVACY_AGREEMENT_PARAGRAPHS } from "./constants/privacyAgreement";
+import {
+  PRIVACY_NOTICE_HEADING,
+  PRIVACY_NOTICE_PARAGRAPHS,
+  PRIVACY_PMES_CONSENT_CLOSING,
+} from "./constants/privacyAgreement";
 import LandingPage from "./landingpage/landing.jsx";
 import { IdentityBanner } from "./components/IdentityBanner.jsx";
 import { B2CLogo } from "./components/B2CLogo.jsx";
@@ -1612,7 +1616,7 @@ export default function App() {
           <div className="text-center">
             <B2CLogo size="lg" align="center" className="mb-6" />
             <ShieldAlert className="mx-auto h-20 w-20 animate-bounce text-[#004aad]" />
-            <h1 className="mt-4 text-4xl font-black uppercase tracking-tighter text-[#004aad] sm:text-5xl">Privacy &amp; data notice</h1>
+            <h1 className="mt-4 text-4xl font-black uppercase tracking-tighter text-[#004aad] sm:text-5xl">{PRIVACY_NOTICE_HEADING}</h1>
             <p className="mt-3 text-lg font-semibold text-slate-600">Please read the following before continuing.</p>
           </div>
           <div
@@ -1620,9 +1624,10 @@ export default function App() {
             role="region"
             aria-label="Privacy agreement text"
           >
-            {PRIVACY_AGREEMENT_PARAGRAPHS.map((paragraph, index) => (
+            {PRIVACY_NOTICE_PARAGRAPHS.map((paragraph, index) => (
               <p key={index}>{paragraph}</p>
             ))}
+            <p>{PRIVACY_PMES_CONSENT_CLOSING}</p>
           </div>
           <button
             type="button"

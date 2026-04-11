@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { B2CLogo } from "../components/B2CLogo.jsx";
 import { COOPERATIVE_NAME, COOPERATIVE_REGION } from "../constants/cooperativeBrand.js";
+import { PRIVACY_NOTICE_HEADING, PRIVACY_NOTICE_PARAGRAPHS } from "../constants/privacyAgreement.js";
 import { BylawsModal } from "./BylawsModal.jsx";
 import { LandingFaqAssistant } from "./LandingFaqAssistant.jsx";
 import { pickRandomActivityMessage } from "./cebuActivityMock.js";
@@ -337,24 +338,13 @@ export default function LandingPage({
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
               <ShieldCheck className="h-6 w-6" />
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-stone-900 md:text-3xl">Data privacy</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-stone-900 md:text-3xl">{PRIVACY_NOTICE_HEADING}</h2>
           </div>
           <div className="space-y-5 text-[15px] leading-relaxed text-stone-600">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">RA 10173 (Philippines)</p>
-            <p>
-              B2C Consumers Cooperative protects personal data you share during membership and registration. We only collect what we
-              need to serve you and meet legal requirements.
-            </p>
-            <h4 className="text-sm font-semibold text-stone-900">Why we collect it</h4>
-            <p>
-              To maintain the CDA Registry of Members, run the co-op store, and calculate patronage refunds and dividends — as the
-              law requires.
-            </p>
-            <h4 className="text-sm font-semibold text-stone-900">Who we share with</h4>
-            <p>
-              We don&apos;t sell your data. We share only with the CDA where required, and with delivery partners when needed to
-              fulfill orders.
-            </p>
+            {PRIVACY_NOTICE_PARAGRAPHS.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
           </div>
           <button
             type="button"
