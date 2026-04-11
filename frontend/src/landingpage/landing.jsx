@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { B2CLogo } from "../components/B2CLogo.jsx";
 import { COOPERATIVE_NAME, COOPERATIVE_REGION } from "../constants/cooperativeBrand.js";
 import { PRIVACY_NOTICE_HEADING, PRIVACY_NOTICE_PARAGRAPHS } from "../constants/privacyAgreement.js";
+import { EarningsSimulator } from "./EarningsSimulator.jsx";
 import { BylawsModal } from "./BylawsModal.jsx";
 import { LandingFaqAssistant } from "./LandingFaqAssistant.jsx";
 import { pickRandomActivityMessage } from "./cebuActivityMock.js";
@@ -931,6 +932,8 @@ export default function LandingPage({
         </div>
       </section>
 
+      <EarningsSimulator onJoinClick={() => onJoinUs?.()} />
+
       <section id="your-path" className="mesh-path relative py-16 text-white sm:py-24 lg:py-28" aria-labelledby="path-heading">
         <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-stretch gap-12 px-4 sm:px-6 lg:flex-row lg:items-start lg:gap-16 lg:px-8">
           <div className="lg:w-1/2 lg:pt-2">
@@ -1046,6 +1049,11 @@ export default function LandingPage({
                 <button type="button" onClick={() => setBylawsActive(true)} className="transition-colors hover:text-blue-600">
                   By-Laws
                 </button>
+              </li>
+              <li>
+                <a href="#earnings-simulator" className="transition-colors hover:text-blue-600">
+                  Earnings simulator
+                </a>
               </li>
               <li>
                 <button type="button" className="transition-colors hover:text-blue-600">

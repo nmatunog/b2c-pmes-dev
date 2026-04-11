@@ -53,4 +53,11 @@
       radial-gradient(ellipse 55% 45% at 100% 80%, rgba(20, 184, 166, 0.08), transparent 50%),
       linear-gradient(165deg, #292524 0%, #1c1917 40%, #0c0a09 100%);
   }
+  /* Earnings simulator — same family as mesh-path, slightly cooler / more blue at edges */
+  .mesh-simulator {
+    background-image:
+      radial-gradient(ellipse 75% 55% at 0% 15%, rgba(59, 130, 246, 0.14), transparent 52%),
+      radial-gradient(ellipse 65% 50% at 100% 85%, rgba(20, 184, 166, 0.1), transparent 48%),
+      linear-gradient(168deg, #1c1917 0%, #262321 42%, #141211 100%);
+  }
 }
