@@ -511,6 +511,26 @@ export default function App() {
     setFormData((prev) => ({ ...prev, email: user.email || prev.email }));
   }, [appState, user]);
 
+  /** LOI header shows formData name/email — fill gaps when opening from member portal (user may skip registration PMES form). */
+  useEffect(() => {
+    if (appState !== "loi_form" || !user) return;
+    setFormData((prev) => {
+      let email = String(prev.email || "").trim();
+      if (!email && user.email) email = user.email;
+
+      let fullName = String(prev.fullName || "").trim();
+      if (!fullName) {
+        const fromParts = composeFullName(prev.firstName, prev.middleName, prev.lastName);
+        if (fromParts) fullName = fromParts;
+      }
+      if (!fullName && activeRecord?.fullName) fullName = String(activeRecord.fullName).trim();
+      if (!fullName && user.displayName) fullName = String(user.displayName).trim();
+
+      if (email === String(prev.email || "").trim() && fullName === String(prev.fullName || "").trim()) return prev;
+      return { ...prev, email, fullName };
+    });
+  }, [appState, user, activeRecord]);
+
   useEffect(() => {
     if (!ttsError) return undefined;
     const id = setTimeout(() => setTtsError(null), 12000);
