@@ -1989,8 +1989,16 @@ export default function App() {
           <Coins className="mx-auto h-16 w-16 text-[#004aad]" aria-hidden />
           <h1 className="text-3xl font-black uppercase tracking-tighter text-[#004aad] md:text-4xl">Share capital &amp; membership</h1>
           <p className="text-lg font-medium leading-relaxed text-slate-600">
-            Use your branch&apos;s official payment instructions to pay share capital and the annual membership fee. Connect your
-            live payment portal here when the cooperative provides the integration or external link.
+            Please contact <strong>B2CCoop</strong> via Facebook Messenger at{" "}
+            <a
+              href="https://m.me/278382175357935"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-[#004aad] underline decoration-2 underline-offset-2 hover:text-[#004aad]/90"
+            >
+              m.me/278382175357935
+            </a>{" "}
+            for share capital and membership fee payment instructions.
           </p>
           <button type="button" onClick={() => setAppState("landing")} className="btn-primary w-full py-5 text-xl font-black">
             Back to home
