@@ -257,4 +257,35 @@ export const PmesService = {
     }
     return response.json();
   },
+
+  /** Public: roster email + DOB match a legacy-imported pioneer pending digital profile. */
+  async checkPioneerEligibility(email, dob) {
+    if (!useRest()) throw new Error("API required");
+    const response = await fetch(`${apiBase()}/pmes/pioneer/check-eligibility`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: String(email || "").trim(), dob: String(dob || "").trim() }),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiErrorMessage(response));
+    }
+    return response.json();
+  },
+
+  /** Admin: bulk-create legacy pioneer rows (pipeline ends at full membership form). */
+  async importLegacyPioneers(accessToken, rows) {
+    if (!useRest()) throw new Error("API required");
+    const response = await fetch(`${apiBase()}/pmes/admin/import-legacy-pioneers`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ rows: Array.isArray(rows) ? rows : [] }),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiErrorMessage(response));
+    }
+    return response.json();
+  },
 };

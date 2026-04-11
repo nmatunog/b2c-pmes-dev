@@ -10,9 +10,12 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { CertificateQueryDto } from "./dto/certificate-query.dto";
 import { CreateLoiDto } from "./dto/create-loi.dto";
 import { CreatePmesDto } from "./dto/create-pmes.dto";
+import { ImportLegacyPioneersDto } from "./dto/import-legacy-pioneers.dto";
+import { PioneerEligibilityDto } from "./dto/pioneer-eligibility.dto";
 import { SubmitFullProfileDto } from "./dto/submit-full-profile.dto";
 import { UpdateParticipantMembershipDto } from "./dto/update-participant-membership.dto";
 import { StaffJwtGuard } from "../auth/staff-jwt.guard";
@@ -53,6 +56,19 @@ export class PmesController {
   @Post("full-profile")
   submitFullProfile(@Body() dto: SubmitFullProfileDto) {
     return this.pmes.submitFullProfile(dto);
+  }
+
+  /** Public: verify pioneer roster match before Firebase sign-up (same email required). */
+  @Post("pioneer/check-eligibility")
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
+  checkPioneerEligibility(@Body() dto: PioneerEligibilityDto) {
+    return this.pmes.checkPioneerEligibility(dto.email, dto.dob);
+  }
+
+  @Post("admin/import-legacy-pioneers")
+  @UseGuards(StaffJwtGuard)
+  importLegacyPioneers(@Body() dto: ImportLegacyPioneersDto) {
+    return this.pmes.importLegacyPioneers(dto.rows);
   }
 
   @Get("admin/records")

@@ -4,6 +4,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { CreateLoiDto } from "./dto/create-loi.dto";
 import { CreatePmesDto } from "./dto/create-pmes.dto";
 import { SubmitFullProfileDto } from "./dto/submit-full-profile.dto";
+import type { ImportLegacyPioneerRowDto } from "./dto/import-legacy-pioneers.dto";
 import { UpdateParticipantMembershipDto } from "./dto/update-participant-membership.dto";
 import { deriveFromMemberProfile, parseFullProfileEnvelope } from "./member-profile.extract";
 import type { LoiSubmission, Participant, PmesRecord } from "@prisma/client";
@@ -231,6 +232,80 @@ export class PmesService {
       },
     });
     return { success: true };
+  }
+
+  /**
+   * Public (throttled): email + DOB match a legacy-imported pioneer row that still needs the digital membership profile.
+   */
+  async checkPioneerEligibility(emailRaw: string, dobRaw: string) {
+    const email = normalizeEmail(emailRaw);
+    const dob = dobRaw.trim();
+    if (!email || !dob) {
+      throw new BadRequestException("email and dob are required.");
+    }
+    const p = await this.prisma.participant.findUnique({ where: { email } });
+    if (!p?.legacyPioneerImport) {
+      return { eligible: false as const };
+    }
+    if (p.dob.trim() !== dob) {
+      return { eligible: false as const };
+    }
+    if (p.fullProfileCompletedAt) {
+      return { eligible: false as const };
+    }
+    return { eligible: true as const };
+  }
+
+  /**
+   * Admin: bulk-create participants positioned at AWAITING_FULL_PROFILE (PMES passed, LOI/fees/board satisfied).
+   */
+  async importLegacyPioneers(rows: ImportLegacyPioneerRowDto[]) {
+    const created: string[] = [];
+    const skipped: { email: string; reason: string }[] = [];
+    for (const row of rows) {
+      const email = normalizeEmail(row.email);
+      const existing = await this.prisma.participant.findUnique({ where: { email } });
+      if (existing) {
+        skipped.push({
+          email,
+          reason: existing.legacyPioneerImport ? "already_imported" : "email_already_registered",
+        });
+        continue;
+      }
+      try {
+        await this.prisma.participant.create({
+          data: {
+            email,
+            fullName: row.fullName.trim(),
+            phone: row.phone.trim(),
+            dob: row.dob.trim(),
+            gender: row.gender.trim(),
+            legacyPioneerImport: true,
+            initialFeesPaidAt: new Date(),
+            boardApprovedAt: new Date(),
+            pmesRecords: {
+              create: {
+                score: 10,
+                passed: true,
+              },
+            },
+            loiSubmission: {
+              create: {
+                address: "(Imported — confirm or update in your membership form)",
+                occupation: "Legacy pioneer",
+                employer: "—",
+                initialCapital: 0,
+              },
+            },
+          },
+        });
+        created.push(email);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "create_failed";
+        skipped.push({ email, reason: msg });
+      }
+    }
+    return { created, skipped, totalInput: rows.length };
   }
 
   /**

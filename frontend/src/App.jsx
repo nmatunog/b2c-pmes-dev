@@ -16,6 +16,7 @@ import {
   Coins,
   Eye,
   FileText,
+  HeartHandshake,
   IdCard,
   House,
   Loader2,
@@ -232,7 +233,7 @@ export default function App() {
   /** Where `registration` was opened from: exam gate, member portal, or default (legacy → seminar). */
   const registrationNavRef = useRef(/** @type {"exam" | "portal" | "menu"} */ ("menu"));
   /** After email/password auth, jump to this PMES screen (e.g. user tapped Start PMES before signing in). */
-  const pendingAfterAuthRef = useRef(/** @type {'consent' | 'retrieval' | null} */ (null));
+  const pendingAfterAuthRef = useRef(/** @type {'consent' | 'retrieval' | 'pioneer_portal' | null} */ (null));
   const [formData, setFormData] = useState({
     fullName: "",
     firstName: "",
@@ -246,6 +247,16 @@ export default function App() {
   });
   const [loiData, setLoiData] = useState({ address: "", occupation: "", employer: "", initialCapital: "", agreement: false });
   const [retrievalData, setRetrievalData] = useState({ email: "", dob: "" });
+  const [pioneerReclaimEmail, setPioneerReclaimEmail] = useState("");
+  const [pioneerReclaimDob, setPioneerReclaimDob] = useState("");
+  const [pioneerReclaimLoading, setPioneerReclaimLoading] = useState(false);
+  const [pioneerReclaimError, setPioneerReclaimError] = useState(null);
+  const [pioneerReclaimEligible, setPioneerReclaimEligible] = useState(/** @type {boolean | null} */ (null));
+  const [legacyImportJson, setLegacyImportJson] = useState(
+    '[\n  { "email": "member@example.com", "fullName": "Juan Dela Cruz", "phone": "+639171234567", "dob": "1985-06-15", "gender": "Male" }\n]',
+  );
+  const [legacyImportMsg, setLegacyImportMsg] = useState(null);
+  const [legacyImportLoading, setLegacyImportLoading] = useState(false);
   const [adminCreds, setAdminCreds] = useState({ email: "", password: "" });
   /** Staff JWT role after admin dashboard login; token kept in memory only. */
   const [staffRole, setStaffRole] = useState(/** @type {null | "admin" | "superuser"} */ (null));
@@ -406,6 +417,14 @@ export default function App() {
         setAuthReady(true);
         return;
       }
+      if (pending === "pioneer_portal") {
+        pendingAfterAuthRef.current = null;
+        setPmesPaused(false);
+        hydratingRef.current = false;
+        setAuthReady(true);
+        setAppState("member_pending");
+        return;
+      }
 
       try {
         const prog = await loadPmesProgress(db, appId, u.uid);
@@ -510,6 +529,26 @@ export default function App() {
     if (appState !== "registration" || !user?.email) return;
     setFormData((prev) => ({ ...prev, email: user.email || prev.email }));
   }, [appState, user]);
+
+  /** After pioneer reclaim, prefill member auth email/DOB from sessionStorage. */
+  useEffect(() => {
+    if (appState !== "member_auth") return;
+    try {
+      const raw = sessionStorage.getItem("b2c_pioneer_prefill");
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      sessionStorage.removeItem("b2c_pioneer_prefill");
+      const email = typeof p.email === "string" ? p.email.trim() : "";
+      const dob = typeof p.dob === "string" ? p.dob.trim() : "";
+      if (email) {
+        setSignUp((s) => ({ ...s, email }));
+        setLogIn((l) => ({ ...l, email }));
+      }
+      if (dob) setSignUp((s) => ({ ...s, dob }));
+    } catch {
+      /* ignore */
+    }
+  }, [appState]);
 
   /** LOI header shows formData name/email — fill gaps when opening from member portal (user may skip registration PMES form). */
   useEffect(() => {
@@ -1346,6 +1385,165 @@ export default function App() {
     );
   }
 
+  if (appState === "pioneer_reclaim")
+    return (
+      <>
+        {identityRibbon}{portalHomeBar}
+        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 sm:p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+          <div className="card-senior w-full max-w-lg space-y-6">
+            <B2CLogo size="md" align="center" />
+            <div className="flex items-start gap-3">
+              <HeartHandshake className="mt-1 h-10 w-10 shrink-0 text-[#004aad]" aria-hidden />
+              <div>
+                <h1 className="text-2xl font-black uppercase tracking-tight text-[#004aad]">Founding pioneer</h1>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
+                  If you were on the roster before this app, confirm the email and birth date we have on file. Then use{" "}
+                  <strong>that same email</strong> to sign in or create your account so your digital membership form opens.
+                </p>
+              </div>
+            </div>
+            {!Boolean((import.meta.env.VITE_API_BASE_URL || "").trim()) ? (
+              <div className="rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-950">
+                Set <code className="rounded bg-white px-1">VITE_API_BASE_URL</code> in <code className="rounded bg-white px-1">frontend/.env</code>{" "}
+                so we can verify your roster row.
+              </div>
+            ) : (
+              <>
+                <form
+                  className="space-y-4"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setPioneerReclaimError(null);
+                    setPioneerReclaimEligible(null);
+                    setPioneerReclaimLoading(true);
+                    try {
+                      const res = await PmesService.checkPioneerEligibility(pioneerReclaimEmail, pioneerReclaimDob);
+                      setPioneerReclaimEligible(Boolean(res?.eligible));
+                    } catch (err) {
+                      setPioneerReclaimError(err instanceof Error ? err.message : "Verification failed.");
+                    } finally {
+                      setPioneerReclaimLoading(false);
+                    }
+                  }}
+                >
+                  <div>
+                    <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="pioneer-email">
+                      Email on file
+                    </label>
+                    <input
+                      id="pioneer-email"
+                      type="email"
+                      autoComplete="email"
+                      className="input-field w-full"
+                      value={pioneerReclaimEmail}
+                      onChange={(ev) => setPioneerReclaimEmail(ev.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="pioneer-dob">
+                      Date of birth (same format as records, e.g. YYYY-MM-DD)
+                    </label>
+                    <input
+                      id="pioneer-dob"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="bday"
+                      placeholder="YYYY-MM-DD"
+                      className="input-field w-full"
+                      value={pioneerReclaimDob}
+                      onChange={(ev) => setPioneerReclaimDob(ev.target.value)}
+                      required
+                    />
+                  </div>
+                  {pioneerReclaimError ? (
+                    <div className="rounded-2xl bg-red-50 p-3 text-center text-sm font-bold text-red-800">{pioneerReclaimError}</div>
+                  ) : null}
+                  <button type="submit" disabled={pioneerReclaimLoading} className="btn-primary flex w-full items-center justify-center gap-2 py-4">
+                    {pioneerReclaimLoading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : null}
+                    Check eligibility
+                  </button>
+                </form>
+                {pioneerReclaimEligible === true ? (
+                  <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4">
+                    <p className="text-sm font-bold text-emerald-950">
+                      You&apos;re on the pioneer import list and still need the digital profile. Sign in or register with{" "}
+                      <strong>this exact email</strong>.
+                    </p>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <button
+                        type="button"
+                        className="btn-primary flex-1 py-3 text-sm font-black uppercase"
+                        onClick={() => {
+                          try {
+                            sessionStorage.setItem(
+                              "b2c_pioneer_prefill",
+                              JSON.stringify({
+                                email: pioneerReclaimEmail.trim(),
+                                dob: pioneerReclaimDob.trim(),
+                              }),
+                            );
+                          } catch {
+                            /* ignore */
+                          }
+                          pendingAfterAuthRef.current = "pioneer_portal";
+                          setMemberAuthMode("login");
+                          setAppState("member_auth");
+                        }}
+                      >
+                        Sign in
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary flex-1 py-3 text-sm font-black uppercase"
+                        onClick={() => {
+                          try {
+                            sessionStorage.setItem(
+                              "b2c_pioneer_prefill",
+                              JSON.stringify({
+                                email: pioneerReclaimEmail.trim(),
+                                dob: pioneerReclaimDob.trim(),
+                              }),
+                            );
+                          } catch {
+                            /* ignore */
+                          }
+                          pendingAfterAuthRef.current = "pioneer_portal";
+                          setMemberAuthMode("signup");
+                          setAppState("member_auth");
+                        }}
+                      >
+                        Create account
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                {pioneerReclaimEligible === false ? (
+                  <p className="text-sm font-medium leading-relaxed text-slate-600">
+                    We couldn&apos;t match a pioneer row that still needs a profile. Check the email and DOB (including format),
+                    or contact the cooperative office. If you already finished the digital form, you won&apos;t see a match
+                    here.
+                  </p>
+                ) : null}
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setPioneerReclaimError(null);
+                setPioneerReclaimEligible(null);
+                setAppState("landing");
+              }}
+              className="w-full text-center text-sm font-bold text-slate-500 hover:text-[#004aad]"
+            >
+              Back to home
+            </button>
+          </div>
+        </div>
+      </>
+    );
+
   if (appState === "landing")
     return (
       <>
@@ -1396,6 +1594,12 @@ export default function App() {
             setAppState("member_auth");
           }}
           onAdminPortal={handleAdminPortal}
+          onPioneerReclaim={() => {
+            if (!isFirebaseConfigured) return;
+            setPioneerReclaimError(null);
+            setPioneerReclaimEligible(null);
+            setAppState("pioneer_reclaim");
+          }}
           onMemberPortal={async () => {
             if (!user) return;
             const api = Boolean((import.meta.env.VITE_API_BASE_URL || "").trim());
@@ -2578,6 +2782,53 @@ export default function App() {
               </div>
             </div>
           ) : null}
+          <div className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-10">
+            <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Legacy pioneer import</h2>
+            <p className="mt-1 text-sm font-medium text-slate-600">
+              Preload roster members so they can use <strong>Pioneer roster — link your account</strong> on the home menu. Paste a
+              JSON array of objects with <code className="rounded bg-slate-200 px-1">email</code>,{" "}
+              <code className="rounded bg-slate-200 px-1">fullName</code>, <code className="rounded bg-slate-200 px-1">phone</code>,{" "}
+              <code className="rounded bg-slate-200 px-1">dob</code> (match reclaim form, e.g. YYYY-MM-DD),{" "}
+              <code className="rounded bg-slate-200 px-1">gender</code>. Rows are created at{" "}
+              <strong>AWAITING_FULL_PROFILE</strong> (PMES passed, fees &amp; board marked for digital onboarding).
+            </p>
+            <textarea
+              className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-4 font-mono text-xs leading-relaxed text-slate-800 shadow-inner"
+              rows={10}
+              value={legacyImportJson}
+              onChange={(e) => setLegacyImportJson(e.target.value)}
+              spellCheck={false}
+            />
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={legacyImportLoading || !staffAccessToken}
+                onClick={async () => {
+                  setLegacyImportMsg(null);
+                  setLegacyImportLoading(true);
+                  try {
+                    const rows = JSON.parse(legacyImportJson);
+                    if (!Array.isArray(rows)) throw new Error("JSON must be an array.");
+                    const result = await PmesService.importLegacyPioneers(staffAccessToken, rows);
+                    setLegacyImportMsg(JSON.stringify(result, null, 2));
+                    const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
+                    setMembershipPipeline(Array.isArray(next) ? next : []);
+                  } catch (e) {
+                    setLegacyImportMsg(e instanceof Error ? e.message : String(e));
+                  } finally {
+                    setLegacyImportLoading(false);
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#004aad] px-5 py-2.5 text-sm font-black uppercase text-white hover:bg-[#003d99] disabled:opacity-50"
+              >
+                {legacyImportLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                Run import
+              </button>
+            </div>
+            {legacyImportMsg ? (
+              <pre className="mt-4 max-h-48 overflow-auto rounded-xl bg-slate-900/90 p-4 text-xs text-emerald-100">{legacyImportMsg}</pre>
+            ) : null}
+          </div>
           <div className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-10">
             <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Membership pipeline</h2>
             <p className="mt-1 text-sm font-medium text-slate-600">

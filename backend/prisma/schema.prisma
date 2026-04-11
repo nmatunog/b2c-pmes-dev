@@ -46,6 +46,8 @@ model Participant {
   mailingAddress      String?   @db.Text
   civilStatus           String?
   memberIdNo            String?
+  /** Preloaded roster row (admin import): member reclaims Firebase account + completes digital profile */
+  legacyPioneerImport   Boolean   @default(false)
   pmesRecords   PmesRecord[]
   loiSubmission LoiSubmission?
 }

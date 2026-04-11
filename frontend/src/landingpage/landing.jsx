@@ -54,6 +54,8 @@ export default function LandingPage({
   onStartPmes,
   onRetrieveCertificate,
   onAdminPortal,
+  /** Roster import: verify email/DOB then sign in with same email to complete digital membership form. */
+  onPioneerReclaim,
   /** Signed-in: navigate to full member portal (dashboard); not the profile intake form. */
   onMemberPortal,
   onMemberProfile,
@@ -419,6 +421,20 @@ export default function LandingPage({
                 >
                   New member? Open registration tab
                 </button>
+                {onPioneerReclaim ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMemberPortalOpen(false);
+                      setIsMenuOpen(false);
+                      onPioneerReclaim();
+                    }}
+                    className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-200 bg-emerald-50/90 py-3.5 text-sm font-semibold text-emerald-900 transition-all hover:border-emerald-400"
+                  >
+                    <HeartHandshake className="h-5 w-5 shrink-0" aria-hidden />
+                    Pioneer roster — link your account
+                  </button>
+                ) : null}
               </>
             )}
             {authUser && resumePmesSuggested && onContinuePmes && (
