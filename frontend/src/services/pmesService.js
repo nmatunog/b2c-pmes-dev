@@ -4,6 +4,22 @@ const apiBase = () => (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "
 
 const useRest = () => Boolean(apiBase());
 
+/** Nest often returns JSON `{ message: string | string[] }`; surface that in the UI. */
+async function parseApiErrorMessage(response) {
+  const text = await response.text();
+  if (!text?.trim()) return `Request failed (${response.status})`;
+  try {
+    const j = JSON.parse(text);
+    const m = j?.message;
+    if (m != null) {
+      return Array.isArray(m) ? m.map((x) => String(x)).join("; ") : String(m);
+    }
+  } catch {
+    /* plain text body */
+  }
+  return text.trim();
+}
+
 async function staffLoginRequest(email, password) {
   const response = await fetch(`${apiBase()}/auth/admin/login`, {
     method: "POST",
@@ -53,12 +69,16 @@ export const PmesService = {
   async saveLoi(db, appId, user, data) {
     if (!useRest() && !user) throw new Error("Auth Required");
     if (useRest()) {
+      const email = String(data.email || user?.email || "").trim();
+      if (!email) {
+        throw new Error("Missing email — sign in again, or reload the page so your account email can load.");
+      }
       const capital = typeof data.initialCapital === "string" ? parseFloat(data.initialCapital) : data.initialCapital;
       const response = await fetch(`${apiBase()}/pmes/loi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: data.email,
+          email,
           address: data.address,
           occupation: data.occupation,
           employer: data.employer ?? "",
@@ -66,7 +86,7 @@ export const PmesService = {
         }),
       });
       if (!response.ok) {
-        throw new Error((await response.text()) || "LOI save failed");
+        throw new Error(await parseApiErrorMessage(response));
       }
       return { success: true, id: "api" };
     }

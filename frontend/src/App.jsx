@@ -694,8 +694,11 @@ export default function App() {
       await PmesService.saveLoi(db, appId, user, { ...formData, ...loiData, pmesRecordId: activeRecord.id });
       void refreshMembershipLifecycle();
       setAppState("loi_success");
-    } catch {
-      setError("Submission failed.");
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : typeof e === "string" ? e : "Submission failed.";
+      console.error("[LOI submit]", e);
+      setError(msg?.trim() || "Submission failed.");
     } finally {
       setLoading(false);
     }
