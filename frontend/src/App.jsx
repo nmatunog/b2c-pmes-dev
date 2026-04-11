@@ -49,6 +49,8 @@ import {
 import LandingPage from "./landingpage/landing.jsx";
 import { IdentityBanner } from "./components/IdentityBanner.jsx";
 import { B2CLogo } from "./components/B2CLogo.jsx";
+import { ReferralEngine } from "./components/ReferralEngine.jsx";
+import { PIONEER_POINTS_PER_JOIN } from "./lib/referralTiers.js";
 
 /**
  * Gemini prebuilt voices (lively / energetic family): Sadachbia = lively, Zephyr = bright,
@@ -228,6 +230,8 @@ export default function App() {
   const [courseAudioEnabled, setCourseAudioEnabledState] = useState(readCourseAudioPreference);
   /** True when the member left PMES for the marketing home but has not finished the flow (resume later). */
   const [pmesPaused, setPmesPaused] = useState(false);
+  /** Pioneer referral stats — wire to API when joins are tracked server-side. */
+  const [pioneerReferral] = useState(() => ({ successfulJoinCount: 0, invitesThisMonth: 0 }));
   const audioCache = useRef({});
   const inflightTts = useRef({});
   const currentAudio = useRef(null);
@@ -1647,10 +1651,15 @@ export default function App() {
 
   if (appState === "registration") {
     const regNav = registrationNavRef.current;
+    const memberDisplayName = displayNameFirstLast(formData, activeRecord?.fullName, user?.displayName);
+    const referralCode = user?.uid
+      ? `PIONEER-${String(user.uid).replace(/-/g, "").slice(-8).toUpperCase()}`
+      : "PIONEER-PENDING";
+    const pioneerPoints = pioneerReferral.successfulJoinCount * PIONEER_POINTS_PER_JOIN;
     return (
       <>
         {identityRibbon}
-        <div className="flex min-h-screen items-center justify-center p-8">
+        <div className="flex min-h-screen flex-col items-center justify-center gap-10 p-4 pb-16 pt-8 sm:p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
         <div className="card-senior w-full max-w-3xl space-y-8">
           <div className="text-center">
@@ -1784,6 +1793,15 @@ export default function App() {
             </div>
           </div>
         </div>
+        {regNav === "portal" && user ? (
+          <ReferralEngine
+            memberName={memberDisplayName || "Member"}
+            referralCode={referralCode}
+            successfulJoinCount={pioneerReferral.successfulJoinCount}
+            pioneerPoints={pioneerPoints}
+            invitesThisMonth={pioneerReferral.invitesThisMonth}
+          />
+        ) : null}
       </div>
       </>
     );
