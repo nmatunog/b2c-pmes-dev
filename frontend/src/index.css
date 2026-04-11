@@ -60,4 +60,108 @@
       radial-gradient(ellipse 65% 50% at 100% 85%, rgba(20, 184, 166, 0.1), transparent 48%),
       linear-gradient(168deg, #1c1917 0%, #262321 42%, #141211 100%);
   }
+
+  /**
+   * Range sliders — native feel on touch: larger thumb + track on coarse pointers,
+   * extra vertical padding for drag, full WebKit + Firefox track styling.
+   */
+  .range-touch-shell {
+    @apply touch-manipulation py-2;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .range-input-touch {
+    @apply w-full cursor-pointer bg-transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 1.75rem;
+  }
+
+  .range-input-touch:focus {
+    outline: none;
+  }
+
+  .range-input-touch:focus-visible {
+    box-shadow: 0 0 0 2px rgb(56 189 248 / 0.55);
+    border-radius: 9999px;
+  }
+
+  /* WebKit track + thumb */
+  .range-input-touch--stone::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 9999px;
+    background: rgb(68 64 60 / 0.85);
+  }
+
+  .range-input-touch--blue::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 9999px;
+    background: rgb(30 58 138 / 0.45);
+  }
+
+  .range-input-touch::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    background: rgb(14 165 233);
+    border: 3px solid rgb(255 255 255);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+    margin-top: -8px;
+  }
+
+  /* Firefox */
+  .range-input-touch--stone::-moz-range-track {
+    height: 8px;
+    border-radius: 9999px;
+    background: rgb(68 64 60 / 0.85);
+  }
+
+  .range-input-touch--blue::-moz-range-track {
+    height: 8px;
+    border-radius: 9999px;
+    background: rgb(30 58 138 / 0.45);
+  }
+
+  .range-input-touch::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    background: rgb(14 165 233);
+    border: 3px solid rgb(255 255 255);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+    cursor: pointer;
+  }
+
+  @media (pointer: coarse) {
+    .range-input-touch {
+      height: 2.35rem;
+    }
+
+    .range-input-touch--stone::-webkit-slider-runnable-track,
+    .range-input-touch--blue::-webkit-slider-runnable-track {
+      height: 12px;
+    }
+
+    .range-input-touch::-webkit-slider-thumb {
+      width: 32px;
+      height: 32px;
+      margin-top: -10px;
+    }
+
+    .range-input-touch--stone::-moz-range-track,
+    .range-input-touch--blue::-moz-range-track {
+      height: 12px;
+    }
+
+    .range-input-touch::-moz-range-thumb {
+      width: 32px;
+      height: 32px;
+    }
+
+    .range-touch-shell {
+      @apply py-2.5;
+    }
+  }
 }

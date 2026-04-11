@@ -166,7 +166,7 @@ export function EarningsSimulator({ onJoinClick }) {
 }
 
 function SliderBlock({ id, label, hint, min, max, step, value, onChange, accent }) {
-  const track = accent === "blue" ? "bg-blue-900/40" : "bg-stone-700/80";
+  const variant = accent === "blue" ? "range-input-touch--blue" : "range-input-touch--stone";
   const valueClass = accent === "blue" ? "text-sky-300" : "text-white";
 
   return (
@@ -180,19 +180,21 @@ function SliderBlock({ id, label, hint, min, max, step, value, onChange, accent 
         </div>
         <span className={`text-2xl font-extrabold tabular-nums sm:text-3xl ${valueClass}`}>₱{value.toLocaleString()}</span>
       </div>
-      <input
-        id={id}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={`h-2.5 w-full cursor-pointer appearance-none rounded-full ${track} accent-sky-500`}
-        aria-valuemin={min}
-        aria-valuemax={max}
-        aria-valuenow={value}
-      />
+      <div className="range-touch-shell">
+        <input
+          id={id}
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className={`range-input-touch ${variant}`}
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={value}
+        />
+      </div>
     </div>
   );
 }
