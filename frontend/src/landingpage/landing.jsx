@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { B2CLogo } from "../components/B2CLogo.jsx";
-import { COOPERATIVE_NAME, COOPERATIVE_REGION } from "../constants/cooperativeBrand.js";
+import { MemberSpotlight } from "../components/MemberSpotlight.jsx";
+import { COOPERATIVE_NAME, COOPERATIVE_REGION, PUBLIC_MEMBER_COUNT } from "../constants/cooperativeBrand.js";
 import { PRIVACY_NOTICE_HEADING, PRIVACY_NOTICE_PARAGRAPHS } from "../constants/privacyAgreement.js";
 import { EarningsSimulator } from "./EarningsSimulator.jsx";
 import { BylawsModal } from "./BylawsModal.jsx";
@@ -57,7 +58,7 @@ export default function LandingPage({
   onOpenLoi,
   onOpenPayment,
 }) {
-  const ACTUAL_MEMBER_COUNT = 27;
+  const ACTUAL_MEMBER_COUNT = PUBLIC_MEMBER_COUNT;
   const INITIAL_INVESTMENT = 1500;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -934,6 +935,8 @@ export default function LandingPage({
 
       <EarningsSimulator onJoinClick={() => onJoinUs?.()} />
 
+      <MemberSpotlight onJoinClick={() => onJoinUs?.()} memberCount={totalMembers} />
+
       <section id="your-path" className="mesh-path relative py-16 text-white sm:py-24 lg:py-28" aria-labelledby="path-heading">
         <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-stretch gap-12 px-4 sm:px-6 lg:flex-row lg:items-start lg:gap-16 lg:px-8">
           <div className="lg:w-1/2 lg:pt-2">
@@ -1053,6 +1056,11 @@ export default function LandingPage({
               <li>
                 <a href="#earnings-simulator" className="transition-colors hover:text-blue-600">
                   Earnings simulator
+                </a>
+              </li>
+              <li>
+                <a href="#member-spotlight" className="transition-colors hover:text-blue-600">
+                  Member spotlight
                 </a>
               </li>
               <li>
