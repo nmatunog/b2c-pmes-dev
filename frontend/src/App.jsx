@@ -53,6 +53,7 @@ import {
 } from "./constants/privacyAgreement";
 import LandingPage from "./landingpage/landing.jsx";
 import { IdentityBanner } from "./components/IdentityBanner.jsx";
+import { MessengerPaymentQr, MESSENGER_PAYMENT_CHAT_URL } from "./components/MessengerPaymentQr.jsx";
 import { PortalHomeBar } from "./components/PortalHomeBar.jsx";
 import { B2CLogo } from "./components/B2CLogo.jsx";
 import { ReferralEngine } from "./components/ReferralEngine.jsx";
@@ -1989,16 +1990,26 @@ export default function App() {
           <Coins className="mx-auto h-16 w-16 text-[#004aad]" aria-hidden />
           <h1 className="text-3xl font-black uppercase tracking-tighter text-[#004aad] md:text-4xl">Share capital &amp; membership</h1>
           <p className="text-lg font-medium leading-relaxed text-slate-600">
-            Please contact <strong>B2CCoop</strong> via Facebook Messenger at{" "}
+            <strong>Scan the code below</strong> with your phone camera. It will open{" "}
+            <strong>Facebook Messenger</strong> so you can chat with us about share capital and membership fee payments.
+          </p>
+          <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-6">
+            <MessengerPaymentQr />
+            <p className="mt-4 text-sm font-medium text-slate-500">
+              Tip: use your camera app or Messenger — scan, then tap the banner to open the chat.
+            </p>
+          </div>
+          <p className="text-lg font-medium leading-relaxed text-slate-600">
+            On a computer or if you prefer a link: contact <strong>B2CCoop</strong> via Facebook Messenger at{" "}
             <a
-              href="https://m.me/278382175357935"
+              href={MESSENGER_PAYMENT_CHAT_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="font-bold text-[#004aad] underline decoration-2 underline-offset-2 hover:text-[#004aad]/90"
             >
               m.me/278382175357935
-            </a>{" "}
-            for share capital and membership fee payment instructions.
+            </a>
+            .
           </p>
           <button type="button" onClick={() => setAppState("landing")} className="btn-primary w-full py-5 text-xl font-black">
             Back to home
