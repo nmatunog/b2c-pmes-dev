@@ -157,4 +157,55 @@ export const PmesService = {
     }
     return response.json();
   },
+
+  /** Cooperative membership pipeline (PostgreSQL participant row). */
+  async fetchMembershipLifecycle(email) {
+    if (!useRest() || !String(email || "").trim()) return null;
+    const response = await fetch(`${apiBase()}/pmes/membership-lifecycle?email=${encodeURIComponent(String(email).trim())}`);
+    if (!response.ok) {
+      const t = await response.text();
+      throw new Error(t?.trim() || `Membership status failed (${response.status})`);
+    }
+    return response.json();
+  },
+
+  async submitFullProfile({ email, fields, sheetFileName, notes }) {
+    if (!useRest()) throw new Error("API required");
+    const response = await fetch(`${apiBase()}/pmes/full-profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, fields, sheetFileName, notes }),
+    });
+    if (!response.ok) {
+      throw new Error((await response.text()) || "Full profile submission failed");
+    }
+    return response.json();
+  },
+
+  async fetchMembershipPipeline(accessToken) {
+    if (!useRest()) return [];
+    const response = await fetch(`${apiBase()}/pmes/admin/membership-pipeline`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      throw new Error((await response.text()) || "Pipeline load failed");
+    }
+    return response.json();
+  },
+
+  async updateParticipantMembership(accessToken, participantId, { initialFeesPaid, boardApproved }) {
+    if (!useRest()) throw new Error("API required");
+    const response = await fetch(`${apiBase()}/pmes/admin/participant/membership`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ participantId, initialFeesPaid, boardApproved }),
+    });
+    if (!response.ok) {
+      throw new Error((await response.text()) || "Membership update failed");
+    }
+    return response.json();
+  },
 };

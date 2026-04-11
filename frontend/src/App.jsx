@@ -52,7 +52,10 @@ import { IdentityBanner } from "./components/IdentityBanner.jsx";
 import { PortalHomeBar } from "./components/PortalHomeBar.jsx";
 import { B2CLogo } from "./components/B2CLogo.jsx";
 import { ReferralEngine } from "./components/ReferralEngine.jsx";
+import { MemberLifecyclePortal } from "./components/MemberLifecyclePortal.jsx";
 import { PIONEER_POINTS_PER_JOIN } from "./lib/referralTiers.js";
+import { derivePmesIntent } from "./lib/pmesIntent.js";
+import { resolveMemberPortalAccess } from "./lib/membershipAccess.js";
 
 /**
  * Gemini prebuilt voices (lively / energetic family): Sadachbia = lively, Zephyr = bright,
@@ -77,6 +80,7 @@ const MEMBER_AUTH_REQUIRED_STATES = new Set([
   "consent",
   "registration",
   "member_portal",
+  "member_pending",
   "seminar",
   "exam",
   "result",
@@ -235,6 +239,10 @@ export default function App() {
   const [pmesPaused, setPmesPaused] = useState(false);
   /** Pioneer referral stats — wire to API when joins are tracked server-side. */
   const [pioneerReferral] = useState(() => ({ successfulJoinCount: 0, invitesThisMonth: 0 }));
+  /** PostgreSQL membership pipeline when `VITE_API_BASE_URL` is set */
+  const [membershipLifecycle, setMembershipLifecycle] = useState(/** @type {Record<string, unknown> | null} */ (null));
+  const [membershipLoading, setMembershipLoading] = useState(false);
+  const [membershipPipeline, setMembershipPipeline] = useState(/** @type {unknown[]} */ ([]));
   const audioCache = useRef({});
   const inflightTts = useRef({});
   const currentAudio = useRef(null);
@@ -511,6 +519,26 @@ export default function App() {
     }
   };
 
+  const refreshMembershipLifecycle = useCallback(async () => {
+    const api = (import.meta.env.VITE_API_BASE_URL || "").trim();
+    if (!api || !user?.email) {
+      setMembershipLifecycle(null);
+      return null;
+    }
+    setMembershipLoading(true);
+    try {
+      const row = await PmesService.fetchMembershipLifecycle(user.email);
+      setMembershipLifecycle(row);
+      return row;
+    } catch {
+      const err = { stage: "UNKNOWN", canAccessFullMemberPortal: false };
+      setMembershipLifecycle(err);
+      return err;
+    } finally {
+      setMembershipLoading(false);
+    }
+  }, [user?.email]);
+
   const handleFinishExam = async () => {
     setLoading(true);
     setError(null);
@@ -526,6 +554,9 @@ export default function App() {
         passed: correct >= 7,
         timestamp: new Date().toISOString(),
       });
+      if ((import.meta.env.VITE_API_BASE_URL || "").trim()) {
+        void refreshMembershipLifecycle();
+      }
       setAppState("result");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed. Check all fields and API connection.");
@@ -533,6 +564,35 @@ export default function App() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!authReady || !user?.email || !(import.meta.env.VITE_API_BASE_URL || "").trim()) return;
+    void refreshMembershipLifecycle();
+  }, [authReady, user?.email, refreshMembershipLifecycle]);
+
+  useEffect(() => {
+    if (appState !== "member_portal") return;
+    if (!(import.meta.env.VITE_API_BASE_URL || "").trim()) return;
+    if (!membershipLifecycle || typeof membershipLifecycle.canAccessFullMemberPortal !== "boolean") return;
+    if (!membershipLifecycle.canAccessFullMemberPortal) {
+      setAppState("member_pending");
+    }
+  }, [appState, membershipLifecycle]);
+
+  useEffect(() => {
+    if (appState !== "admin_dashboard" || !staffAccessToken) return;
+    let cancelled = false;
+    void PmesService.fetchMembershipPipeline(staffAccessToken)
+      .then((rows) => {
+        if (!cancelled) setMembershipPipeline(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (!cancelled) setMembershipPipeline([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [appState, staffAccessToken]);
 
   const handleLoiSubmit = async () => {
     if (!loiData.address || !loiData.occupation || !loiData.initialCapital || !loiData.agreement) {
@@ -542,6 +602,7 @@ export default function App() {
     setLoading(true);
     try {
       await PmesService.saveLoi(db, appId, user, { ...formData, ...loiData, pmesRecordId: activeRecord.id });
+      void refreshMembershipLifecycle();
       setAppState("loi_success");
     } catch {
       setError("Submission failed.");
@@ -647,6 +708,7 @@ export default function App() {
       /* ignore */
     }
     setPmesPaused(false);
+    setMembershipLifecycle(null);
     setAppState("landing");
   };
 
@@ -821,14 +883,6 @@ export default function App() {
   const memberDisplayNameForBanner =
     displayNameFirstLast(formData, activeRecord?.fullName, user?.displayName) || "Member";
 
-  const memberIdentityForBanner =
-    user && appState !== "member_auth" && !staffForBanner
-      ? {
-          fullName: memberDisplayNameForBanner,
-          email: user.email || String(formData.email || "").trim() || "",
-        }
-      : null;
-  const identityRibbon = <IdentityBanner member={memberIdentityForBanner} staff={staffForBanner} />;
   /** Fixed Home control on every flow screen except the marketing homepage. */
   const portalHomeBar =
     appState !== "landing" ? <PortalHomeBar onGoHome={() => setAppState("landing")} /> : null;
@@ -838,11 +892,30 @@ export default function App() {
     user && ((typeof score === "number" && score >= 7) || activeRecord?.passed === true),
   );
 
-  const resumePmesSuggested =
-    Boolean(user) &&
-    !pmesExamPassed &&
-    (pmesPaused ||
-      Boolean(lastFlowAppStateRef.current && RESUMABLE_APP_STATES.has(lastFlowAppStateRef.current)));
+  const pmesIntent = derivePmesIntent({
+    pmesPaused,
+    lastFlowAppState: lastFlowAppStateRef.current,
+    pmesExamPassed,
+  });
+
+  const resumePmesSuggested = Boolean(user) && !pmesExamPassed && pmesIntent.resumeRecommended;
+
+  const useApiMembership = Boolean((import.meta.env.VITE_API_BASE_URL || "").trim());
+  const accessForRibbon = resolveMemberPortalAccess({
+    useApi: useApiMembership,
+    apiLifecycle: membershipLifecycle,
+    pmesExamPassed,
+  });
+
+  const memberIdentityForBanner =
+    user && appState !== "member_auth" && !staffForBanner
+      ? {
+          fullName: memberDisplayNameForBanner,
+          email: user.email || String(formData.email || "").trim() || "",
+          ribbonStatus: accessForRibbon.ribbonStatus,
+        }
+      : null;
+  const identityRibbon = <IdentityBanner member={memberIdentityForBanner} staff={staffForBanner} />;
 
   if (isFirebaseConfigured && !sessionUser && MEMBER_AUTH_REQUIRED_STATES.has(appState)) {
     return (
@@ -918,7 +991,7 @@ export default function App() {
     return (
       <>
         {identityRibbon}{portalHomeBar}
-        <div className="flex min-h-screen flex-col sm:flex-row">
+        <div className="animate-in fade-in duration-500 flex min-h-screen flex-col sm:flex-row">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
           <aside className="relative flex flex-col justify-start overflow-hidden bg-gradient-to-br from-[#004aad] via-[#003d8f] to-slate-900 px-8 py-10 text-white sm:w-[42%] sm:min-h-screen sm:shrink-0 sm:py-14 sm:pl-8 sm:pr-6 md:pl-10 md:pr-8 xl:py-16 xl:pl-14 xl:pr-12">
             <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" aria-hidden />
@@ -1226,9 +1299,21 @@ export default function App() {
             setAppState("member_auth");
           }}
           onAdminPortal={handleAdminPortal}
-          onMemberPortal={() => {
+          onMemberPortal={async () => {
             if (!user) return;
-            setAppState("member_portal");
+            const api = Boolean((import.meta.env.VITE_API_BASE_URL || "").trim());
+            if (!api) {
+              setAppState("member_portal");
+              return;
+            }
+            const row = await refreshMembershipLifecycle();
+            const access = resolveMemberPortalAccess({
+              useApi: true,
+              apiLifecycle: row,
+              pmesExamPassed,
+            });
+            if (access.canAccessFullMemberPortal) setAppState("member_portal");
+            else setAppState("member_pending");
           }}
           onMemberProfile={() => {
             if (!user) return;
@@ -1775,7 +1860,8 @@ export default function App() {
                 if (from === "exam") {
                   setAppState("exam");
                 } else if (from === "portal") {
-                  setAppState("member_portal");
+                  const full = Boolean(membershipLifecycle?.canAccessFullMemberPortal);
+                  setAppState(useApiMembership && !full ? "member_pending" : "member_portal");
                 } else {
                   setAppState("seminar");
                 }
@@ -1795,8 +1881,10 @@ export default function App() {
                   const from = registrationNavRef.current;
                   registrationNavRef.current = "menu";
                   if (from === "exam") setAppState("seminar");
-                  else if (from === "portal") setAppState("member_portal");
-                  else setAppState("landing");
+                  else if (from === "portal") {
+                    const full = Boolean(membershipLifecycle?.canAccessFullMemberPortal);
+                    setAppState(useApiMembership && !full ? "member_pending" : "member_portal");
+                  } else setAppState("landing");
                 }}
                 className="text-sm font-bold text-slate-500 hover:text-[#004aad]"
               >
@@ -1806,6 +1894,49 @@ export default function App() {
           </div>
         </div>
       </div>
+      </>
+    );
+  }
+
+  if (appState === "member_pending") {
+    const memberDisplayName = displayNameFirstLast(formData, activeRecord?.fullName, user?.displayName);
+    return (
+      <>
+        {identityRibbon}
+        {portalHomeBar}
+        <div className="flex min-h-screen flex-col items-center bg-slate-100/80 p-4 pb-24 pt-8 sm:p-8">
+          <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+          <MemberLifecyclePortal
+            lifecycle={membershipLifecycle}
+            displayName={memberDisplayName}
+            email={user?.email || ""}
+            loading={membershipLoading}
+            apiConfigured={useApiMembership}
+            onContinuePmes={() => {
+              void continuePmesFromLanding();
+            }}
+            onOpenLoi={() => {
+              setLoiData((prev) => ({
+                ...prev,
+                address: String(prev.address || "").trim() || String(formData.residenceAddress || "").trim() || "",
+              }));
+              setAppState("loi_form");
+            }}
+            onOpenPayment={() => setAppState("payment_portal")}
+            onSubmitFullProfile={async ({ fields, sheetFileName }) => {
+              if (!user?.email) return;
+              const notes = typeof fields.notes === "string" ? fields.notes : "";
+              await PmesService.submitFullProfile({
+                email: user.email,
+                fields,
+                sheetFileName,
+                notes,
+              });
+              await refreshMembershipLifecycle();
+              setAppState("member_portal");
+            }}
+          />
+        </div>
       </>
     );
   }
@@ -2143,6 +2274,85 @@ export default function App() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-10">
+            <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Membership pipeline</h2>
+            <p className="mt-1 text-sm font-medium text-slate-600">
+              Record treasury receipt of share capital and membership fees, then Board approval. Members see the next step in
+              their portal automatically.
+            </p>
+            <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full min-w-[52rem] text-left text-sm">
+                <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-600">
+                  <tr>
+                    <th className="p-4">Participant</th>
+                    <th className="p-4">Stage</th>
+                    <th className="p-4">LOI</th>
+                    <th className="p-4">Fees paid</th>
+                    <th className="p-4">Board OK</th>
+                    <th className="p-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {membershipPipeline.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center font-medium text-slate-500">
+                        No participants yet, or pipeline failed to load.
+                      </td>
+                    </tr>
+                  ) : (
+                    membershipPipeline.map((row) => (
+                      <tr key={String(row.participantId)} className="border-t border-slate-100">
+                        <td className="p-4 align-top">
+                          <p className="font-bold text-slate-900">{String(row.fullName ?? "—")}</p>
+                          <p className="break-all text-xs text-slate-500">{String(row.email ?? "")}</p>
+                        </td>
+                        <td className="p-4 align-top text-xs font-bold uppercase text-[#004aad]">{String(row.stage ?? "—")}</td>
+                        <td className="p-4 align-top">{row.loiSubmitted ? "Yes" : "—"}</td>
+                        <td className="p-4 align-top">{row.initialFeesPaid ? "Yes" : "—"}</td>
+                        <td className="p-4 align-top">{row.boardApproved ? "Yes" : "—"}</td>
+                        <td className="p-4 align-top">
+                          <div className="flex flex-wrap gap-2">
+                            {row.loiSubmitted && !row.initialFeesPaid ? (
+                              <button
+                                type="button"
+                                className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold uppercase text-white hover:bg-amber-700"
+                                onClick={async () => {
+                                  if (!staffAccessToken) return;
+                                  await PmesService.updateParticipantMembership(staffAccessToken, String(row.participantId), {
+                                    initialFeesPaid: true,
+                                  });
+                                  const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
+                                  setMembershipPipeline(Array.isArray(next) ? next : []);
+                                }}
+                              >
+                                Mark fees received
+                              </button>
+                            ) : null}
+                            {row.initialFeesPaid && !row.boardApproved ? (
+                              <button
+                                type="button"
+                                className="rounded-lg bg-[#004aad] px-3 py-1.5 text-xs font-bold uppercase text-white hover:bg-[#003d99]"
+                                onClick={async () => {
+                                  if (!staffAccessToken) return;
+                                  await PmesService.updateParticipantMembership(staffAccessToken, String(row.participantId), {
+                                    boardApproved: true,
+                                  });
+                                  const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
+                                  setMembershipPipeline(Array.isArray(next) ? next : []);
+                                }}
+                              >
+                                Board approved
+                              </button>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

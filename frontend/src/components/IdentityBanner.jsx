@@ -2,6 +2,7 @@ import { Briefcase, User } from "lucide-react";
 
 /**
  * Fixed top-left session ribbon: member shows first + last name + email; staff shows role + email.
+ * @param {{ fullName: string, email: string, ribbonStatus?: 'full' | 'pending' | 'prospect' } | null} member
  */
 export function IdentityBanner({ member, staff }) {
   if (staff?.email) {
@@ -28,6 +29,21 @@ export function IdentityBanner({ member, staff }) {
 
   if (member?.email) {
     const displayName = String(member.fullName || "").trim() || "Member";
+    const status = member.ribbonStatus || "prospect";
+    const badge =
+      status === "full" ? (
+        <span className="mt-1 inline-flex max-w-full rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-900">
+          Full member
+        </span>
+      ) : status === "pending" ? (
+        <span className="mt-1 inline-flex max-w-full rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-950">
+          Pending member
+        </span>
+      ) : (
+        <span className="mt-1 inline-flex max-w-full rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-600">
+          Prospect
+        </span>
+      );
     return (
       <div
         className="animate-in fade-in slide-in-from-left-2 fixed left-4 top-20 z-[90] max-w-sm rounded-2xl border border-slate-200/90 bg-white/95 px-4 py-3 shadow-lg shadow-slate-900/10 backdrop-blur-md duration-300"
@@ -42,6 +58,7 @@ export function IdentityBanner({ member, staff }) {
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Signed in as</p>
             <p className="truncate text-sm font-black text-slate-900">{displayName}</p>
             <p className="truncate text-xs font-medium text-slate-600">{member.email}</p>
+            {badge}
           </div>
         </div>
       </div>

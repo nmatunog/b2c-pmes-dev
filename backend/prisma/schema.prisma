@@ -25,13 +25,21 @@ enum StaffRole {
 }
 
 model Participant {
-  id            String         @id @default(uuid())
+  id            String    @id @default(uuid())
   fullName      String
-  email         String         @unique
+  email         String    @unique
   phone         String
   dob           String
   gender        String
-  createdAt     DateTime       @default(now())
+  createdAt     DateTime  @default(now())
+  /** Set when treasury confirms share capital + membership fees received */
+  initialFeesPaidAt   DateTime?
+  /** Set when the Board records approval in admin */
+  boardApprovedAt     DateTime?
+  /** Member finished post-approval full profile + optional sheet upload */
+  fullProfileCompletedAt DateTime?
+  /** Extra structured fields after board approval (JSON for flexibility) */
+  fullProfileJson     String?   @db.Text
   pmesRecords   PmesRecord[]
   loiSubmission LoiSubmission?
 }
