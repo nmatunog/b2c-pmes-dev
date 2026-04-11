@@ -7,6 +7,10 @@ export const envValidationSchema = Joi.object({
   DATABASE_URL: Joi.string().required().messages({
     "any.required": "DATABASE_URL is required (PostgreSQL connection string)",
   }),
+  /** Same DB as DATABASE_URL for local dev; on Neon use the direct (non-pooled) hostname for `prisma migrate`. */
+  DIRECT_URL: Joi.string().required().messages({
+    "any.required": "DIRECT_URL is required — use same value as DATABASE_URL locally; Neon provides a separate direct URL",
+  }),
   /**
    * TTS backend: `noop` (no paid calls), `gemini`, `openai`, `grok` (xAI Grok TTS at api.x.ai).
    */
