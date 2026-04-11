@@ -1,16 +1,16 @@
-import { IsEmail, IsObject, IsOptional, IsString, MinLength } from "class-validator";
+import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 
+/** Full B2C membership form as JSON string (nested sections from the official sheet). */
 export class SubmitFullProfileDto {
   @IsEmail()
   email!: string;
 
-  /** Arbitrary key-value profile fields from the official member sheet */
-  @IsObject()
-  fields!: Record<string, string>;
+  @IsString()
+  @MinLength(4)
+  profileJson!: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(0)
   sheetFileName?: string;
 
   @IsOptional()

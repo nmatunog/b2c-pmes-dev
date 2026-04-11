@@ -4,15 +4,12 @@ import {
   Building2,
   CheckCircle2,
   ClipboardList,
-  FileSpreadsheet,
   Loader2,
-  Lock,
   Send,
   Wallet,
 } from "lucide-react";
 import { B2CLogo } from "./B2CLogo.jsx";
-
-const TEMPLATE_URL = "/templates/member-full-profile-template.csv";
+import { MemberFullProfileForm } from "./MemberFullProfileForm.jsx";
 
 /**
  * Cooperative onboarding home: one screen explains the current gate and primary action.
@@ -30,29 +27,17 @@ export function MemberLifecyclePortal({
   onSubmitFullProfile,
 }) {
   const stage = lifecycle?.stage ?? "UNKNOWN";
-  const [fullFields, setFullFields] = useState({
-    tin: "",
-    emergencyName: "",
-    emergencyPhone: "",
-    employerFull: "",
-    notes: "",
-  });
-  const [sheetFile, setSheetFile] = useState(/** @type {File | null} */ (null));
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState(null);
 
   const firstName = String(displayName || "Member").trim().split(/\s+/)[0] || "Member";
 
-  const handleFullSubmit = async (e) => {
-    e.preventDefault();
+  const handleFullSuccess = async (payload) => {
     setLocalError(null);
     if (!onSubmitFullProfile) return;
     setSubmitting(true);
     try {
-      await onSubmitFullProfile({
-        fields: fullFields,
-        sheetFileName: sheetFile ? sheetFile.name : "",
-      });
+      await onSubmitFullProfile(payload);
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : "Submission failed.");
     } finally {
@@ -86,7 +71,7 @@ export function MemberLifecyclePortal({
   }
 
   return (
-    <div className="w-full max-w-3xl space-y-8">
+    <div className="w-full max-w-4xl space-y-8">
       <div className="text-center">
         <B2CLogo size="lg" align="center" className="mb-4" />
         <h1 className="text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Member onboarding</h1>
@@ -161,92 +146,22 @@ export function MemberLifecyclePortal({
       ) : null}
 
       {stage === "AWAITING_FULL_PROFILE" ? (
-        <section className="card-senior space-y-6 p-8 text-left">
-          <div className="flex items-start gap-3">
+        <section className="card-senior space-y-6 p-6 text-left sm:p-8">
+          <div className="flex items-start gap-3 border-b border-slate-100 pb-6">
             <CheckCircle2 className="h-10 w-10 shrink-0 text-emerald-600" aria-hidden />
             <div>
-              <h2 className="text-xl font-black text-slate-900">Board approved — complete your full profile</h2>
+              <h2 className="text-xl font-black text-slate-900">B2C membership form</h2>
               <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
-                Download the official CSV template, fill it in, then upload the file here and confirm the fields below. Staff may contact you if anything is unclear.
+                Board approval is on file. Complete the official consumer cooperative membership sheet below (aligned to your paper form). You can download your entries as CSV anytime, or attach a scan/PDF of a filled paper form.
               </p>
-              <a
-                href={TEMPLATE_URL}
-                download
-                className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#004aad] underline-offset-2 hover:underline"
-              >
-                <FileSpreadsheet className="h-4 w-4" aria-hidden />
-                Download profile template (CSV)
-              </a>
             </div>
           </div>
-
-          <form onSubmit={handleFullSubmit} className="space-y-4 border-t border-slate-100 pt-6">
-            {localError ? (
-              <div className="rounded-2xl bg-red-50 p-3 text-center text-sm font-bold text-red-700">{localError}</div>
-            ) : null}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-500">
-                TIN (if applicable)
-                <input
-                  className="input-field mt-1"
-                  value={fullFields.tin}
-                  onChange={(e) => setFullFields((f) => ({ ...f, tin: e.target.value }))}
-                />
-              </label>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-500">
-                Emergency contact name
-                <input
-                  className="input-field mt-1"
-                  value={fullFields.emergencyName}
-                  onChange={(e) => setFullFields((f) => ({ ...f, emergencyName: e.target.value }))}
-                />
-              </label>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-500">
-                Emergency contact phone
-                <input
-                  className="input-field mt-1"
-                  inputMode="tel"
-                  value={fullFields.emergencyPhone}
-                  onChange={(e) => setFullFields((f) => ({ ...f, emergencyPhone: e.target.value }))}
-                />
-              </label>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-500">
-                Employer (full)
-                <input
-                  className="input-field mt-1"
-                  value={fullFields.employerFull}
-                  onChange={(e) => setFullFields((f) => ({ ...f, employerFull: e.target.value }))}
-                />
-              </label>
-            </div>
-            <label className="block text-xs font-black uppercase tracking-wider text-slate-500">
-              Notes for membership desk
-              <textarea
-                className="input-field mt-1 min-h-[5rem]"
-                rows={3}
-                value={fullFields.notes}
-                onChange={(e) => setFullFields((f) => ({ ...f, notes: e.target.value }))}
-              />
-            </label>
-            <div>
-              <p className="text-xs font-black uppercase tracking-wider text-slate-500">Upload completed sheet</p>
-              <input
-                type="file"
-                accept=".csv,.txt"
-                className="mt-2 block w-full text-sm font-medium text-slate-700"
-                onChange={(e) => setSheetFile(e.target.files?.[0] ?? null)}
-              />
-              {sheetFile ? (
-                <p className="mt-2 text-xs font-medium text-slate-500">Selected: {sheetFile.name}</p>
-              ) : (
-                <p className="mt-2 text-xs text-slate-400">CSV from the template is preferred.</p>
-              )}
-            </div>
-            <button type="submit" disabled={submitting} className="btn-primary flex w-full items-center justify-center gap-2 py-4 sm:w-auto">
-              {submitting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Lock className="h-5 w-5" aria-hidden />}
-              Submit full profile
-            </button>
-          </form>
+          <MemberFullProfileForm
+            memberEmail={email}
+            submitting={submitting}
+            localError={localError}
+            onSubmitSuccess={handleFullSuccess}
+          />
         </section>
       ) : null}
 

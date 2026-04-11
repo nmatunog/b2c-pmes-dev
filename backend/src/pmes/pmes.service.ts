@@ -186,8 +186,16 @@ export class PmesService {
       throw new BadRequestException("Full profile was already submitted.");
     }
 
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(dto.profileJson) as unknown;
+    } catch {
+      throw new BadRequestException("profileJson must be valid JSON.");
+    }
+
     const payload = {
-      ...dto.fields,
+      formVersion: "b2c-membership-v1",
+      profile: parsed,
       sheetFileName: dto.sheetFileName ?? "",
       notes: dto.notes ?? "",
       submittedAt: new Date().toISOString(),

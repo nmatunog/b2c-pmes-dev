@@ -1923,14 +1923,13 @@ export default function App() {
               setAppState("loi_form");
             }}
             onOpenPayment={() => setAppState("payment_portal")}
-            onSubmitFullProfile={async ({ fields, sheetFileName }) => {
+            onSubmitFullProfile={async ({ profileJson, sheetFileName, notes }) => {
               if (!user?.email) return;
-              const notes = typeof fields.notes === "string" ? fields.notes : "";
               await PmesService.submitFullProfile({
                 email: user.email,
-                fields,
+                profileJson,
                 sheetFileName,
-                notes,
+                notes: notes ?? "",
               });
               await refreshMembershipLifecycle();
               setAppState("member_portal");
