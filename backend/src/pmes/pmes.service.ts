@@ -27,6 +27,15 @@ function digitsOnly(s: string | undefined): string {
   return String(s ?? "").replace(/\D/g, "");
 }
 
+/** Non-digits removed; if more than 9 digits, drop last 3 repeatedly (sheet TINs often end in 000). */
+function normalizeTinDigits(raw: string | undefined): string {
+  let d = digitsOnly(raw);
+  while (d.length > 9) {
+    d = d.slice(0, -3);
+  }
+  return d;
+}
+
 function composeLegacyFullName(row: ImportLegacyPioneerRowDto): string | null {
   const direct = row.fullName?.trim();
   if (direct) return direct;
@@ -51,7 +60,7 @@ function resolveLegacyGender(row: ImportLegacyPioneerRowDto): string | null {
 function synthesizeLegacyImportEmail(row: ImportLegacyPioneerRowDto): string {
   const fromRow = row.email?.trim();
   if (fromRow) return normalizeEmail(fromRow);
-  const tin = digitsOnly(row.tinNo);
+  const tin = normalizeTinDigits(row.tinNo);
   if (tin.length >= 6) return normalizeEmail(`tin-${tin}@b2c-registry.example.com`);
   return normalizeEmail(`legacy-${randomUUID()}@b2c-registry.example.com`);
 }
@@ -97,7 +106,8 @@ function buildRegistryImportSnapshot(
     barangay: row.barangay ?? null,
     cityMunicipality: row.cityMunicipality ?? null,
     province: row.province ?? null,
-    tinNo: row.tinNo ?? null,
+    tinNo: normalizeTinDigits(row.tinNo) || null,
+    tinNoAsImported: row.tinNo?.trim() || null,
     initialSubscriptionAmount: row.initialSubscriptionAmount ?? null,
     paidUpShareAmount: row.paidUpShareAmount ?? null,
     religion: row.religion ?? null,
@@ -457,7 +467,7 @@ export class PmesService {
       const phone = row.phone?.trim() && row.phone.trim().length >= 5 ? row.phone.trim().slice(0, 80) : "+639000000000";
 
       const mailing = buildLegacyMailingAddress(row);
-      const tinDigits = digitsOnly(row.tinNo);
+      const tinDigits = normalizeTinDigits(row.tinNo);
       const civil = row.civilStatus?.trim().slice(0, 80) ?? null;
       const memberId = tinDigits.length > 0 ? tinDigits.slice(0, 80) : null;
 
