@@ -475,6 +475,10 @@ export class PmesService {
         callsign: null as string | null,
         alternatePublicHandle: null as string | null,
         memberIdIsProvisional: false,
+        registrationFullName: null as string | null,
+        registrationDob: null as string | null,
+        registrationGender: null as string | null,
+        registrationPhone: null as string | null,
       };
     }
     const withMemberId = await this.ensureMemberPublicId(participant);
@@ -945,6 +949,11 @@ export class PmesService {
        * account had no reliable DOB; submit replaces with a permanent ID from the form date of birth.
        */
       memberIdIsProvisional: !profile,
+      /** From Participant row (PMES registration / sync); client may prefill the membership sheet. */
+      registrationFullName: participant.fullName,
+      registrationDob: participant.dob,
+      registrationGender: participant.gender,
+      registrationPhone: participant.phone,
     };
   }
 

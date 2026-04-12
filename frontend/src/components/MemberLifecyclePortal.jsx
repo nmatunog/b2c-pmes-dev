@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AlertCircle,
   Building2,
@@ -35,6 +35,16 @@ export function MemberLifecyclePortal({
   const legacyFounder = Boolean(lifecycle?.isLegacyFounderImport);
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState(null);
+
+  const registrationPrefill = useMemo(() => {
+    if (!lifecycle || typeof lifecycle !== "object") return null;
+    return {
+      registrationFullName: typeof lifecycle.registrationFullName === "string" ? lifecycle.registrationFullName : "",
+      registrationDob: typeof lifecycle.registrationDob === "string" ? lifecycle.registrationDob : "",
+      registrationGender: typeof lifecycle.registrationGender === "string" ? lifecycle.registrationGender : "",
+      registrationPhone: typeof lifecycle.registrationPhone === "string" ? lifecycle.registrationPhone : "",
+    };
+  }, [lifecycle]);
 
   const firstName = String(displayName || "Member").trim().split(/\s+/)[0] || "Member";
 
@@ -242,6 +252,8 @@ export function MemberLifecyclePortal({
             assignedMemberId={typeof lifecycle?.memberIdNo === "string" ? lifecycle.memberIdNo : ""}
             memberIdIsProvisional={lifecycle?.memberIdIsProvisional === true}
             assignedCallsign={typeof lifecycle?.callsign === "string" ? lifecycle.callsign : ""}
+            registrationPrefill={registrationPrefill}
+            authDisplayName={typeof displayName === "string" ? displayName : ""}
             onRefreshLifecycle={onRefreshLifecycle}
             submitting={submitting}
             localError={localError}

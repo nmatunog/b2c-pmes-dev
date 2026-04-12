@@ -21,6 +21,11 @@ import {
   SEX_GENDER_OPTIONS,
   YES_NO_NA_OPTIONS,
 } from "../lib/memberFullProfileFieldOptions.js";
+import {
+  mapRegistrationGenderToSexGender,
+  registrationDobToBirthDate,
+  splitFullNameForPrefill,
+} from "../lib/membershipFormPrefill.js";
 import { profileToCsvString } from "../lib/memberProfileFlatten.js";
 import { auth } from "../services/firebase";
 import { PmesService } from "../services/pmesService";
@@ -301,6 +306,10 @@ export function MemberFullProfileForm({
   assignedCallsign = "",
   /** After PATCH callsign, refresh membership lifecycle from parent. */
   onRefreshLifecycle,
+  /** PMES `Participant` registration fields from GET /pmes/membership-lifecycle (prefill empty form fields). */
+  registrationPrefill = null,
+  /** Firebase / app display name fallback when `registrationFullName` is missing. */
+  authDisplayName = "",
   onSubmitSuccess,
   submitting,
   localError,
@@ -374,6 +383,62 @@ export function MemberFullProfileForm({
       return { ...p, personal: { ...p.personal, callsign: c } };
     });
   }, [assignedCallsign]);
+
+  /** One-time merge from PostgreSQL registration row + optional Firebase display name. */
+  useEffect(() => {
+    const rawName =
+      String(registrationPrefill?.registrationFullName ?? "").trim() ||
+      String(authDisplayName ?? "").trim();
+    const dob = String(registrationPrefill?.registrationDob ?? "").trim();
+    const genderRaw = String(registrationPrefill?.registrationGender ?? "").trim();
+    const phone = String(registrationPrefill?.registrationPhone ?? "").trim();
+
+    if (!rawName && !dob && !genderRaw && !phone) return;
+
+    setProfile((p) => {
+      const pr = p.personal;
+      const hasSplitName =
+        String(pr.firstName || "").trim() !== "" && String(pr.lastName || "").trim() !== "";
+
+      let personal = p.personal;
+      let contact = p.contact;
+      let changed = false;
+      const bump = () => {
+        if (!changed) {
+          personal = { ...personal };
+          contact = { ...contact };
+          changed = true;
+        }
+      };
+
+      if (!hasSplitName && rawName) {
+        bump();
+        const sp = splitFullNameForPrefill(rawName);
+        if (!String(personal.firstName || "").trim()) personal.firstName = sp.firstName;
+        if (!String(personal.middleName || "").trim()) personal.middleName = sp.middleName;
+        if (!String(personal.lastName || "").trim()) personal.lastName = sp.lastName;
+      }
+
+      if (!String(pr.birthDate || "").trim() && dob) {
+        bump();
+        personal.birthDate = registrationDobToBirthDate(dob);
+      }
+
+      const g = mapRegistrationGenderToSexGender(genderRaw);
+      if (!String(pr.sexGender || "").trim() && g) {
+        bump();
+        personal.sexGender = g;
+      }
+
+      if (!String(p.contact.mobileNo || "").trim() && phone) {
+        bump();
+        contact.mobileNo = phone;
+      }
+
+      if (!changed) return p;
+      return { ...p, personal, contact };
+    });
+  }, [registrationPrefill, authDisplayName]);
 
   const phProvinceOptions = useMemo(
     () => (phGeo ? phGeo.getProvinceSelectOptions() : []),
