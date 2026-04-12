@@ -288,6 +288,8 @@ export default function App() {
   const [masterList, setMasterList] = useState([]);
   /** While a superuser delete request is in flight (row id). */
   const [deletingMasterListId, setDeletingMasterListId] = useState(null);
+  /** Superuser: membership pipeline participant delete in flight. */
+  const [deletingPipelineParticipantId, setDeletingPipelineParticipantId] = useState(null);
   const [examQuestions, setExamQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [score, setScore] = useState(0);
@@ -812,6 +814,29 @@ export default function App() {
       setStaffAdminError(e instanceof Error ? e.message : "Could not create admin.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeletePipelineParticipant = async (row) => {
+    if (!staffAccessToken || staffRole !== "superuser" || !row?.participantId) return;
+    const email = String(row.email ?? "").trim() || "this participant";
+    if (
+      !window.confirm(
+        `Permanently remove ${email} from the database (all PMES attempts and LOI for this account)? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setDeletingPipelineParticipantId(String(row.participantId));
+    try {
+      await PmesService.deleteParticipant(staffAccessToken, row.participantId);
+      setMembershipPipeline((list) =>
+        Array.isArray(list) ? list.filter((r) => String(r.participantId) !== String(row.participantId)) : [],
+      );
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Delete failed.");
+    } finally {
+      setDeletingPipelineParticipantId(null);
     }
   };
 
@@ -2528,6 +2553,7 @@ export default function App() {
                 setNewStaffAdmin({ email: "", password: "" });
                 setStaffAdminError(null);
                 setDeletingMasterListId(null);
+                setDeletingPipelineParticipantId(null);
                 setAppState("landing");
               }}
               className="shrink-0 rounded-xl bg-white/20 px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-white/30"
@@ -3022,6 +3048,22 @@ export default function App() {
                                 }}
                               >
                                 Board approved
+                              </button>
+                            ) : null}
+                            {staffRole === "superuser" ? (
+                              <button
+                                type="button"
+                                disabled={deletingPipelineParticipantId === String(row.participantId)}
+                                onClick={() => handleDeletePipelineParticipant(row)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold uppercase text-red-800 hover:bg-red-100 disabled:opacity-50"
+                                title="Remove this participant from the database (superuser only)"
+                              >
+                                {deletingPipelineParticipantId === String(row.participantId) ? (
+                                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+                                ) : (
+                                  <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                )}
+                                Remove account
                               </button>
                             ) : null}
                           </div>

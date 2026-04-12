@@ -124,4 +124,12 @@ export class PmesController {
   adminParticipantDetail(@Param("id") id: string) {
     return this.pmes.getParticipantAdminDetail(id);
   }
+
+  /** Superuser only: delete participant + PMES/LOI (removes one pipeline row). */
+  @Delete("admin/participants/:id")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @UseGuards(StaffJwtGuard, SuperuserGuard)
+  adminDeleteParticipant(@Param("id") id: string) {
+    return this.pmes.deleteParticipantById(id);
+  }
 }

@@ -153,6 +153,30 @@ export class PmesService {
     return { deleted: true, id };
   }
 
+  /**
+   * Superuser only: permanently remove a participant and all related PMES attempts and LOI.
+   * Use to drop duplicate/stale pipeline rows (e.g. second email) without touching other participants.
+   */
+  async deleteParticipantById(participantId: string) {
+    const id = String(participantId ?? "").trim();
+    if (!id) {
+      throw new BadRequestException("participant id is required");
+    }
+
+    const exists = await this.prisma.participant.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) {
+      throw new NotFoundException("Participant not found");
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.pmesRecord.deleteMany({ where: { participantId: id } }),
+      this.prisma.loiSubmission.deleteMany({ where: { participantId: id } }),
+      this.prisma.participant.delete({ where: { id } }),
+    ]);
+
+    return { deleted: true, participantId: id };
+  }
+
   /** Member-facing: derive cooperative membership pipeline from DB */
   async getMembershipLifecycle(emailRaw: string) {
     const email = normalizeEmail(emailRaw);

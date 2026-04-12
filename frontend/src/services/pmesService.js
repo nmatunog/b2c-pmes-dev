@@ -263,6 +263,40 @@ export const PmesService = {
     return response.json();
   },
 
+  /**
+   * Superuser only: delete one participant (all PMES rows + LOI). Removes a membership pipeline row.
+   */
+  async deleteParticipant(accessToken, participantId) {
+    if (!useRest()) throw new Error("API required");
+    const id = String(participantId ?? "").trim();
+    if (!id) throw new Error("Participant id required");
+    const response = await fetch(`${apiBase()}/pmes/admin/participants/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      let detail = text?.trim() || `Delete failed (${response.status})`;
+      try {
+        const j = JSON.parse(text);
+        const m = j?.message;
+        if (m != null) {
+          detail = Array.isArray(m) ? m.map((x) => String(x)).join("; ") : String(m);
+        }
+      } catch {
+        /* keep detail */
+      }
+      if (response.status === 404 && detail.includes("Cannot DELETE")) {
+        throw new Error(
+          "The backend on your API port is an old Node process (it does not have participant delete). Restart the API from the repo root (npm run dev) or free port 3000.",
+        );
+      }
+      throw new Error(detail);
+    }
+    if (!text?.trim()) return {};
+    return JSON.parse(text);
+  },
+
   /** Admin: full members registry (search + pagination). */
   async fetchMemberRegistry(accessToken, { q = "", page = 1, pageSize = 50, includeAll = false } = {}) {
     if (!useRest()) throw new Error("API required");
