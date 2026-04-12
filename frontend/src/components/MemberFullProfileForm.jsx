@@ -2,6 +2,25 @@ import { useEffect, useMemo, useState } from "react";
 import { FileSpreadsheet, Loader2, Lock } from "lucide-react";
 import { B2CLogo } from "./B2CLogo.jsx";
 import { createEmptyMemberProfile } from "../lib/memberFullProfileSchema.js";
+import {
+  BANK_ACCOUNT_TYPE_OPTIONS,
+  BLOOD_TYPE_OPTIONS,
+  CHILD_DEPENDENT_COUNT_OPTIONS,
+  CITIZENSHIP_OPTIONS,
+  CIVIL_STATUS_OPTIONS,
+  COUNTRY_OPTIONS,
+  EMPLOYMENT_SECTOR_OPTIONS,
+  EMPLOYMENT_STATUS_OPTIONS,
+  HIGHEST_EDUCATION_OPTIONS,
+  JOB_LEVEL_OPTIONS,
+  NAME_SUFFIX_OPTIONS,
+  PH_REGION_OPTIONS,
+  RELIGION_OPTIONS,
+  SELF_EMPLOYMENT_SECTOR_OPTIONS,
+  SENIOR_CITIZEN_OPTIONS,
+  SEX_GENDER_OPTIONS,
+  YES_NO_NA_OPTIONS,
+} from "../lib/memberFullProfileFieldOptions.js";
 import { profileToCsvString } from "../lib/memberProfileFlatten.js";
 import { auth } from "../services/firebase";
 import { PmesService } from "../services/pmesService";
@@ -47,6 +66,42 @@ function TextArea({ label, value, onChange, rows = 2 }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
+    </label>
+  );
+}
+
+/**
+ * @param {{ label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; required?: boolean; placeholder?: string; className?: string }} props
+ */
+function Select({ label, value, onChange, options, required, placeholder = "Choose…", className = "" }) {
+  const mergedOptions = useMemo(() => {
+    const list = [...options];
+    const v = String(value ?? "");
+    if (v && !list.some((x) => x.value === v)) {
+      list.unshift({ value: v, label: `${v} (current value)` });
+    }
+    return list;
+  }, [options, value]);
+
+  const hasBlankOption = mergedOptions.some((o) => o.value === "");
+  const showPlaceholder = !hasBlankOption && (!required || mergedOptions.length > 0);
+
+  return (
+    <label className={`block text-[10px] font-bold uppercase tracking-wider text-slate-600 ${className}`}>
+      {label}
+      {required ? <span className="text-red-600"> *</span> : null}
+      <select
+        className="input-field mt-1 text-sm font-medium text-slate-900"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {showPlaceholder ? <option value="">{placeholder}</option> : null}
+        {mergedOptions.map((o) => (
+          <option key={`${o.value}__${o.label}`} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
@@ -371,34 +426,102 @@ export function MemberFullProfileForm({
         <Text label="Last name" value={pr.lastName} onChange={(v) => setPersonal({ lastName: v })} required />
         <Text label="First name" value={pr.firstName} onChange={(v) => setPersonal({ firstName: v })} required />
         <Text label="Middle name" value={pr.middleName} onChange={(v) => setPersonal({ middleName: v })} required />
-        <Text label="Suffix name" value={pr.suffixName} onChange={(v) => setPersonal({ suffixName: v })} />
+        <Select
+          label="Suffix name"
+          value={pr.suffixName}
+          onChange={(v) => setPersonal({ suffixName: v })}
+          options={NAME_SUFFIX_OPTIONS}
+          placeholder="None"
+        />
         <Text label="Nickname" value={pr.nickname} onChange={(v) => setPersonal({ nickname: v })} />
         <Text label="Birth date (mm/dd/yyyy)" value={pr.birthDate} onChange={(v) => setPersonal({ birthDate: v })} required />
         <Text label="Place of birth" value={pr.placeOfBirth} onChange={(v) => setPersonal({ placeOfBirth: v })} required />
-        <Text label="Country of birth" value={pr.countryOfBirth} onChange={(v) => setPersonal({ countryOfBirth: v })} />
-        <Text label="Civil status" value={pr.civilStatus} onChange={(v) => setPersonal({ civilStatus: v })} required />
-        <Text label="Sex / Gender" value={pr.sexGender} onChange={(v) => setPersonal({ sexGender: v })} required />
-        <Text label="Blood type" value={pr.bloodType} onChange={(v) => setPersonal({ bloodType: v })} required />
+        <Select
+          label="Country of birth"
+          value={pr.countryOfBirth}
+          onChange={(v) => setPersonal({ countryOfBirth: v })}
+          options={COUNTRY_OPTIONS}
+          placeholder="Select country"
+        />
+        <Select
+          label="Civil status"
+          value={pr.civilStatus}
+          onChange={(v) => setPersonal({ civilStatus: v })}
+          options={CIVIL_STATUS_OPTIONS}
+          required
+          placeholder="Select civil status"
+        />
+        <Select
+          label="Sex / Gender"
+          value={pr.sexGender}
+          onChange={(v) => setPersonal({ sexGender: v })}
+          options={SEX_GENDER_OPTIONS}
+          required
+          placeholder="Select"
+        />
+        <Select
+          label="Blood type"
+          value={pr.bloodType}
+          onChange={(v) => setPersonal({ bloodType: v })}
+          options={BLOOD_TYPE_OPTIONS}
+          required
+          placeholder="Select blood type"
+        />
         <Text label="Height (ft & in)" value={pr.heightFeetInches} onChange={(v) => setPersonal({ heightFeetInches: v })} />
         <Text label="Weight (kg)" value={pr.weightKg} onChange={(v) => setPersonal({ weightKg: v })} />
-        <Text label="No. of children" value={pr.noOfChildren} onChange={(v) => setPersonal({ noOfChildren: v })} />
-        <Text label="No. of dependents" value={pr.noOfDependents} onChange={(v) => setPersonal({ noOfDependents: v })} />
-        <Text
+        <Select
+          label="No. of children"
+          value={pr.noOfChildren}
+          onChange={(v) => setPersonal({ noOfChildren: v })}
+          options={CHILD_DEPENDENT_COUNT_OPTIONS}
+          placeholder="Select"
+        />
+        <Select
+          label="No. of dependents"
+          value={pr.noOfDependents}
+          onChange={(v) => setPersonal({ noOfDependents: v })}
+          options={CHILD_DEPENDENT_COUNT_OPTIONS}
+          placeholder="Select"
+        />
+        <Select
           label="Citizenship / Nationality"
           value={pr.citizenshipNationality}
           onChange={(v) => setPersonal({ citizenshipNationality: v })}
+          options={CITIZENSHIP_OPTIONS}
           required
+          placeholder="Select"
         />
-        <Text label="Religion" value={pr.religion} onChange={(v) => setPersonal({ religion: v })} required />
+        <Select
+          label="Religion"
+          value={pr.religion}
+          onChange={(v) => setPersonal({ religion: v })}
+          options={RELIGION_OPTIONS}
+          required
+          placeholder="Select"
+        />
         <Text label="Social affiliations" value={pr.socialAffiliations} onChange={(v) => setPersonal({ socialAffiliations: v })} />
-        <Text label="Highest education" value={pr.highestEducation} onChange={(v) => setPersonal({ highestEducation: v })} required />
+        <Select
+          label="Highest education"
+          value={pr.highestEducation}
+          onChange={(v) => setPersonal({ highestEducation: v })}
+          options={HIGHEST_EDUCATION_OPTIONS}
+          required
+          placeholder="Select education"
+        />
       </Section>
 
       <Section title="Mother's information">
         <Text label="Mother's maiden last name" value={mo.maidenLastName} onChange={(v) => setMother({ maidenLastName: v })} required />
         <Text label="Mother's maiden first name" value={mo.maidenFirstName} onChange={(v) => setMother({ maidenFirstName: v })} required />
         <Text label="Mother's maiden middle name" value={mo.maidenMiddleName} onChange={(v) => setMother({ maidenMiddleName: v })} required />
-        <Text label="Region" value={mo.region} onChange={(v) => setMother({ region: v })} required />
+        <Select
+          label="Region"
+          value={mo.region}
+          onChange={(v) => setMother({ region: v })}
+          options={PH_REGION_OPTIONS}
+          required
+          placeholder="Select region"
+        />
         <Text label="Province" value={mo.province} onChange={(v) => setMother({ province: v })} required />
         <Text label="City / Municipality" value={mo.cityMunicipality} onChange={(v) => setMother({ cityMunicipality: v })} required />
         <Text label="Barangay" value={mo.barangay} onChange={(v) => setMother({ barangay: v })} />
@@ -410,8 +533,20 @@ export function MemberFullProfileForm({
         <Text label="Father's last name" value={fa.lastName} onChange={(v) => setFather({ lastName: v })} />
         <Text label="Father's first name" value={fa.firstName} onChange={(v) => setFather({ firstName: v })} />
         <Text label="Father's middle name" value={fa.middleName} onChange={(v) => setFather({ middleName: v })} />
-        <Text label="Suffix" value={fa.suffix} onChange={(v) => setFather({ suffix: v })} />
-        <Text label="Region" value={fa.region} onChange={(v) => setFather({ region: v })} />
+        <Select
+          label="Suffix"
+          value={fa.suffix}
+          onChange={(v) => setFather({ suffix: v })}
+          options={NAME_SUFFIX_OPTIONS}
+          placeholder="None"
+        />
+        <Select
+          label="Region"
+          value={fa.region}
+          onChange={(v) => setFather({ region: v })}
+          options={PH_REGION_OPTIONS}
+          placeholder="Select region"
+        />
         <Text label="Province" value={fa.province} onChange={(v) => setFather({ province: v })} />
         <Text label="City / Municipality" value={fa.cityMunicipality} onChange={(v) => setFather({ cityMunicipality: v })} />
         <Text label="Barangay" value={fa.barangay} onChange={(v) => setFather({ barangay: v })} />
@@ -420,8 +555,22 @@ export function MemberFullProfileForm({
       </Section>
 
       <Section title="Present address">
-        <Text label="Country" value={pa.country} onChange={(v) => setPresent({ country: v })} required />
-        <Text label="Region" value={pa.region} onChange={(v) => setPresent({ region: v })} required />
+        <Select
+          label="Country"
+          value={pa.country}
+          onChange={(v) => setPresent({ country: v })}
+          options={COUNTRY_OPTIONS}
+          required
+          placeholder="Select country"
+        />
+        <Select
+          label="Region"
+          value={pa.region}
+          onChange={(v) => setPresent({ region: v })}
+          options={PH_REGION_OPTIONS}
+          required
+          placeholder="Select region"
+        />
         <Text label="Province" value={pa.province} onChange={(v) => setPresent({ province: v })} required />
         <Text label="City / Municipality" value={pa.cityMunicipality} onChange={(v) => setPresent({ cityMunicipality: v })} required />
         <Text label="Barangay" value={pa.barangay} onChange={(v) => setPresent({ barangay: v })} />
@@ -430,15 +579,45 @@ export function MemberFullProfileForm({
         <Text label="House No." value={pa.houseNo} onChange={(v) => setPresent({ houseNo: v })} required />
         <Text label="Postal code" value={pa.postalCode} onChange={(v) => setPresent({ postalCode: v })} />
         <Text label="Occupied since" value={pa.occupiedSince} onChange={(v) => setPresent({ occupiedSince: v })} required />
-        <Text label="Living with parents (Y/N)" value={pa.livingWithParents} onChange={(v) => setPresent({ livingWithParents: v })} />
-        <Text label="Rented house (Y/N)" value={pa.rentedHouse} onChange={(v) => setPresent({ rentedHouse: v })} />
-        <Text label="Owned house (Y/N)" value={pa.ownedHouse} onChange={(v) => setPresent({ ownedHouse: v })} />
+        <Select
+          label="Living with parents"
+          value={pa.livingWithParents}
+          onChange={(v) => setPresent({ livingWithParents: v })}
+          options={YES_NO_NA_OPTIONS}
+          placeholder="Select"
+        />
+        <Select
+          label="Rented house"
+          value={pa.rentedHouse}
+          onChange={(v) => setPresent({ rentedHouse: v })}
+          options={YES_NO_NA_OPTIONS}
+          placeholder="Select"
+        />
+        <Select
+          label="Owned house"
+          value={pa.ownedHouse}
+          onChange={(v) => setPresent({ ownedHouse: v })}
+          options={YES_NO_NA_OPTIONS}
+          placeholder="Select"
+        />
         <Text label="House owner if rented" value={pa.houseOwnerIfRented} onChange={(v) => setPresent({ houseOwnerIfRented: v })} />
       </Section>
 
       <Section title="Previous address (if applicable)">
-        <Text label="Country" value={pv.country} onChange={(v) => setPrev({ country: v })} />
-        <Text label="Region" value={pv.region} onChange={(v) => setPrev({ region: v })} />
+        <Select
+          label="Country"
+          value={pv.country}
+          onChange={(v) => setPrev({ country: v })}
+          options={COUNTRY_OPTIONS}
+          placeholder="Select country"
+        />
+        <Select
+          label="Region"
+          value={pv.region}
+          onChange={(v) => setPrev({ region: v })}
+          options={PH_REGION_OPTIONS}
+          placeholder="Select region"
+        />
         <Text label="Province" value={pv.province} onChange={(v) => setPrev({ province: v })} />
         <Text label="City / Municipality" value={pv.cityMunicipality} onChange={(v) => setPrev({ cityMunicipality: v })} />
         <Text label="Barangay" value={pv.barangay} onChange={(v) => setPrev({ barangay: v })} />
@@ -465,7 +644,13 @@ export function MemberFullProfileForm({
         <Text label="GSIS No." value={rne.gsisNo} onChange={(v) => setRegNE({ gsisNo: v })} />
         <Text label="UMID No." value={rne.umidNo} onChange={(v) => setRegNE({ umidNo: v })} />
         <Text label="Philhealth or Pag-ibig No." value={rne.philhealthOrPagibigNo} onChange={(v) => setRegNE({ philhealthOrPagibigNo: v })} />
-        <Text label="Senior Citizen card" value={rne.seniorCitizenCard} onChange={(v) => setRegNE({ seniorCitizenCard: v })} />
+        <Select
+          label="Senior Citizen card"
+          value={rne.seniorCitizenCard}
+          onChange={(v) => setRegNE({ seniorCitizenCard: v })}
+          options={SENIOR_CITIZEN_OPTIONS}
+          placeholder="Select"
+        />
       </Section>
 
       <Section title="Registration numbers (with expiry)">
@@ -497,8 +682,20 @@ export function MemberFullProfileForm({
 
       <Section title="Employment information">
         <Text label="Company" value={em.company} onChange={(v) => setEmp({ company: v })} />
-        <Text label="Sector" value={em.sector} onChange={(v) => setEmp({ sector: v })} />
-        <Text label="Region" value={em.region} onChange={(v) => setEmp({ region: v })} />
+        <Select
+          label="Sector"
+          value={em.sector}
+          onChange={(v) => setEmp({ sector: v })}
+          options={EMPLOYMENT_SECTOR_OPTIONS}
+          placeholder="Select sector"
+        />
+        <Select
+          label="Region"
+          value={em.region}
+          onChange={(v) => setEmp({ region: v })}
+          options={PH_REGION_OPTIONS}
+          placeholder="Select region"
+        />
         <Text label="Province" value={em.province} onChange={(v) => setEmp({ province: v })} />
         <Text label="City / Municipality" value={em.cityMunicipality} onChange={(v) => setEmp({ cityMunicipality: v })} />
         <Text label="Barangay" value={em.barangay} onChange={(v) => setEmp({ barangay: v })} />
@@ -506,20 +703,44 @@ export function MemberFullProfileForm({
         <Text label="Postal code" value={em.postalCode} onChange={(v) => setEmp({ postalCode: v })} />
         <Text label="Company ID No." value={em.companyIdNo} onChange={(v) => setEmp({ companyIdNo: v })} />
         <Text label="Position" value={em.position} onChange={(v) => setEmp({ position: v })} />
-        <Text label="Job level" value={em.jobLevel} onChange={(v) => setEmp({ jobLevel: v })} />
-        <Text label="Employment status" value={em.employmentStatus} onChange={(v) => setEmp({ employmentStatus: v })} />
+        <Select
+          label="Job level"
+          value={em.jobLevel}
+          onChange={(v) => setEmp({ jobLevel: v })}
+          options={JOB_LEVEL_OPTIONS}
+          placeholder="Select"
+        />
+        <Select
+          label="Employment status"
+          value={em.employmentStatus}
+          onChange={(v) => setEmp({ employmentStatus: v })}
+          options={EMPLOYMENT_STATUS_OPTIONS}
+          placeholder="Select"
+        />
         <Text label="Years of employment" value={em.yearsOfEmployment} onChange={(v) => setEmp({ yearsOfEmployment: v })} />
         <Text label="Date hired from" value={em.dateHiredFrom} onChange={(v) => setEmp({ dateHiredFrom: v })} />
         <Text label="Date hired to" value={em.dateHiredTo} onChange={(v) => setEmp({ dateHiredTo: v })} />
       </Section>
 
       <Section title="Self-employment or business (if applicable)">
-        <Text label="Sector" value={se.sector} onChange={(v) => setSelf({ sector: v })} />
+        <Select
+          label="Sector"
+          value={se.sector}
+          onChange={(v) => setSelf({ sector: v })}
+          options={SELF_EMPLOYMENT_SECTOR_OPTIONS}
+          placeholder="Select sector"
+        />
         <Text label="Sub-sector" value={se.subSector} onChange={(v) => setSelf({ subSector: v })} />
         <Text label="Occupation" value={se.occupation} onChange={(v) => setSelf({ occupation: v })} />
         <Text label="Business name" value={se.businessName} onChange={(v) => setSelf({ businessName: v })} />
         <Text label="Line of business" value={se.lineOfBusiness} onChange={(v) => setSelf({ lineOfBusiness: v })} />
-        <Text label="Region" value={se.region} onChange={(v) => setSelf({ region: v })} />
+        <Select
+          label="Region"
+          value={se.region}
+          onChange={(v) => setSelf({ region: v })}
+          options={PH_REGION_OPTIONS}
+          placeholder="Select region"
+        />
         <Text label="Province" value={se.province} onChange={(v) => setSelf({ province: v })} />
         <Text label="City / Municipality" value={se.cityMunicipality} onChange={(v) => setSelf({ cityMunicipality: v })} />
         <Text label="Barangay" value={se.barangay} onChange={(v) => setSelf({ barangay: v })} />
@@ -544,11 +765,13 @@ export function MemberFullProfileForm({
               onChange={(v) => setBank(i, { bankName: v })}
               required={i === 0}
             />
-            <Text
+            <Select
               label={`${i + 1} — Account type`}
               value={profile.bankAccounts[i].accountType}
               onChange={(v) => setBank(i, { accountType: v })}
+              options={BANK_ACCOUNT_TYPE_OPTIONS}
               required={i === 0}
+              placeholder="Select account type"
             />
           </div>
         ))}
