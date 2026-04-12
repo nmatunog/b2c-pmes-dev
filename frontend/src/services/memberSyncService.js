@@ -16,7 +16,8 @@ export async function syncMemberToPostgres(user, fullName) {
   const base = apiBase();
   if (!base || !user?.uid || !user.email) return null;
 
-  const idToken = await user.getIdToken();
+  /** Force refresh so Nest verifies a current token (avoids stale-session 401s when Admin is configured). */
+  const idToken = await user.getIdToken(true);
   const body = {
     uid: user.uid,
     email: user.email,
