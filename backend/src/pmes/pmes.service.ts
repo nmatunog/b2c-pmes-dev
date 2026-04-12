@@ -967,7 +967,14 @@ export class PmesService {
   }
 
   private flattenRecord(
-    participant: { fullName: string; email: string; phone: string; dob: string; gender: string },
+    participant: {
+      fullName: string;
+      email: string;
+      phone: string;
+      dob: string;
+      gender: string;
+      legacyPioneerImport?: boolean;
+    },
     record: { id: string; score: number; passed: boolean; timestamp: Date },
   ) {
     return {
@@ -980,6 +987,7 @@ export class PmesService {
       score: record.score,
       passed: record.passed,
       timestamp: record.timestamp.toISOString(),
+      legacyPioneerImport: Boolean(participant.legacyPioneerImport),
     };
   }
 }

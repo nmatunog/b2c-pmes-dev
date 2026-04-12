@@ -9,6 +9,10 @@ function formatCertCode(id) {
 }
 
 export function Certificate({ record }) {
+  /** Registry / lifecycle imports — omit issue date/time on the PDF (historical PMES). */
+  const pioneer =
+    Boolean(record?.legacyPioneerImport) || Boolean(record?.isLegacyFounderImport);
+
   const dateStr = record?.timestamp
     ? new Date(record.timestamp).toLocaleString("en-PH", {
         month: "long",
@@ -44,12 +48,18 @@ export function Certificate({ record }) {
         <p className="text-xl font-black text-[#004aad] sm:text-2xl">
           Assessment score: <span className="tabular-nums">{scoreLine}</span>
         </p>
-        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-8 border-t-2 border-slate-100 pt-8 sm:grid-cols-2 sm:gap-12">
-          <div className="text-center">
-            <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Issued</p>
-            <p className="text-lg font-black text-slate-800 sm:text-xl">{dateStr}</p>
-          </div>
-          <div className="text-center">
+        <div
+          className={`mx-auto grid max-w-2xl grid-cols-1 gap-8 border-t-2 border-slate-100 pt-8 ${
+            pioneer ? "" : "sm:grid-cols-2 sm:gap-12"
+          }`}
+        >
+          {!pioneer ? (
+            <div className="text-center">
+              <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Issued</p>
+              <p className="text-lg font-black text-slate-800 sm:text-xl">{dateStr}</p>
+            </div>
+          ) : null}
+          <div className={`text-center ${pioneer ? "mx-auto max-w-lg" : ""}`}>
             <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Certificate ID</p>
             <p className="text-lg font-black tracking-tight text-slate-800 sm:text-xl">{formatCertCode(record?.id)}</p>
           </div>

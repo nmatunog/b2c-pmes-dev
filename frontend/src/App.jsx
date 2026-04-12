@@ -2241,7 +2241,14 @@ export default function App() {
           </div>
         ) : (
           <>
-            <Certificate record={activeRecord} />
+            <Certificate
+              record={{
+                ...activeRecord,
+                legacyPioneerImport:
+                  Boolean(activeRecord?.legacyPioneerImport) ||
+                  Boolean(membershipLifecycle?.isLegacyFounderImport),
+              }}
+            />
             <div className="no-print mt-16 flex w-full max-w-4xl flex-col gap-8 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
