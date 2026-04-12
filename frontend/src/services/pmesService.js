@@ -236,6 +236,19 @@ export const PmesService = {
     return response.json();
   },
 
+  /** Map email, callsign, lastname-seq label, or member ID → Firebase email. Returns null if 404. */
+  async resolveLoginEmail(login) {
+    if (!useRest() || !String(login || "").trim()) return null;
+    const response = await fetch(
+      `${apiBase()}/pmes/member/resolve-login-email?login=${encodeURIComponent(String(login).trim())}`,
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error(await parseApiErrorMessage(response));
+    }
+    return response.json();
+  },
+
   async submitFullProfile({ email, profileJson, sheetFileName, notes }) {
     if (!useRest()) throw new Error("API required");
     const response = await fetch(`${apiBase()}/pmes/full-profile`, {

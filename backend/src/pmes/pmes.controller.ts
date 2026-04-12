@@ -61,6 +61,23 @@ export class PmesController {
     return this.pmes.getMembershipLifecycle(email);
   }
 
+  /**
+   * Resolve email for Firebase `signInWithEmailAndPassword` when the user enters callsign, `lastname-seq`, or member ID.
+   * Throttled — still possible to probe existence; pair with strong Firebase password rules.
+   */
+  @Get("member/resolve-login-email")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async resolveLoginEmail(@Query("login") login: string) {
+    if (!login?.trim()) {
+      throw new BadRequestException("login query parameter is required");
+    }
+    const out = await this.pmes.resolveLoginEmailForFirebase(login);
+    if (!out) {
+      throw new NotFoundException("No account matches that login.");
+    }
+    return out;
+  }
+
   @Post("full-profile")
   submitFullProfile(@Body() dto: SubmitFullProfileDto) {
     return this.pmes.submitFullProfile(dto);

@@ -1106,25 +1106,71 @@ export default function App() {
       setError("Firebase is not configured.");
       return;
     }
+    const raw = logIn.email.trim();
+    if (!raw) {
+      setError("Enter your email, callsign, or alternate label.");
+      return;
+    }
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, logIn.email.trim(), logIn.password);
+      let firebaseEmail = raw;
+      if (!raw.includes("@")) {
+        const api = (import.meta.env.VITE_API_BASE_URL || "").trim();
+        if (!api) {
+          setError("To sign in with a callsign or label, set VITE_API_BASE_URL to your API.");
+          return;
+        }
+        const resolved = await PmesService.resolveLoginEmail(raw);
+        if (!resolved?.email) {
+          setError(
+            "No account found for that login. Try your email, callsign, member ID, or alternate label (e.g. cruz-2).",
+          );
+          return;
+        }
+        firebaseEmail = resolved.email;
+      } else {
+        firebaseEmail = raw.toLowerCase();
+      }
+      await signInWithEmailAndPassword(auth, firebaseEmail, logIn.password);
     } catch (err) {
-      setError(mapFirebaseAuthError(err?.code));
+      const code = err && typeof err === "object" && "code" in err ? err.code : undefined;
+      if (typeof code === "string" && code.startsWith("auth/")) {
+        setError(mapFirebaseAuthError(code));
+      } else if (err instanceof Error && err.message) {
+        setError(err.message);
+      } else {
+        setError(mapFirebaseAuthError(undefined));
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleForgotPassword = async () => {
-    const email = logIn.email.trim();
-    if (!email) {
-      setError("Enter your email above, then tap Forgot password again.");
+    const raw = logIn.email.trim();
+    if (!raw) {
+      setError("Enter your email, callsign, or alternate label above, then tap Forgot password again.");
       return;
     }
     setError(null);
     try {
-      await sendPasswordResetEmail(auth, email);
+      let firebaseEmail = raw;
+      if (!raw.includes("@")) {
+        const api = (import.meta.env.VITE_API_BASE_URL || "").trim();
+        if (!api) {
+          setError("Configure VITE_API_BASE_URL to reset password using a callsign or label.");
+          return;
+        }
+        const resolved = await PmesService.resolveLoginEmail(raw);
+        if (!resolved?.email) {
+          setError("No account found for that login.");
+          return;
+        }
+        firebaseEmail = resolved.email;
+      } else {
+        firebaseEmail = raw.toLowerCase();
+      }
+      await sendPasswordResetEmail(auth, firebaseEmail);
       setError(null);
       alert("Password reset email sent. Check your inbox.");
     } catch (err) {
@@ -1399,7 +1445,7 @@ export default function App() {
             <ul className="relative z-10 mt-8 hidden max-w-md space-y-3 text-sm font-semibold leading-snug text-white/90 sm:block">
               <li className="flex gap-3">
                 <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden />
-                Secure sign-in with email &amp; password
+                Sign in with email, callsign, or alternate label — same password
               </li>
               <li className="flex gap-3">
                 <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden />
@@ -1543,10 +1589,12 @@ export default function App() {
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
                   <input
-                    type="email"
-                    autoComplete="email"
+                    type={isSignup ? "email" : "text"}
+                    autoComplete={isSignup ? "email" : "username"}
                     className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
-                    placeholder="Email address"
+                    placeholder={
+                      isSignup ? "Email address" : "Email, callsign, or label (e.g. delacruz-2)"
+                    }
                     value={isSignup ? signUp.email : logIn.email}
                     onChange={(e) =>
                       isSignup

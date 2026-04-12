@@ -811,6 +811,51 @@ export class PmesService {
   }
 
   /**
+   * Map email, callsign, default alternate (`lastname-seq`), or member ID → account email for Firebase sign-in.
+   * Returns null if nothing matches.
+   */
+  async resolveLoginEmailForFirebase(raw: string): Promise<{ email: string } | null> {
+    const trimmed = String(raw ?? "").trim();
+    if (!trimmed) return null;
+
+    if (trimmed.includes("@")) {
+      const email = normalizeEmail(trimmed);
+      const byEmail = await this.prisma.participant.findUnique({
+        where: { email },
+        select: { email: true },
+      });
+      return byEmail ? { email: byEmail.email } : null;
+    }
+
+    const byMemberId = await this.prisma.participant.findFirst({
+      where: { memberIdNo: { equals: trimmed, mode: "insensitive" } },
+      select: { email: true },
+    });
+    if (byMemberId) return { email: byMemberId.email };
+
+    const lower = trimmed.toLowerCase();
+    const byCallsign = await this.prisma.participant.findUnique({
+      where: { callsign: lower },
+      select: { email: true },
+    });
+    if (byCallsign) return { email: byCallsign.email };
+
+    const m = lower.match(/^([a-z0-9]{2,})-(\d{1,5})$/);
+    if (m) {
+      const slug = m[1]!;
+      const seq = parseInt(m[2]!, 10);
+      if (!Number.isFinite(seq) || seq < 1) return null;
+      const bySlug = await this.prisma.participant.findFirst({
+        where: { lastNameKey: slug, lastNameSeq: seq },
+        select: { email: true },
+      });
+      if (bySlug) return { email: bySlug.email };
+    }
+
+    return null;
+  }
+
+  /**
    * Optional callsign or clear it (Firebase-authenticated via controller).
    * Does not change last-name sequence; clearing falls back to default alternate.
    */
