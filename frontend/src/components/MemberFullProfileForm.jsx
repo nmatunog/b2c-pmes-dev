@@ -22,6 +22,12 @@ import {
   YES_NO_NA_OPTIONS,
 } from "../lib/memberFullProfileFieldOptions.js";
 import { profileToCsvString } from "../lib/memberProfileFlatten.js";
+import {
+  formatPlaceOfBirth,
+  getMunicipalitySelectOptions,
+  getProvinceSelectOptions,
+  parseLegacyPlaceOfBirth,
+} from "../lib/phPlaceOfBirth.js";
 import { auth } from "../services/firebase";
 import { PmesService } from "../services/pmesService";
 
@@ -188,6 +194,12 @@ export function MemberFullProfileForm({
     });
   }, [assignedCallsign]);
 
+  const phProvinceOptions = useMemo(() => getProvinceSelectOptions(), []);
+  const phMunicipalityOptions = useMemo(
+    () => getMunicipalitySelectOptions(profile.personal.placeOfBirthProvCode),
+    [profile.personal.placeOfBirthProvCode],
+  );
+
   const csvBlobUrl = useMemo(() => {
     const forExport = {
       ...profile,
@@ -208,6 +220,28 @@ export function MemberFullProfileForm({
 
   const setAck = (patch) => setProfile((p) => ({ ...p, acknowledgement: { ...p.acknowledgement, ...patch } }));
   const setPersonal = (patch) => setProfile((p) => ({ ...p, personal: { ...p.personal, ...patch } }));
+
+  /** Hydrate PSGC dropdowns from legacy free-text placeOfBirth when codes are empty. */
+  useEffect(() => {
+    setProfile((p) => {
+      const pr = p.personal;
+      const hasBoth =
+        String(pr.placeOfBirthProvCode ?? "").trim() !== "" &&
+        String(pr.placeOfBirthMunCity ?? "").trim() !== "";
+      if (hasBoth) return p;
+      const parsed = parseLegacyPlaceOfBirth(pr.placeOfBirth);
+      if (!parsed) return p;
+      return {
+        ...p,
+        personal: {
+          ...pr,
+          placeOfBirthProvCode: parsed.provCode,
+          placeOfBirthMunCity: parsed.munCity,
+          placeOfBirth: formatPlaceOfBirth(parsed.provCode, parsed.munCity),
+        },
+      };
+    });
+  }, [profile.personal.placeOfBirth]);
   const setMother = (patch) => setProfile((p) => ({ ...p, mother: { ...p.mother, ...patch } }));
   const setFather = (patch) => setProfile((p) => ({ ...p, father: { ...p.father, ...patch } }));
   const setPresent = (patch) => setProfile((p) => ({ ...p, presentAddress: { ...p.presentAddress, ...patch } }));
@@ -435,7 +469,33 @@ export function MemberFullProfileForm({
         />
         <Text label="Nickname" value={pr.nickname} onChange={(v) => setPersonal({ nickname: v })} />
         <Text label="Birth date (mm/dd/yyyy)" value={pr.birthDate} onChange={(v) => setPersonal({ birthDate: v })} required />
-        <Text label="Place of birth" value={pr.placeOfBirth} onChange={(v) => setPersonal({ placeOfBirth: v })} required />
+        <Select
+          label="Province (place of birth)"
+          value={pr.placeOfBirthProvCode}
+          onChange={(v) =>
+            setPersonal({
+              placeOfBirthProvCode: v,
+              placeOfBirthMunCity: "",
+              placeOfBirth: "",
+            })
+          }
+          options={phProvinceOptions}
+          required
+          placeholder="Select province"
+        />
+        <Select
+          label="City / municipality"
+          value={pr.placeOfBirthMunCity}
+          onChange={(v) =>
+            setPersonal({
+              placeOfBirthMunCity: v,
+              placeOfBirth: formatPlaceOfBirth(pr.placeOfBirthProvCode, v),
+            })
+          }
+          options={phMunicipalityOptions}
+          required
+          placeholder={pr.placeOfBirthProvCode ? "Select city or municipality" : "Select province first"}
+        />
         <Select
           label="Country of birth"
           value={pr.countryOfBirth}

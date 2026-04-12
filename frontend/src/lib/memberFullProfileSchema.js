@@ -27,7 +27,12 @@ export function createEmptyMemberProfile() {
       suffixName: "",
       nickname: "",
       birthDate: "",
+      /** Combined display: "City/Municipality, Province" (synced from PSGC dropdowns). */
       placeOfBirth: "",
+      /** PSGC province code (3-digit string, e.g. "022"); pairs with placeOfBirthMunCity. */
+      placeOfBirthProvCode: "",
+      /** City or municipality name within placeOfBirthProvCode. */
+      placeOfBirthMunCity: "",
       countryOfBirth: "",
       civilStatus: "",
       sexGender: "",
