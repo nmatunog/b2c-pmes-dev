@@ -3,8 +3,8 @@ import { FileText, X } from "lucide-react";
 import { parsePrimaryBylawsPlaintext } from "./parsePrimaryBylaws.js";
 import { PRIMARY_BYLAWS_PLAINTEXT } from "./b2cBylawsPrimarySource.js";
 
-/** Landing section to show in the URL when leaving the By-Laws modal (see `landing.jsx` root). */
-const LANDING_SECTION_AFTER_BYLAWS = "top";
+/** Landing section to show in the URL when leaving the By-Laws modal (see `landing.jsx` `<main>`). */
+const LANDING_SECTION_AFTER_BYLAWS = "main-content";
 
 /**
  * @param {{ active: boolean; onClose: () => void; pdfUrl: string }} props
