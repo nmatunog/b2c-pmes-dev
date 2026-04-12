@@ -69,7 +69,9 @@ export class AuthService {
     }
     const app = this.getFirebaseAdminApp();
     if (!app) {
-      throw new BadRequestException("Firebase Admin is not configured; cannot update sign-in email.");
+      throw new BadRequestException(
+        "Cannot update sign-in email: add Firebase service account env on the API (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) — same project as the web app.",
+      );
     }
     let existing;
     try {
@@ -119,6 +121,15 @@ export class AuthService {
       return;
     }
 
+    /**
+     * Local dev: no `MEMBER_SYNC_SECRET` and no service account — trust `uid` / `email` in the body.
+     * The browser still sends `Authorization: Bearer`; we must not reject that before this check,
+     * or POST /auth/sync-member always 401s and `Participant.firebaseUid` never syncs.
+     */
+    if (!hasSecret && !hasAdmin) {
+      return;
+    }
+
     const bearer = this.extractBearer(authorization);
     if (bearer) {
       if (!hasAdmin) {
@@ -143,10 +154,6 @@ export class AuthService {
         if (e instanceof UnauthorizedException) throw e;
         throw new UnauthorizedException("Invalid Firebase ID token");
       }
-    }
-
-    if (!hasSecret && !hasAdmin) {
-      return;
     }
 
     throw new UnauthorizedException("Invalid or missing member sync authorization");

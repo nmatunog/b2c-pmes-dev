@@ -1165,7 +1165,8 @@ export class PmesService {
       uid = firebaseUidFromToken;
     } else {
       throw new BadRequestException(
-        "Your cooperative record is missing a Firebase link. Sign out and sign in again, or contact support.",
+        "Your member record has no Firebase user id. Reload the app so POST /auth/sync-member can run, " +
+          "or set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY on the API so the server can verify your session.",
       );
     }
 
