@@ -458,6 +458,8 @@ export function MemberFullProfileForm({
   const [draftImageBackupNote, setDraftImageBackupNote] = useState(false);
   const [formToast, setFormToast] = useState(/** @type {null | { type: "success" | "error" | "info"; title: string; message: string }} */ (null));
   const draftHydratedRef = useRef(false);
+  const consentBlockRef = useRef(/** @type {HTMLDivElement | null} */ (null));
+  const [consentAttention, setConsentAttention] = useState(false);
   const [sheetFile, setSheetFile] = useState(/** @type {File | null} */ (null));
   const signatureFileInputRef = useRef(/** @type {HTMLInputElement | null} */ (null));
   const [signaturePadReset, setSignaturePadReset] = useState(0);
@@ -746,11 +748,13 @@ export function MemberFullProfileForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!profile.acknowledgement.consentToDataProcessing) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      consentBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setConsentAttention(true);
+      window.setTimeout(() => setConsentAttention(false), 6000);
       setFormToast({
         type: "error",
         title: "Consent required",
-        message: "Please check the data processing consent box (Acknowledgement section at the top), then submit again.",
+        message: "Check the highlighted consent box in Acknowledgement (top of the form), then submit again.",
       });
       return;
     }
@@ -939,29 +943,53 @@ export function MemberFullProfileForm({
         </div>
       </div>
 
-      <Section title="Acknowledgement (RA 9520, 9510, 9160)">
-        <label className="flex cursor-pointer items-start gap-3 sm:col-span-2">
-          <input
-            type="checkbox"
-            className="mt-1 h-5 w-5 shrink-0 rounded border-slate-300 text-[#004aad]"
-            checked={profile.acknowledgement.consentToDataProcessing}
-            onChange={(e) => setAck({ consentToDataProcessing: e.target.checked })}
+      <div className="rounded-2xl border-2 border-[#004aad]/20 bg-white p-5 shadow-md">
+        <h3 className="text-xs font-black uppercase tracking-wide text-[#004aad]">Acknowledgement (RA 9520, 9510, 9160)</h3>
+        <p className="mt-2 text-sm font-medium leading-relaxed text-slate-700">
+          <span className="font-bold text-slate-900">Start here:</span> this section stays open so you can read it. You must
+          tick consent before the membership form can be submitted.
+        </p>
+        <div
+          ref={consentBlockRef}
+          id="membership-data-consent"
+          className={`mt-4 rounded-xl p-4 transition-[box-shadow,background-color] duration-300 ${
+            consentAttention
+              ? "bg-amber-50 shadow-lg shadow-amber-200/50 ring-4 ring-amber-400/80 ring-offset-2 ring-offset-white"
+              : "bg-slate-50/90 ring-1 ring-slate-200"
+          }`}
+        >
+          <p className="mb-3 text-[11px] font-black uppercase tracking-wider text-amber-950/90">
+            Required — check the box below
+          </p>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-6 w-6 shrink-0 rounded border-2 border-[#004aad] text-[#004aad] accent-[#004aad] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004aad]"
+              checked={profile.acknowledgement.consentToDataProcessing}
+              onChange={(e) => {
+                setAck({ consentToDataProcessing: e.target.checked });
+                if (e.target.checked) setConsentAttention(false);
+              }}
+              aria-describedby="membership-consent-copy"
+            />
+            <span id="membership-consent-copy" className="text-sm font-medium leading-relaxed text-slate-800">
+              I acknowledge consent to the collection, use, processing, storage, and disposal of my personal identifiable
+              information for cooperative products and services and legitimate business purposes, including compliance with RA
+              9520, RA 9510, and RA 9160.
+            </span>
+          </label>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Text
+            label="Signature over printed name (type your full name)"
+            value={getSignaturePrintedName(profile)}
+            onChange={(v) => {
+              setAck({ memberSignatureOverPrintedName: v });
+              setSig({ memberSignatureOverPrintedName: v });
+            }}
           />
-          <span className="text-sm font-medium leading-relaxed text-slate-700">
-            I acknowledge consent to the collection, use, processing, storage, and disposal of my personal identifiable
-            information for cooperative products and services and legitimate business purposes, including compliance with RA
-            9520, RA 9510, and RA 9160.
-          </span>
-        </label>
-        <Text
-          label="Signature over printed name (type your full name)"
-          value={getSignaturePrintedName(profile)}
-          onChange={(v) => {
-            setAck({ memberSignatureOverPrintedName: v });
-            setSig({ memberSignatureOverPrintedName: v });
-          }}
-        />
-      </Section>
+        </div>
+      </div>
 
       <Section title="Personal information" defaultOpen>
         <div className="sm:col-span-2">

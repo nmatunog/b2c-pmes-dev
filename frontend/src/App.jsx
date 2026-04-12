@@ -371,7 +371,7 @@ export default function App() {
   const [membershipLoading, setMembershipLoading] = useState(false);
   /** Snapshot for the post–full-profile confirmation screen (Member ID, email). */
   const [memberSubmissionAck, setMemberSubmissionAck] = useState(
-    /** @type {null | { memberIdNo: string; memberIdIsProvisional: boolean; email: string; displayName: string; alternatePublicHandle: string }} */ (
+    /** @type {null | { memberIdNo: string; memberIdIsProvisional: boolean; loginEmail: string; officialContactEmail: string; displayName: string; alternatePublicHandle: string; callsign: string }} */ (
       null
     ),
   );
@@ -1421,6 +1421,10 @@ export default function App() {
           fullName: memberDisplayNameForBanner,
           email: user.email || String(formData.email || "").trim() || "",
           ribbonStatus: accessForRibbon.ribbonStatus,
+          callsign:
+            typeof membershipLifecycle?.callsign === "string" && String(membershipLifecycle.callsign).trim()
+              ? String(membershipLifecycle.callsign).trim()
+              : "",
         }
       : null;
   const identityRibbon = <IdentityBanner member={memberIdentityForBanner} staff={staffForBanner} />;
@@ -2791,13 +2795,26 @@ export default function App() {
                 });
                 const row = await refreshMembershipLifecycle();
                 const r = row && typeof row === "object" ? /** @type {Record<string, unknown>} */ (row) : {};
+                let officialContactEmail = "";
+                try {
+                  const parsed = JSON.parse(profileJson);
+                  const c = parsed && typeof parsed === "object" && "contact" in parsed ? parsed.contact : null;
+                  if (c && typeof c === "object" && "emailAddress" in c) {
+                    officialContactEmail = String(/** @type {{ emailAddress?: string }} */ (c).emailAddress ?? "").trim();
+                  }
+                } catch {
+                  /* ignore */
+                }
+                const loginEmail = user.email || "";
                 setMemberSubmissionAck({
                   memberIdNo: typeof r.memberIdNo === "string" ? r.memberIdNo.trim() : "",
                   memberIdIsProvisional: r.memberIdIsProvisional === true,
-                  email: user.email,
+                  loginEmail,
+                  officialContactEmail: officialContactEmail || loginEmail,
                   displayName: memberDisplayName || "Member",
                   alternatePublicHandle:
                     typeof r.alternatePublicHandle === "string" ? r.alternatePublicHandle.trim() : "",
+                  callsign: typeof r.callsign === "string" ? r.callsign.trim() : "",
                 });
                 setAppState("member_submission_success");
               }}
@@ -2827,7 +2844,9 @@ export default function App() {
         {ack ? (
           <MemberSubmissionAckScreen
             displayName={ack.displayName}
-            email={ack.email}
+            loginEmail={ack.loginEmail}
+            officialContactEmail={ack.officialContactEmail}
+            callsign={ack.callsign}
             memberIdNo={ack.memberIdNo}
             memberIdIsProvisional={ack.memberIdIsProvisional}
             alternatePublicHandle={ack.alternatePublicHandle}

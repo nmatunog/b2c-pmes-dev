@@ -2,7 +2,7 @@ import { Briefcase, User } from "lucide-react";
 
 /**
  * Fixed top-left session ribbon: member shows first + last name + email; staff shows role + email.
- * @param {{ fullName: string, email: string, ribbonStatus?: 'full' | 'pending' | 'prospect' } | null} member
+ * @param {{ fullName: string, email: string, callsign?: string, ribbonStatus?: 'full' | 'pending' | 'prospect' } | null} member
  */
 export function IdentityBanner({ member, staff }) {
   if (staff?.email) {
@@ -29,6 +29,7 @@ export function IdentityBanner({ member, staff }) {
 
   if (member?.email) {
     const displayName = String(member.fullName || "").trim() || "Member";
+    const callsign = String(member.callsign || "").trim();
     const status = member.ribbonStatus || "prospect";
     const badge =
       status === "full" ? (
@@ -57,6 +58,12 @@ export function IdentityBanner({ member, staff }) {
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Signed in as</p>
             <p className="truncate text-sm font-black text-slate-900">{displayName}</p>
+            {callsign ? (
+              <div className="mt-2 rounded-xl border-2 border-[#004aad]/25 bg-[#004aad]/5 px-3 py-2 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#004aad]/80">Callsign</p>
+                <p className="font-mono text-lg font-black leading-tight tracking-tight text-[#004aad]">{callsign}</p>
+              </div>
+            ) : null}
             <p className="truncate text-xs font-medium text-slate-600">{member.email}</p>
             {badge}
           </div>
