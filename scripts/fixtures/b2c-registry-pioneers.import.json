@@ -6,13 +6,25 @@
     "registryTimestamp": "1/25/25 12:33",
     "civilStatus": "Married",
     "sexGender": "Female",
-    "street": "Saint Matthew Street",
+    "street": "N/A Saint Matthew Street",
     "barangay": "Tabok",
     "cityMunicipality": "Mandaue",
     "province": "Cebu",
     "tinNo": "207863868",
     "initialSubscriptionAmount": "4,000.00",
-    "paidUpShareAmount": "1,000.00"
+    "paidUpShareAmount": "1,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "1",
+      "nationality": "Filipino",
+      "socialAffiliations": "Bukas Loob sa Diyos",
+      "highestEducation": "College Graduate",
+      "houseNo": "N/A",
+      "subdivision": "Hermag Village",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6014"
+    }
   },
   {
     "lastName": "Aleguiojo",
@@ -21,13 +33,23 @@
     "registryTimestamp": "7/22/23 20:45",
     "civilStatus": "Widower",
     "sexGender": "Male",
-    "street": "Cebu South Road",
+    "street": "516 Cebu South Road",
     "barangay": "Basak Pardo",
     "cityMunicipality": "Cebu City",
     "province": "Cebu",
     "tinNo": "115460274",
     "initialSubscriptionAmount": "50,000.00",
-    "paidUpShareAmount": "12,500.00"
+    "paidUpShareAmount": "12,500.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "3",
+      "nationality": "Filipino",
+      "highestEducation": "Post Graduate (Masters)",
+      "houseNo": "516",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Balantucas",
@@ -37,12 +59,17 @@
     "civilStatus": "Married",
     "sexGender": "Male",
     "street": "Villa Leyson",
-    "barangay": "Cebu City",
-    "cityMunicipality": "Cebu",
+    "barangay": "",
+    "cityMunicipality": "Cebu City",
     "province": "Cebu",
     "tinNo": "903677109",
     "initialSubscriptionAmount": "20,000.00",
-    "paidUpShareAmount": "5,000.00"
+    "paidUpShareAmount": "5,000.00",
+    "sheet": {
+      "dependents": "3",
+      "nationality": "Filipino",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Barlam",
@@ -51,13 +78,24 @@
     "registryTimestamp": "9/19/23 10:41",
     "civilStatus": "Married",
     "sexGender": "Male",
-    "street": "G Ouano Street",
+    "street": "Block 1 Lot2D G Ouano Street",
     "barangay": "Umapad",
     "cityMunicipality": "Mandaue City",
     "province": "Cebu",
     "tinNo": "160 864 962",
     "initialSubscriptionAmount": "20,000.00",
-    "paidUpShareAmount": "5,000.00"
+    "paidUpShareAmount": "5,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "2",
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "houseNo": "Block 1 Lot2D",
+      "subdivision": "San Jose Village",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6014"
+    }
   },
   {
     "lastName": "Cabaña",
@@ -66,13 +104,22 @@
     "registryTimestamp": "9/26/23 15:06",
     "civilStatus": "Married",
     "sexGender": "Male",
-    "street": "F. Arcilla",
+    "street": "1811 F. Arcilla",
     "barangay": "Mabolo",
     "cityMunicipality": "Cebu City",
     "province": "Cebu",
     "tinNo": "140173629",
     "initialSubscriptionAmount": "50,000.00",
-    "paidUpShareAmount": "12,500.00"
+    "paidUpShareAmount": "12,500.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "houseNo": "1811",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Cabanig",
@@ -87,7 +134,15 @@
     "province": "Cebu",
     "tinNo": "213076549",
     "initialSubscriptionAmount": "50,000.00",
-    "paidUpShareAmount": "12,500.00"
+    "paidUpShareAmount": "12,500.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Canaliija",
@@ -102,7 +157,17 @@
     "province": "Cebu",
     "tinNo": "108552952",
     "initialSubscriptionAmount": "4,000.00",
-    "paidUpShareAmount": "1,000.00"
+    "paidUpShareAmount": "1,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "2",
+      "nationality": "Filipino",
+      "socialAffiliations": "ADFEC",
+      "highestEducation": "College Graduate",
+      "region": "VII - Central Visayas",
+      "country": "Phillipines",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Cardanio",
@@ -111,13 +176,22 @@
     "registryTimestamp": "9/26/23 14:38",
     "civilStatus": "Single",
     "sexGender": "Male",
-    "street": "E. Sabellano",
+    "street": "248B E. Sabellano",
     "barangay": "Quiot",
     "cityMunicipality": "Cebu City",
     "province": "Cebu",
     "tinNo": "1312323123",
     "initialSubscriptionAmount": "4,000.00",
-    "paidUpShareAmount": "1,000.00"
+    "paidUpShareAmount": "1,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "houseNo": "248B",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Cuizon",
@@ -126,13 +200,44 @@
     "registryTimestamp": "4/5/24 19:29",
     "civilStatus": "Single",
     "sexGender": "Male",
-    "street": "Cuizon Compound",
+    "street": "470 Cuizon Compound",
     "barangay": "Bankal",
     "cityMunicipality": "Lapu-lapu",
     "province": "Cebu",
     "tinNo": "280787425",
     "initialSubscriptionAmount": "20,000.00",
-    "paidUpShareAmount": "5,000.00"
+    "paidUpShareAmount": "5,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "0",
+      "nationality": "Filipino",
+      "socialAffiliations": "Kadaugan Eagles Club",
+      "highestEducation": "Post Graduate (Masters)",
+      "houseNo": "470",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6015"
+    }
+  },
+  {
+    "lastName": "Diola",
+    "firstName": "Cristina",
+    "middleName": "",
+    "registryTimestamp": "",
+    "civilStatus": "",
+    "sexGender": "Female",
+    "street": "",
+    "barangay": "",
+    "cityMunicipality": "",
+    "province": "Cebu",
+    "tinNo": "280787425",
+    "initialSubscriptionAmount": "",
+    "paidUpShareAmount": "",
+    "email": "diola.cristina@b2c-registry.example.com",
+    "sheet": {
+      "note": "Sparse row in source registry; same TIN as Cuizon — explicit email avoids import collision.",
+      "nationality": "Filipino"
+    }
   },
   {
     "lastName": "Domingo",
@@ -142,12 +247,19 @@
     "civilStatus": "Married",
     "sexGender": "Male",
     "street": "Osmena Blvd",
-    "barangay": "Cebu City",
-    "cityMunicipality": "Cebu",
+    "barangay": "Club Ultima Residences",
+    "cityMunicipality": "Cebu City",
     "province": "Cebu",
     "tinNo": "127446283",
     "initialSubscriptionAmount": "50,000.00",
-    "paidUpShareAmount": "12,500.00"
+    "paidUpShareAmount": "12,500.00",
+    "sheet": {
+      "dependents": "0",
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "region": "VII - Central Visayas",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Fuentes",
@@ -156,14 +268,25 @@
     "registryTimestamp": "1/5/24 15:43",
     "civilStatus": "Single",
     "sexGender": "Male",
-    "street": "1st",
+    "street": "59 1st",
     "barangay": "Lahug",
     "cityMunicipality": "Cebu",
     "province": "Cebu",
     "tinNo": "293613180",
     "initialSubscriptionAmount": "4,000.00",
     "paidUpShareAmount": "1,000.00",
-    "religion": "Roman Catholic"
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "5",
+      "nationality": "Filipino",
+      "socialAffiliations": "VICTO NATIONAL COOPERATIVE FEDERATION and DEVELOPMENT CENTER",
+      "highestEducation": "College Graduate",
+      "houseNo": "59",
+      "subdivision": "Beverly Hills",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Gingoyon",
@@ -178,7 +301,33 @@
     "province": "Cebu",
     "tinNo": "413549520",
     "initialSubscriptionAmount": "20,000.00",
-    "paidUpShareAmount": "5,000.00"
+    "paidUpShareAmount": "5,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "region": "VII - Central Visayas",
+      "country": "Philippines"
+    }
+  },
+  {
+    "lastName": "Jayme",
+    "firstName": "Rommel",
+    "middleName": "Mag-usara",
+    "registryTimestamp": "9/19/23 10:39",
+    "civilStatus": "Married",
+    "sexGender": "Male",
+    "street": "Asturias",
+    "barangay": "",
+    "cityMunicipality": "Asturias",
+    "province": "Cebu",
+    "initialSubscriptionAmount": "8,000.00",
+    "paidUpShareAmount": "2,000.00",
+    "email": "jayme.rommel@b2c-registry.example.com",
+    "sheet": {
+      "note": "Source row had no TIN; address columns partially shifted in sheet.",
+      "nationality": "Filipino"
+    }
   },
   {
     "lastName": "Laluces",
@@ -187,13 +336,24 @@
     "registryTimestamp": "7/22/23 12:56",
     "civilStatus": "Widower",
     "sexGender": "Male",
-    "street": "Blk 3 Lot 21",
+    "street": "Blk 3 Lot 21 Blk 3 Lot 21",
     "barangay": "Pajac",
     "cityMunicipality": "Lapulapu City",
     "province": "Cebu",
     "tinNo": "240169735",
     "initialSubscriptionAmount": "8,000.00",
-    "paidUpShareAmount": "2,000.00"
+    "paidUpShareAmount": "2,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "2",
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "subdivision": "BF Country Homes",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6015",
+      "sourceReligionTypo": "Roman Catholioc"
+    }
   },
   {
     "lastName": "Macariola",
@@ -202,13 +362,25 @@
     "registryTimestamp": "7/22/23 14:03",
     "civilStatus": "Married",
     "sexGender": "Male",
-    "street": "First street",
+    "street": "16A First street",
     "barangay": "Gun-Ob",
     "cityMunicipality": "Cebu",
     "province": "Cebu City",
     "tinNo": "154-770-850",
     "initialSubscriptionAmount": "40,000.00",
-    "paidUpShareAmount": "10,000.00"
+    "paidUpShareAmount": "10,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "3",
+      "nationality": "Filipino",
+      "socialAffiliations": "BNP, KLOC, AIA",
+      "highestEducation": "College Graduate",
+      "houseNo": "16A",
+      "subdivision": "Ampalaya Village",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6015"
+    }
   },
   {
     "lastName": "Mallo",
@@ -217,13 +389,25 @@
     "registryTimestamp": "7/22/23 11:44",
     "civilStatus": "Married",
     "sexGender": "Male",
-    "street": "Mango Drive",
+    "street": "2660 Mango Drive",
     "barangay": "Tungkop",
     "cityMunicipality": "Minglanilla",
     "province": "Cebu",
     "tinNo": "107125366",
     "initialSubscriptionAmount": "16,000.00",
-    "paidUpShareAmount": "4,000.00"
+    "paidUpShareAmount": "4,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "none",
+      "nationality": "Filipino",
+      "socialAffiliations": "BLD",
+      "highestEducation": "College Graduate",
+      "houseNo": "2660",
+      "subdivision": "Primitiva Compound",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6046"
+    }
   },
   {
     "lastName": "Matunog",
@@ -232,13 +416,24 @@
     "registryTimestamp": "1/5/24 14:15",
     "civilStatus": "Married",
     "sexGender": "Male",
-    "street": "Salvador Street",
+    "street": "T2-814 Salvador Street",
     "barangay": "Labangon",
     "cityMunicipality": "Cebu",
     "province": "Cebu",
     "tinNo": "221439744",
     "initialSubscriptionAmount": "40,000.00",
-    "paidUpShareAmount": "10,000.00"
+    "paidUpShareAmount": "10,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "3",
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "houseNo": "T2-814",
+      "subdivision": "Casa Mira Towers",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Matunog",
@@ -247,13 +442,24 @@
     "registryTimestamp": "7/21/23 15:04",
     "civilStatus": "Married",
     "sexGender": "Male",
-    "street": "2nd St",
+    "street": "#5 2nd St",
     "barangay": "Lawaan 1",
     "cityMunicipality": "Talisay",
     "province": "Cebu",
     "tinNo": "106983471",
     "initialSubscriptionAmount": "44,000.00",
-    "paidUpShareAmount": "11,000.00"
+    "paidUpShareAmount": "11,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "1",
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "houseNo": "#5",
+      "subdivision": "Seaview Heights",
+      "region": "7",
+      "country": "Philippines",
+      "postalCode": "6045"
+    }
   },
   {
     "lastName": "Mermida",
@@ -262,13 +468,22 @@
     "registryTimestamp": "9/19/23 9:43",
     "civilStatus": "Single",
     "sexGender": "Female",
-    "street": "Treasure Ville",
+    "street": "Zone 2 064 Treasure Ville",
     "barangay": "San Isidro",
     "cityMunicipality": "Talisay",
     "province": "Cebu",
     "tinNo": "342816317",
     "initialSubscriptionAmount": "8,000.00",
-    "paidUpShareAmount": "2,000.00"
+    "paidUpShareAmount": "2,000.00",
+    "religion": "Roman Catholic",
+    "sheet": {
+      "dependents": "0",
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6045"
+    }
   },
   {
     "lastName": "Morales",
@@ -278,12 +493,18 @@
     "civilStatus": "Widowed",
     "sexGender": "Female",
     "street": "Sapphire St",
-    "barangay": "Cebu City",
-    "cityMunicipality": "Cebu",
+    "barangay": "",
+    "cityMunicipality": "Cebu City",
     "province": "Cebu",
     "tinNo": "169981400",
     "initialSubscriptionAmount": "50,000.00",
-    "paidUpShareAmount": "12,500.00"
+    "paidUpShareAmount": "12,500.00",
+    "sheet": {
+      "nationality": "Filipino",
+      "houseNo": "7",
+      "subdivision": "Gemsville Subd",
+      "postalCode": "6000"
+    }
   },
   {
     "lastName": "Sagun",
@@ -292,13 +513,25 @@
     "registryTimestamp": "7/22/23 19:34",
     "civilStatus": "Married",
     "sexGender": "Male",
-    "street": "Nevada Street",
+    "street": "B1 L40 Nevada Street",
     "barangay": "Basak",
     "cityMunicipality": "Lapulapu City",
     "province": "Cebu",
     "tinNo": "164798132",
     "initialSubscriptionAmount": "50,000.00",
-    "paidUpShareAmount": "12,500.00"
+    "paidUpShareAmount": "12,500.00",
+    "religion": "Christian",
+    "sheet": {
+      "dependents": "1",
+      "nationality": "Filipino",
+      "socialAffiliations": "Philippine Eagles",
+      "highestEducation": "College Graduate",
+      "houseNo": "B1 L40",
+      "subdivision": "BF Better Living Subdivision",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6015"
+    }
   },
   {
     "lastName": "Simene",
@@ -307,13 +540,18 @@
     "registryTimestamp": "7/22/23 19:34",
     "civilStatus": "Married",
     "sexGender": "Female",
-    "street": "B5L1",
+    "street": "B5L1 Villa Lorena 1",
     "barangay": "Yati",
     "cityMunicipality": "Liloan",
     "province": "Cebu",
     "tinNo": "167534820",
     "initialSubscriptionAmount": "8,000.00",
-    "paidUpShareAmount": "2,000.00"
+    "paidUpShareAmount": "2,000.00",
+    "sheet": {
+      "nationality": "Filipino",
+      "houseNo": "B5L1",
+      "subdivision": "Villa Lorena 1"
+    }
   },
   {
     "lastName": "Tabasa",
@@ -322,12 +560,23 @@
     "registryTimestamp": "12/21/24 13:05",
     "civilStatus": "Married",
     "sexGender": "Male",
-    "street": "B3L35",
+    "street": "B3L35 Modena",
     "barangay": "Basak",
     "cityMunicipality": "Lapulapu",
     "province": "Cebu",
     "tinNo": "154100102",
     "initialSubscriptionAmount": "40,000.00",
-    "paidUpShareAmount": "10,000.00"
+    "paidUpShareAmount": "10,000.00",
+    "religion": "Protestant",
+    "sheet": {
+      "dependents": "0",
+      "nationality": "Filipino",
+      "highestEducation": "College Graduate",
+      "houseNo": "B3L35",
+      "subdivision": "Modena",
+      "region": "VII - Central Visayas",
+      "country": "Philippines",
+      "postalCode": "6015"
+    }
   }
 ]

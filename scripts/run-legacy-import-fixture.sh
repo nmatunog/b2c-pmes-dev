@@ -8,8 +8,8 @@
 #   export API_URL='http://localhost:3000'   # optional
 #   bash scripts/run-legacy-import-fixture.sh
 #
-# Fixture: scripts/fixtures/b2c-registry-pioneers.import.json (22 rows from a snapshot;
-# add more objects to the array if your sheet has 27 — rows with bad columns were omitted.)
+# Fixture: scripts/fixtures/b2c-registry-pioneers.import.json (B2C registry scan; 24 rows;
+# sparse/duplicate-TIN rows use explicit test emails — see fixture notes in sheet.*.note.)
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
