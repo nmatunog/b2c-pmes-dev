@@ -48,6 +48,16 @@ const OFFICIAL_COOPERATIVE_EMAIL = "b2ccoop@gmail.com";
 
 const SUBMIT_TIMEOUT_MS = 120_000;
 
+/**
+ * Printed name appears under Acknowledgement and again under Member signature; either counts for submit.
+ * @param {{ acknowledgement: { memberSignatureOverPrintedName?: string }; signature: { memberSignatureOverPrintedName?: string } }} profile
+ */
+function getSignaturePrintedName(profile) {
+  const sig = String(profile.signature?.memberSignatureOverPrintedName ?? "").trim();
+  const ack = String(profile.acknowledgement?.memberSignatureOverPrintedName ?? "").trim();
+  return sig || ack;
+}
+
 /** @param {unknown} err */
 function formatSubmitError(err) {
   if (err && typeof err === "object" && "name" in err && err.name === "AbortError") {
@@ -760,13 +770,13 @@ export function MemberFullProfileForm({
       });
       return;
     }
-    const printed = String(profile.signature?.memberSignatureOverPrintedName ?? "").trim();
+    const printed = getSignaturePrintedName(profile);
     if (!printed) {
       setMemberSigPrintedNameError("Enter your full name as it should appear as signature over printed name.");
       setFormToast({
         type: "error",
         title: "Signature name required",
-        message: "Enter your full name in the signature over printed name field, then submit again.",
+        message: "Enter your full name in “Signature over printed name” (Acknowledgement or Member signature section), then submit again.",
       });
       return;
     }
@@ -774,6 +784,14 @@ export function MemberFullProfileForm({
 
     const merged = {
       ...profile,
+      acknowledgement: {
+        ...profile.acknowledgement,
+        memberSignatureOverPrintedName: printed,
+      },
+      signature: {
+        ...profile.signature,
+        memberSignatureOverPrintedName: printed,
+      },
       cooperative: {
         ...profile.cooperative,
         address: OFFICIAL_COOPERATIVE_ADDRESS,
@@ -932,8 +950,11 @@ export function MemberFullProfileForm({
         </label>
         <Text
           label="Signature over printed name (type your full name)"
-          value={profile.acknowledgement.memberSignatureOverPrintedName}
-          onChange={(v) => setAck({ memberSignatureOverPrintedName: v })}
+          value={getSignaturePrintedName(profile)}
+          onChange={(v) => {
+            setAck({ memberSignatureOverPrintedName: v });
+            setSig({ memberSignatureOverPrintedName: v });
+          }}
         />
       </Section>
 
@@ -1526,8 +1547,9 @@ export function MemberFullProfileForm({
       <Section title="Member signature">
         <Text
           label="Signature over printed name"
-          value={sg.memberSignatureOverPrintedName}
+          value={getSignaturePrintedName(profile)}
           onChange={(v) => {
+            setAck({ memberSignatureOverPrintedName: v });
             setSig({ memberSignatureOverPrintedName: v });
             setMemberSigPrintedNameError(null);
           }}
@@ -1645,7 +1667,7 @@ export function MemberFullProfileForm({
           !profile.acknowledgement.consentToDataProcessing ||
           !phGeo ||
           phGeoLoadFailed ||
-          !String(sg.memberSignatureOverPrintedName || "").trim()
+          !getSignaturePrintedName(profile)
         }
         className="btn-primary flex w-full items-center justify-center gap-2 py-4 sm:w-auto"
       >
