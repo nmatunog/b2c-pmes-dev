@@ -135,6 +135,24 @@ export class PmesService {
     }));
   }
 
+  /** Superuser-only: remove one PMES attempt row (does not delete the participant). */
+  async deletePmesRecordById(recordId: string) {
+    const id = String(recordId ?? "").trim();
+    if (!id) {
+      throw new BadRequestException("record id is required");
+    }
+    try {
+      await this.prisma.pmesRecord.delete({ where: { id } });
+    } catch (e) {
+      const code = e && typeof e === "object" && "code" in e ? String((e as { code?: string }).code) : "";
+      if (code === "P2025") {
+        throw new NotFoundException("PMES record not found");
+      }
+      throw e;
+    }
+    return { deleted: true, id };
+  }
+
   /** Member-facing: derive cooperative membership pipeline from DB */
   async getMembershipLifecycle(emailRaw: string) {
     const email = normalizeEmail(emailRaw);

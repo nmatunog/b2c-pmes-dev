@@ -28,6 +28,7 @@ import {
   Printer,
   Search,
   ShieldAlert,
+  Trash2,
   Sparkles,
   User,
   UserPlus,
@@ -285,6 +286,8 @@ export default function App() {
   const [ttsError, setTtsError] = useState(null);
   const [activeRecord, setActiveRecord] = useState(null);
   const [masterList, setMasterList] = useState([]);
+  /** While a superuser delete request is in flight (row id). */
+  const [deletingMasterListId, setDeletingMasterListId] = useState(null);
   const [examQuestions, setExamQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [score, setScore] = useState(0);
@@ -809,6 +812,24 @@ export default function App() {
       setStaffAdminError(e instanceof Error ? e.message : "Could not create admin.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteMasterListRow = async (item) => {
+    if (!staffAccessToken || staffRole !== "superuser" || !item?.id) return;
+    const name = String(item.fullName ?? "this participant").trim() || "this participant";
+    if (!window.confirm(`Remove the PMES master list row for ${name}? This cannot be undone.`)) return;
+    setDeletingMasterListId(item.id);
+    try {
+      await PmesService.deletePmesRecord(staffAccessToken, item.id);
+      setMasterList((list) => list.filter((r) => r.id !== item.id));
+      if (activeRecord?.id === item.id) {
+        setActiveRecord(null);
+      }
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Delete failed.");
+    } finally {
+      setDeletingMasterListId(null);
     }
   };
 
@@ -2506,6 +2527,7 @@ export default function App() {
                 setManagedStaffAdmins([]);
                 setNewStaffAdmin({ email: "", password: "" });
                 setStaffAdminError(null);
+                setDeletingMasterListId(null);
                 setAppState("landing");
               }}
               className="shrink-0 rounded-xl bg-white/20 px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-white/30"
@@ -2585,12 +2607,15 @@ export default function App() {
                   <th className="p-4 lg:p-5">Score</th>
                   <th className="p-4 lg:p-5">Status</th>
                   <th className="p-4 lg:p-5 text-center">Certificate</th>
+                  {staffRole === "superuser" ? (
+                    <th className="p-4 lg:p-5 text-center">Delete</th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody>
                 {masterList.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-12 text-center text-lg font-semibold text-slate-500">
+                    <td colSpan={staffRole === "superuser" ? 7 : 6} className="p-12 text-center text-lg font-semibold text-slate-500">
                       No records loaded. Sign in again from Admin portal or check the API.
                     </td>
                   </tr>
@@ -2657,6 +2682,24 @@ export default function App() {
                             <span className="text-xs text-slate-400">—</span>
                           )}
                         </td>
+                        {staffRole === "superuser" ? (
+                          <td className="p-4 align-top text-center lg:p-5">
+                            <button
+                              type="button"
+                              disabled={deletingMasterListId === item.id}
+                              onClick={() => handleDeleteMasterListRow(item)}
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold uppercase text-red-800 hover:bg-red-100 disabled:opacity-50"
+                              title="Remove this PMES row (superuser only)"
+                            >
+                              {deletingMasterListId === item.id ? (
+                                <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                              ) : (
+                                <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                              )}
+                              Remove
+                            </button>
+                          </td>
+                        ) : null}
                       </tr>
                     );
                   })

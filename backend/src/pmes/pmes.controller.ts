@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -19,6 +20,7 @@ import { PioneerEligibilityDto } from "./dto/pioneer-eligibility.dto";
 import { SubmitFullProfileDto } from "./dto/submit-full-profile.dto";
 import { UpdateParticipantMembershipDto } from "./dto/update-participant-membership.dto";
 import { StaffJwtGuard } from "../auth/staff-jwt.guard";
+import { SuperuserGuard } from "../auth/superuser.guard";
 import { PmesService } from "./pmes.service";
 
 @Controller("pmes")
@@ -75,6 +77,14 @@ export class PmesController {
   @UseGuards(StaffJwtGuard)
   adminRecords() {
     return this.pmes.listAllPmesForAdmin();
+  }
+
+  /** Superuser only: delete one PMES attempt (master list row). */
+  @Delete("admin/records/:id")
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @UseGuards(StaffJwtGuard, SuperuserGuard)
+  adminDeletePmesRecord(@Param("id") id: string) {
+    return this.pmes.deletePmesRecordById(id);
   }
 
   @Get("admin/membership-pipeline")

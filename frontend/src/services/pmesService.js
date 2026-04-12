@@ -151,6 +151,23 @@ export const PmesService = {
     throw new Error("Staff dashboard requires VITE_API_BASE_URL and the Nest API with a database superuser (npm run create-superuser).");
   },
 
+  /**
+   * Superuser only: remove a PMES master list row (PmesRecord). Does not delete the participant.
+   */
+  async deletePmesRecord(accessToken, recordId) {
+    if (!useRest()) throw new Error("API required");
+    const id = String(recordId ?? "").trim();
+    if (!id) throw new Error("Record id required");
+    const response = await fetch(`${apiBase()}/pmes/admin/records/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      throw new Error((await response.text()) || "Delete failed");
+    }
+    return response.json();
+  },
+
   async listStaffAdmins(accessToken) {
     if (!useRest()) throw new Error("API required");
     const response = await fetch(`${apiBase()}/auth/staff/admins`, {
