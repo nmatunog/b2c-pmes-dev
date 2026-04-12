@@ -247,14 +247,20 @@ export default function LandingPage({
     onJoinUs?.();
   };
 
-  /** Guests sign in; signed-in members go straight to the member portal dashboard (not the modal). */
+  /** Signed-in: app member portal. Guests: open modal (PMES entry, pioneer reclaim, certificate) — do not skip straight to login. */
   const openMemberPortal = () => {
     setIsMenuOpen(false);
     if (authUser) {
       onMemberPortal?.();
     } else {
-      onLogin?.();
+      setMemberPortalOpen(true);
     }
+  };
+
+  const goPioneerReclaim = () => {
+    setIsMenuOpen(false);
+    setMemberPortalOpen(false);
+    onPioneerReclaim?.();
   };
 
   const orientationContent = [
@@ -404,7 +410,7 @@ export default function LandingPage({
                 >
                   New member? Open registration tab
                 </button>
-                {onPioneerReclaim ? (
+                {isFirebaseConfigured && onPioneerReclaim ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -420,6 +426,26 @@ export default function LandingPage({
                 ) : null}
               </>
             )}
+            {authUser && isFirebaseConfigured && onPioneerReclaim ? (
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3">
+                <p className="mb-2 text-xs font-medium leading-snug text-emerald-950">
+                  On the cooperative roster from before this app? Verify your email and birth date, then sign in with the{" "}
+                  <span className="font-bold">same email</span>. Sign out first if you&apos;re using a different address.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMemberPortalOpen(false);
+                    setIsMenuOpen(false);
+                    onPioneerReclaim();
+                  }}
+                  className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border-2 border-emerald-200 bg-white py-2.5 text-sm font-semibold text-emerald-900 transition-all hover:border-emerald-400"
+                >
+                  <HeartHandshake className="h-5 w-5 shrink-0" aria-hidden />
+                  Pioneer roster — link your account
+                </button>
+              </div>
+            ) : null}
             {authUser && resumePmesSuggested && onContinuePmes && (
               <button
                 type="button"
@@ -736,6 +762,15 @@ export default function LandingPage({
             >
               Portal
             </button>
+            {isFirebaseConfigured && onPioneerReclaim ? (
+              <button
+                type="button"
+                onClick={goPioneerReclaim}
+                className="font-medium text-emerald-800 transition-colors hover:text-emerald-950"
+              >
+                Link roster
+              </button>
+            ) : null}
             {!authUser && (
               <button type="button" onClick={() => onLogin?.()} className="font-medium text-stone-700 transition-colors hover:text-blue-700">
                 Sign in
@@ -791,6 +826,16 @@ export default function LandingPage({
                 <LogIn className="h-4 w-4" />
                 Portal
               </button>
+              {isFirebaseConfigured && onPioneerReclaim ? (
+                <button
+                  type="button"
+                  onClick={goPioneerReclaim}
+                  className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/90 py-2.5 text-sm font-semibold text-emerald-900"
+                >
+                  <HeartHandshake className="h-4 w-4 shrink-0" aria-hidden />
+                  Link roster account
+                </button>
+              ) : null}
               {!authUser && (
                 <button
                   type="button"
@@ -929,6 +974,24 @@ export default function LandingPage({
                     I already have one
                   </button>
                 </div>
+              </div>
+            ) : null}
+            {isFirebaseConfigured && onPioneerReclaim ? (
+              <div className="glass-card mx-auto mt-4 flex max-w-lg flex-col items-center gap-2 rounded-2xl border border-emerald-200/80 bg-emerald-50/90 px-4 py-3 text-center sm:flex-row sm:justify-center sm:gap-4 sm:text-left">
+                <HeartHandshake className="h-8 w-8 shrink-0 text-emerald-700" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-emerald-950">Already on the cooperative roster?</p>
+                  <p className="mt-0.5 text-xs font-medium text-emerald-900/90">
+                    Verify your email and birth date, then sign in with the same email.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={goPioneerReclaim}
+                  className="shrink-0 rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800"
+                >
+                  Link pioneer account
+                </button>
               </div>
             ) : null}
           </div>
