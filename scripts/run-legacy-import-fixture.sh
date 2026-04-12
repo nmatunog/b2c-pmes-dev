@@ -9,7 +9,7 @@
 #   bash scripts/run-legacy-import-fixture.sh
 #
 # Fixture: scripts/fixtures/b2c-registry-pioneers.import.json (B2C registry scan; 24 rows;
-# sparse/duplicate-TIN rows use explicit test emails — see fixture notes in sheet.*.note.)
+# missing TIN uses placeholder 000000000; rows sharing that placeholder keep explicit test emails.)
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

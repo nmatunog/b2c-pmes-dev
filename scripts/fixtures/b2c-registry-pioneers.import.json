@@ -230,12 +230,12 @@
     "barangay": "",
     "cityMunicipality": "",
     "province": "Cebu",
-    "tinNo": "280787425",
+    "tinNo": "000000000",
     "initialSubscriptionAmount": "",
     "paidUpShareAmount": "",
     "email": "diola.cristina@b2c-registry.example.com",
     "sheet": {
-      "note": "Sparse row in source registry; same TIN as Cuizon — explicit email avoids import collision.",
+      "note": "Sparse row; TIN missing in source — temporary placeholder 000000000. Explicit email avoids collision with other placeholder-TIN rows.",
       "nationality": "Filipino"
     }
   },
@@ -321,11 +321,12 @@
     "barangay": "",
     "cityMunicipality": "Asturias",
     "province": "Cebu",
+    "tinNo": "000000000",
     "initialSubscriptionAmount": "8,000.00",
     "paidUpShareAmount": "2,000.00",
     "email": "jayme.rommel@b2c-registry.example.com",
     "sheet": {
-      "note": "Source row had no TIN; address columns partially shifted in sheet.",
+      "note": "TIN missing in source — temporary placeholder 000000000. Explicit email avoids collision with other placeholder-TIN rows; address columns partially shifted in sheet.",
       "nationality": "Filipino"
     }
   },
@@ -493,7 +494,7 @@
     "civilStatus": "Widowed",
     "sexGender": "Female",
     "street": "Sapphire St",
-    "barangay": "",
+    "barangay": "Lahug",
     "cityMunicipality": "Cebu City",
     "province": "Cebu",
     "tinNo": "169981400",
