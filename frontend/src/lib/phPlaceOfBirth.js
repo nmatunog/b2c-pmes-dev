@@ -53,6 +53,59 @@ export function getMunicipalitySelectOptions(provCode) {
     .sort((a, b) => a.label.localeCompare(b.label, "en", { sensitivity: "base" }));
 }
 
+const MAX_SUGGESTIONS = 20;
+
+/**
+ * Typeahead matches within a province: prefix matches first, then substring; deduped.
+ * Empty query returns the first {@link MAX_SUGGESTIONS} names alphabetically (fast pick).
+ * @param {string} provCode
+ * @param {string} query
+ * @param {number} [limit]
+ * @returns {string[]}
+ */
+export function searchMunicipalities(provCode, query, limit = MAX_SUGGESTIONS) {
+  if (!provCode) return [];
+  const list = munByProvCode[provCode];
+  if (!list?.length) return [];
+  const names = [...new Set(list.map((m) => normalizeGeoName(m.munCityName)))];
+  names.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+  const q = normalizeGeoName(query).toLowerCase();
+  if (!q) return names.slice(0, limit);
+
+  const starts = [];
+  const contains = [];
+  for (const n of names) {
+    const nl = n.toLowerCase();
+    if (nl.startsWith(q)) starts.push(n);
+    else if (nl.includes(q)) contains.push(n);
+  }
+  const out = [];
+  const seen = new Set();
+  for (const part of [starts, contains]) {
+    for (const n of part) {
+      if (seen.has(n)) continue;
+      seen.add(n);
+      out.push(n);
+      if (out.length >= limit) return out;
+    }
+  }
+  return out;
+}
+
+/**
+ * Returns canonical PSGC spelling if `typed` matches a municipality in the province (case-insensitive).
+ * @param {string} provCode
+ * @param {string} typed
+ * @returns {string | null}
+ */
+export function resolveMunicipalityName(provCode, typed) {
+  const t = normalizeGeoName(typed).toLowerCase();
+  if (!provCode || !t) return null;
+  const list = munByProvCode[provCode] ?? [];
+  const match = list.find((m) => normalizeGeoName(m.munCityName).toLowerCase() === t);
+  return match ? normalizeGeoName(match.munCityName) : null;
+}
+
 /** @param {string} provCode */
 export function formatPlaceOfBirth(provCode, munCityName) {
   const c = normalizeGeoName(munCityName);

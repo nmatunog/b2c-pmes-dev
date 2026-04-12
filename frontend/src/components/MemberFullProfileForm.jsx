@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { FileSpreadsheet, Loader2, Lock } from "lucide-react";
 import { B2CLogo } from "./B2CLogo.jsx";
 import { createEmptyMemberProfile } from "../lib/memberFullProfileSchema.js";
@@ -121,6 +121,174 @@ function Section({ title, children, defaultOpen = false }) {
 }
 
 /**
+ * City/municipality typeahead within a province — avoids huge &lt;select&gt; lists (fast DOM).
+ * @param {{ label: string; required?: boolean; provCode: string; value: string; placeholder: string; disabled?: boolean; phGeo: typeof import("../lib/phPlaceOfBirth.js"); onCommit: (canonicalName: string) => void }} props
+ */
+function MunicipalityCombobox({ label, required, provCode, value, placeholder, disabled, phGeo, onCommit }) {
+  const listId = useId();
+  const inputId = useId();
+  const ignoreBlurSync = useRef(false);
+  const blurTimer = useRef(/** @type {ReturnType<typeof setTimeout> | null} */ (null));
+  const [text, setText] = useState(value || "");
+  const [open, setOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    setText(value || "");
+  }, [value, provCode]);
+
+  useEffect(() => {
+    return () => {
+      if (blurTimer.current) clearTimeout(blurTimer.current);
+    };
+  }, []);
+
+  const suggestions = useMemo(() => {
+    if (!phGeo || disabled || !provCode) return [];
+    return phGeo.searchMunicipalities(provCode, text, 20);
+  }, [phGeo, provCode, text, disabled]);
+
+  useEffect(() => {
+    setActiveIdx(0);
+  }, [suggestions]);
+
+  const commitMun = (name) => {
+    const n = String(name ?? "").trim();
+    setText(n);
+    onCommit(n);
+    setOpen(false);
+  };
+
+  const syncFromBlur = () => {
+    if (!phGeo || !provCode) return;
+    const resolved = phGeo.resolveMunicipalityName(provCode, text);
+    if (resolved) {
+      if (resolved !== value) onCommit(resolved);
+      setText(resolved);
+      return;
+    }
+    if (!String(text ?? "").trim()) {
+      if (value) onCommit("");
+      setText("");
+      return;
+    }
+    setText(value || "");
+  };
+
+  const isLocked = Boolean(disabled);
+
+  return (
+    <div className={`relative ${isLocked ? "opacity-70" : ""}`}>
+      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600" htmlFor={inputId}>
+        {label}
+        {required ? <span className="text-red-600"> *</span> : null}
+      </label>
+      <input
+        id={inputId}
+        type="text"
+        name="placeOfBirthMunCity"
+        required={required}
+        disabled={isLocked}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-activedescendant={open && suggestions[activeIdx] ? `${listId}-opt-${activeIdx}` : undefined}
+        placeholder={placeholder}
+        className="input-field mt-1 w-full text-sm font-medium text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-50"
+        value={text}
+        onChange={(e) => {
+          const v = e.target.value;
+          setText(v);
+          if (!isLocked) setOpen(true);
+        }}
+        onFocus={() => {
+          if (!isLocked) setOpen(true);
+        }}
+        onBlur={() => {
+          if (blurTimer.current) clearTimeout(blurTimer.current);
+          blurTimer.current = setTimeout(() => {
+            blurTimer.current = null;
+            if (ignoreBlurSync.current) {
+              ignoreBlurSync.current = false;
+              setOpen(false);
+              return;
+            }
+            setOpen(false);
+            syncFromBlur();
+          }, 120);
+        }}
+        onKeyDown={(e) => {
+          if (isLocked) return;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (!open) setOpen(true);
+            setActiveIdx((i) => Math.min(i + 1, Math.max(0, suggestions.length - 1)));
+            return;
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActiveIdx((i) => Math.max(0, i - 1));
+            return;
+          }
+          if (e.key === "Enter") {
+            if (open && suggestions.length > 0 && suggestions[activeIdx]) {
+              e.preventDefault();
+              commitMun(suggestions[activeIdx]);
+              return;
+            }
+            if (phGeo && provCode && String(text ?? "").trim()) {
+              const r = phGeo.resolveMunicipalityName(provCode, text);
+              if (r) {
+                e.preventDefault();
+                commitMun(r);
+              }
+            }
+            return;
+          }
+          if (e.key === "Escape") {
+            if (open) {
+              e.preventDefault();
+              setOpen(false);
+            }
+          }
+        }}
+      />
+      {open && !isLocked && suggestions.length > 0 ? (
+        <ul
+          id={listId}
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-20 mt-0.5 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+        >
+          {suggestions.map((name, i) => (
+            <li key={name} role="presentation">
+              <button
+                type="button"
+                id={`${listId}-opt-${i}`}
+                role="option"
+                aria-selected={i === activeIdx}
+                className={`flex w-full px-3 py-2 text-left text-sm font-medium text-slate-900 hover:bg-slate-50 ${
+                  i === activeIdx ? "bg-slate-100" : ""
+                }`}
+                onMouseDown={(ev) => {
+                  ev.preventDefault();
+                  ignoreBlurSync.current = true;
+                  commitMun(name);
+                }}
+              >
+                {name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * B2C Consumer Cooperative membership form (aligned to official Board sheet).
  */
 export function MemberFullProfileForm({
@@ -210,11 +378,6 @@ export function MemberFullProfileForm({
   const phProvinceOptions = useMemo(
     () => (phGeo ? phGeo.getProvinceSelectOptions() : []),
     [phGeo],
-  );
-  const phMunicipalityOptions = useMemo(
-    () =>
-      phGeo ? phGeo.getMunicipalitySelectOptions(profile.personal.placeOfBirthProvCode) : [],
-    [phGeo, profile.personal.placeOfBirthProvCode],
   );
 
   const csvBlobUrl = useMemo(() => {
@@ -515,18 +678,20 @@ export function MemberFullProfileForm({
               required
               placeholder="Select province"
             />
-            <Select
+            <MunicipalityCombobox
               label="City / municipality"
+              required
+              provCode={pr.placeOfBirthProvCode}
               value={pr.placeOfBirthMunCity}
-              onChange={(v) =>
+              disabled={!pr.placeOfBirthProvCode}
+              placeholder={pr.placeOfBirthProvCode ? "Type to search (e.g. Cala…)" : "Select province first"}
+              phGeo={phGeo}
+              onCommit={(mun) =>
                 setPersonal({
-                  placeOfBirthMunCity: v,
-                  placeOfBirth: phGeo.formatPlaceOfBirth(pr.placeOfBirthProvCode, v),
+                  placeOfBirthMunCity: mun,
+                  placeOfBirth: phGeo.formatPlaceOfBirth(pr.placeOfBirthProvCode, mun),
                 })
               }
-              options={phMunicipalityOptions}
-              required
-              placeholder={pr.placeOfBirthProvCode ? "Select city or municipality" : "Select province first"}
             />
           </>
         )}
