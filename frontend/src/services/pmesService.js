@@ -162,10 +162,27 @@ export const PmesService = {
       method: "DELETE",
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+    const text = await response.text();
     if (!response.ok) {
-      throw new Error((await response.text()) || "Delete failed");
+      let detail = text?.trim() || `Delete failed (${response.status})`;
+      try {
+        const j = JSON.parse(text);
+        const m = j?.message;
+        if (m != null) {
+          detail = Array.isArray(m) ? m.map((x) => String(x)).join("; ") : String(m);
+        }
+      } catch {
+        /* keep detail */
+      }
+      if (response.status === 404 && detail.includes("Cannot DELETE")) {
+        throw new Error(
+          "The backend on your API port is an old Node process (it does not have the delete route). Stop it and restart: press Ctrl+C in the terminal running the API, then from the repo root run npm run dev. If it still fails, free the port: lsof -nP -iTCP:3000 -sTCP:LISTEN then kill -9 the listed PID(s).",
+        );
+      }
+      throw new Error(detail);
     }
-    return response.json();
+    if (!text?.trim()) return {};
+    return JSON.parse(text);
   },
 
   async listStaffAdmins(accessToken) {
