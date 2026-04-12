@@ -1294,8 +1294,9 @@ export default function App() {
   /** `auth.currentUser` covers the brief window after sign-up before React `user` state updates. */
   const sessionUser = isFirebaseConfigured ? user ?? auth.currentUser : null;
 
+  /** Staff JWT session: show ribbon on admin dashboard and when previewing a certificate without Firebase member sign-in. */
   const staffForBanner =
-    staffSessionEmail && staffRole && appState === "admin_dashboard"
+    staffSessionEmail && staffRole && (appState === "admin_dashboard" || (appState === "certificate" && staffAccessToken))
       ? { email: staffSessionEmail, role: staffRole }
       : null;
   /** Ribbon shows first + last only (middle omitted; legacy full names → first token + last token). */
@@ -1351,7 +1352,16 @@ export default function App() {
       : null;
   const identityRibbon = <IdentityBanner member={memberIdentityForBanner} staff={staffForBanner} />;
 
-  if (isFirebaseConfigured && !sessionUser && MEMBER_AUTH_REQUIRED_STATES.has(appState)) {
+  /** Admins preview certificates via API rows — no Firebase member session; do not force the public sign-in gate. */
+  const staffBypassMemberAuthGate =
+    Boolean(staffAccessToken) && appState === "certificate";
+
+  if (
+    isFirebaseConfigured &&
+    !sessionUser &&
+    MEMBER_AUTH_REQUIRED_STATES.has(appState) &&
+    !staffBypassMemberAuthGate
+  ) {
     return (
       <>
         {identityRibbon}{portalHomeBar}
@@ -2221,14 +2231,18 @@ export default function App() {
           <div className="card-senior w-full max-w-lg space-y-8 text-center">
             <B2CLogo size="md" align="center" />
             <p className="text-xl font-bold text-slate-700">Certificate data is missing. Complete the exam with a passing score, or retrieve your record from “My Certificate.”</p>
-            <button type="button" onClick={() => setAppState("landing")} className="btn-primary w-full py-6">
-              Back to home
+            <button
+              type="button"
+              onClick={() => setAppState(staffAccessToken ? "admin_dashboard" : "landing")}
+              className="btn-primary w-full py-6"
+            >
+              {staffAccessToken ? "Back to admin dashboard" : "Back to home"}
             </button>
           </div>
         ) : (
           <>
             <Certificate record={activeRecord} />
-            <div className="no-print mt-16 flex w-full max-w-4xl flex-col gap-8 sm:flex-row">
+            <div className="no-print mt-16 flex w-full max-w-4xl flex-col gap-8 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => window.print()}
@@ -2237,23 +2251,35 @@ export default function App() {
                 <Printer aria-hidden />
                 Print / Save as PDF
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setLoiData((prev) => ({
-                    ...prev,
-                    address: String(prev.address || "").trim() || String(formData.residenceAddress || "").trim() || "",
-                  }));
-                  setAppState("loi_form");
-                }}
-                className="btn-primary flex-1 py-8 text-2xl uppercase tracking-tighter"
-              >
-                <Briefcase aria-hidden />
-                Letter of Intent
-              </button>
-              <button type="button" onClick={goHomeFromPmes} className="btn-secondary flex-1 py-8 text-lg font-bold">
-                Home
-              </button>
+              {staffAccessToken && !sessionUser ? (
+                <button
+                  type="button"
+                  onClick={() => setAppState("admin_dashboard")}
+                  className="btn-primary flex-1 py-8 text-2xl uppercase tracking-tighter"
+                >
+                  Back to admin dashboard
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoiData((prev) => ({
+                        ...prev,
+                        address: String(prev.address || "").trim() || String(formData.residenceAddress || "").trim() || "",
+                      }));
+                      setAppState("loi_form");
+                    }}
+                    className="btn-primary flex-1 py-8 text-2xl uppercase tracking-tighter"
+                  >
+                    <Briefcase aria-hidden />
+                    Letter of Intent
+                  </button>
+                  <button type="button" onClick={goHomeFromPmes} className="btn-secondary flex-1 py-8 text-lg font-bold">
+                    Home
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}
