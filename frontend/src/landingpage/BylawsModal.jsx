@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react";
+import { useEffect, useId, useMemo } from "react";
 import { FileText, X } from "lucide-react";
 import { parsePrimaryBylawsPlaintext } from "./parsePrimaryBylaws.js";
 import { PRIMARY_BYLAWS_PLAINTEXT } from "./b2cBylawsPrimarySource.js";
@@ -6,6 +6,13 @@ import { PRIMARY_BYLAWS_PLAINTEXT } from "./b2cBylawsPrimarySource.js";
 /**
  * @param {{ active: boolean; onClose: () => void; pdfUrl: string }} props
  */
+function stripBylawHashFromUrl() {
+  if (typeof window === "undefined") return;
+  if (!/^#bylaw-h2-\d+$/i.test(window.location.hash)) return;
+  const { pathname, search } = window.location;
+  window.history.replaceState(null, "", `${pathname}${search}`);
+}
+
 export function BylawsModal({ active, onClose, pdfUrl }) {
   const baseId = useId();
 
@@ -19,11 +26,24 @@ export function BylawsModal({ active, onClose, pdfUrl }) {
     [segments],
   );
 
+  useEffect(() => {
+    if (active) stripBylawHashFromUrl();
+  }, [active]);
+
+  const handleClose = () => {
+    stripBylawHashFromUrl();
+    onClose();
+  };
+
+  const scrollToArticle = (anchorId) => {
+    document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   if (!active) return null;
 
   return (
     <div className="fixed inset-0 z-[251] flex items-center justify-center p-3 sm:p-4">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={handleClose} aria-hidden />
       <div
         role="dialog"
         aria-modal
@@ -32,7 +52,7 @@ export function BylawsModal({ active, onClose, pdfUrl }) {
       >
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute right-3 top-3 z-10 rounded-full bg-white/95 p-2 shadow-md ring-1 ring-slate-200/80 transition-colors hover:bg-slate-100"
           aria-label="Close"
         >
@@ -75,12 +95,13 @@ export function BylawsModal({ active, onClose, pdfUrl }) {
                 <ul className="space-y-1.5 text-left text-xs font-semibold leading-snug text-slate-600">
                   {tocEntries.map((item) => (
                     <li key={item.anchorId}>
-                      <a
-                        href={`#${item.anchorId}`}
-                        className="block rounded-lg px-2 py-2 transition-colors hover:bg-slate-100 hover:text-blue-700"
+                      <button
+                        type="button"
+                        onClick={() => scrollToArticle(item.anchorId)}
+                        className="block w-full rounded-lg px-2 py-2 text-left text-inherit transition-colors hover:bg-slate-100 hover:text-blue-700"
                       >
                         {item.text.length > 80 ? `${item.text.slice(0, 78)}…` : item.text}
-                      </a>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -143,7 +164,7 @@ export function BylawsModal({ active, onClose, pdfUrl }) {
         <footer className="shrink-0 border-t border-slate-100 bg-white px-5 py-4 sm:px-8">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-black text-white shadow-xl sm:py-4"
           >
             Close
