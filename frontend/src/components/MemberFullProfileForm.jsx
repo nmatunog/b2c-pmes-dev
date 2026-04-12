@@ -331,7 +331,6 @@ function MunicipalityCombobox({ label, required, provCode, value, placeholder, d
         id={inputId}
         type="text"
         name="placeOfBirthMunCity"
-        required={required}
         disabled={isLocked}
         autoComplete="off"
         autoCorrect="off"
@@ -747,10 +746,11 @@ export function MemberFullProfileForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!profile.acknowledgement.consentToDataProcessing) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setFormToast({
         type: "error",
         title: "Consent required",
-        message: "Please check the data processing consent box before submitting.",
+        message: "Please check the data processing consent box (Acknowledgement section at the top), then submit again.",
       });
       return;
     }
@@ -852,7 +852,12 @@ export function MemberFullProfileForm({
   const sg = profile.signature;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" aria-busy={submitting}>
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4"
+      aria-busy={submitting}
+      noValidate
+    >
       <p className="text-sm font-medium leading-relaxed text-slate-600">
         Complete all sections that apply. Fields marked <span className="text-red-600">*</span> match the paper form. Board
         approval checkboxes are recorded by staff; you may leave resolution references blank unless instructed.
@@ -940,7 +945,6 @@ export function MemberFullProfileForm({
             className="mt-1 h-5 w-5 shrink-0 rounded border-slate-300 text-[#004aad]"
             checked={profile.acknowledgement.consentToDataProcessing}
             onChange={(e) => setAck({ consentToDataProcessing: e.target.checked })}
-            required
           />
           <span className="text-sm font-medium leading-relaxed text-slate-700">
             I acknowledge consent to the collection, use, processing, storage, and disposal of my personal identifiable
@@ -1660,20 +1664,29 @@ export function MemberFullProfileForm({
         />
       </Section>
 
-      <button
-        type="submit"
-        disabled={
-          submitting ||
-          !profile.acknowledgement.consentToDataProcessing ||
-          !phGeo ||
-          phGeoLoadFailed ||
-          !getSignaturePrintedName(profile)
-        }
-        className="btn-primary flex w-full items-center justify-center gap-2 py-4 sm:w-auto"
-      >
-        {submitting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Lock className="h-5 w-5" aria-hidden />}
-        {submitting ? "Submitting…" : "Submit membership form"}
-      </button>
+      <div className="space-y-2 sm:col-span-2">
+        <p className="text-xs font-medium text-slate-500">
+          {submitting
+            ? "Submitting — please keep this tab open."
+            : !profile.acknowledgement.consentToDataProcessing
+              ? "Check the data-processing consent box (Acknowledgement section) before submitting."
+              : phGeoLoadFailed
+                ? "Place-of-birth data failed to load — refresh the page, then try Submit again."
+                : !phGeo
+                  ? "Wait for place-of-birth lists to finish loading, then tap Submit."
+                  : !getSignaturePrintedName(profile)
+                    ? "Enter your full name in “Signature over printed name” (top or bottom of the form), then submit."
+                    : "Ready to submit when your entries are complete."}
+        </p>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="btn-primary flex w-full items-center justify-center gap-2 py-4 sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Lock className="h-5 w-5" aria-hidden />}
+          {submitting ? "Submitting…" : "Submit membership form"}
+        </button>
+      </div>
 
       <FormToast toast={formToast} onDismiss={() => setFormToast(null)} />
     </form>
