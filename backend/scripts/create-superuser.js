@@ -7,6 +7,13 @@
  *
  * Requires DATABASE_URL and a migrated DB (StaffUser table).
  */
+const path = require("path");
+try {
+  require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+} catch {
+  /* optional — Nest bundles dotenv */
+}
+
 const bcrypt = require("bcryptjs");
 const { PrismaClient, StaffRole } = require("@prisma/client");
 
