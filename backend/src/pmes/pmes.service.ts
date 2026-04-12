@@ -543,6 +543,8 @@ export class PmesService {
       boardApproved: board,
       fullProfileCompleted: profile,
       canAccessFullMemberPortal: stage === "FULL_MEMBER",
+      /** Pre-roster import: member already pledged elsewhere; digital PMES not required on this app. */
+      isLegacyFounderImport: participant.legacyPioneerImport,
     };
   }
 

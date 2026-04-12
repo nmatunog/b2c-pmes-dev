@@ -30,6 +30,7 @@ export function MemberLifecyclePortal({
   onSubmitFullProfile,
 }) {
   const stage = lifecycle?.stage ?? "UNKNOWN";
+  const legacyFounder = Boolean(lifecycle?.isLegacyFounderImport);
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState(null);
 
@@ -79,7 +80,14 @@ export function MemberLifecyclePortal({
         <B2CLogo size="lg" align="center" className="mb-4" />
         <h1 className="text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Member onboarding</h1>
         <p className="mt-3 text-base font-semibold text-slate-600">
-          Hi {firstName}, your cooperative membership follows Board-approved steps after PMES.
+          {legacyFounder ? (
+            <>
+              Hi {firstName}, you&apos;re a <span className="font-black text-slate-800">founding member</span> on file. You
+              don&apos;t need to retake PMES here — complete your official digital membership profile when prompted below.
+            </>
+          ) : (
+            <>Hi {firstName}, your cooperative membership follows Board-approved steps after PMES.</>
+          )}
         </p>
       </div>
 
@@ -183,7 +191,19 @@ export function MemberLifecyclePortal({
             <div>
               <h2 className="text-xl font-black text-slate-900">B2C membership form</h2>
               <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
-                Board approval is on file. Complete the official consumer cooperative membership sheet below (aligned to your paper form). You can download your entries as CSV anytime, or attach a scan/PDF of a filled paper form.
+                {legacyFounder ? (
+                  <>
+                    As an existing pledged member, you&apos;re only registering your account in this system. Complete the
+                    official consumer cooperative membership sheet below so your records match the cooperative file. You
+                    can download your entries as CSV or attach a scan/PDF of a filled paper form.
+                  </>
+                ) : (
+                  <>
+                    Board approval is on file. Complete the official consumer cooperative membership sheet below (aligned
+                    to your paper form). You can download your entries as CSV anytime, or attach a scan/PDF of a filled
+                    paper form.
+                  </>
+                )}
               </p>
             </div>
           </div>
