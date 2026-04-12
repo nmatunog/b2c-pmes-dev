@@ -1,18 +1,14 @@
-import { useEffect, useId, useMemo } from "react";
+import { useId, useMemo } from "react";
 import { FileText, X } from "lucide-react";
 import { parsePrimaryBylawsPlaintext } from "./parsePrimaryBylaws.js";
 import { PRIMARY_BYLAWS_PLAINTEXT } from "./b2cBylawsPrimarySource.js";
 
+/** Landing section to show in the URL when leaving the By-Laws modal (see `landing.jsx` root). */
+const LANDING_SECTION_AFTER_BYLAWS = "top";
+
 /**
  * @param {{ active: boolean; onClose: () => void; pdfUrl: string }} props
  */
-function stripBylawHashFromUrl() {
-  if (typeof window === "undefined") return;
-  if (!/^#bylaw-h2-\d+$/i.test(window.location.hash)) return;
-  const { pathname, search } = window.location;
-  window.history.replaceState(null, "", `${pathname}${search}`);
-}
-
 export function BylawsModal({ active, onClose, pdfUrl }) {
   const baseId = useId();
 
@@ -26,17 +22,14 @@ export function BylawsModal({ active, onClose, pdfUrl }) {
     [segments],
   );
 
-  useEffect(() => {
-    if (active) stripBylawHashFromUrl();
-  }, [active]);
-
   const handleClose = () => {
-    stripBylawHashFromUrl();
     onClose();
-  };
-
-  const scrollToArticle = (anchorId) => {
-    document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (typeof window === "undefined") return;
+    queueMicrotask(() => {
+      const { pathname, search } = window.location;
+      window.history.replaceState(null, "", `${pathname}${search}#${LANDING_SECTION_AFTER_BYLAWS}`);
+      document.getElementById(LANDING_SECTION_AFTER_BYLAWS)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   if (!active) return null;
@@ -95,13 +88,12 @@ export function BylawsModal({ active, onClose, pdfUrl }) {
                 <ul className="space-y-1.5 text-left text-xs font-semibold leading-snug text-slate-600">
                   {tocEntries.map((item) => (
                     <li key={item.anchorId}>
-                      <button
-                        type="button"
-                        onClick={() => scrollToArticle(item.anchorId)}
-                        className="block w-full rounded-lg px-2 py-2 text-left text-inherit transition-colors hover:bg-slate-100 hover:text-blue-700"
+                      <a
+                        href={`#${item.anchorId}`}
+                        className="block rounded-lg px-2 py-2 transition-colors hover:bg-slate-100 hover:text-blue-700"
                       >
                         {item.text.length > 80 ? `${item.text.slice(0, 78)}…` : item.text}
-                      </button>
+                      </a>
                     </li>
                   ))}
                 </ul>
