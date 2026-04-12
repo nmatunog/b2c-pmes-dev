@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FileSpreadsheet, Loader2, Lock, Upload, X } from "lucide-react";
 import { B2CLogo } from "./B2CLogo.jsx";
 import { SignatureDrawPad } from "./SignatureDrawPad.jsx";
@@ -30,6 +30,12 @@ import {
   registrationDobToBirthDate,
   splitFullNameForPrefill,
 } from "../lib/membershipFormPrefill.js";
+import {
+  clearMemberProfileDraft,
+  loadMemberProfileDraft,
+  memberProfileDraftKey,
+  saveMemberProfileDraft,
+} from "../lib/memberProfileDraftStorage.js";
 import { profileToCsvString } from "../lib/memberProfileFlatten.js";
 import { compressImageFileToJpegDataUrl } from "../lib/signatureImage.js";
 import { auth } from "../services/firebase";
@@ -383,6 +389,10 @@ export function MemberFullProfileForm({
   localError,
 }) {
   const [profile, setProfile] = useState(() => createEmptyMemberProfile());
+  const [draftSaveBanner, setDraftSaveBanner] = useState(/** @type {null | "restored"} */ (null));
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState(/** @type {number | null} */ (null));
+  const [draftImageBackupNote, setDraftImageBackupNote] = useState(false);
+  const draftHydratedRef = useRef(false);
   const [sheetFile, setSheetFile] = useState(/** @type {File | null} */ (null));
   const signatureFileInputRef = useRef(/** @type {HTMLInputElement | null} */ (null));
   const [signaturePadReset, setSignaturePadReset] = useState(0);
@@ -395,6 +405,23 @@ export function MemberFullProfileForm({
     /** @type {null | typeof import("../lib/phPlaceOfBirth.js")} */ (null),
   );
   const [phGeoLoadFailed, setPhGeoLoadFailed] = useState(false);
+
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
+  const draftSaveTimerRef = useRef(/** @type {ReturnType<typeof setTimeout> | null} */ (null));
+
+  /** Restore saved draft before other effects merge prefills (same browser; keyed by login email). */
+  useLayoutEffect(() => {
+    const e = String(memberEmail ?? "").trim().toLowerCase();
+    if (!e) return;
+    if (draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    const loaded = loadMemberProfileDraft(e);
+    if (!loaded) return;
+    setProfile(loaded.profile);
+    setDraftSaveBanner("restored");
+    setLastDraftSavedAt(loaded.savedAt);
+  }, [memberEmail]);
 
   useEffect(() => {
     let cancelled = false;
@@ -434,13 +461,13 @@ export function MemberFullProfileForm({
         ...p,
         personal: {
           ...p.personal,
-          ...(fn ? { firstName: fn } : {}),
-          ...(mn ? { middleName: mn } : {}),
-          ...(ln ? { lastName: ln } : {}),
+          ...(fn && !String(p.personal.firstName ?? "").trim() ? { firstName: fn } : {}),
+          ...(mn && !String(p.personal.middleName ?? "").trim() ? { middleName: mn } : {}),
+          ...(ln && !String(p.personal.lastName ?? "").trim() ? { lastName: ln } : {}),
         },
         registrationNoExpiry: {
           ...p.registrationNoExpiry,
-          ...(tin ? { tinNo: tin } : {}),
+          ...(tin && !String(p.registrationNoExpiry.tinNo ?? "").trim() ? { tinNo: tin } : {}),
         },
       }));
     } catch {
@@ -546,6 +573,50 @@ export function MemberFullProfileForm({
     return () => URL.revokeObjectURL(csvBlobUrl);
   }, [csvBlobUrl]);
 
+  /** Autosave draft locally (same device/browser; survives refresh and brief disconnects). */
+  useEffect(() => {
+    const key = memberProfileDraftKey(memberEmail);
+    if (!key || !draftHydratedRef.current) return;
+
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    draftSaveTimerRef.current = setTimeout(() => {
+      const r = saveMemberProfileDraft(memberEmail, profileRef.current);
+      if (r.ok) {
+        setLastDraftSavedAt(Date.now());
+        if (r.imageStripped) setDraftImageBackupNote(true);
+      }
+      draftSaveTimerRef.current = null;
+    }, 600);
+
+    return () => {
+      if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    };
+  }, [profile, memberEmail]);
+
+  useEffect(() => {
+    const e = String(memberEmail ?? "").trim().toLowerCase();
+    if (!e) return;
+    const flush = () => {
+      if (!draftHydratedRef.current) return;
+      saveMemberProfileDraft(memberEmail, profileRef.current);
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [memberEmail]);
+
+  useEffect(() => {
+    if (draftSaveBanner !== "restored") return undefined;
+    const t = window.setTimeout(() => setDraftSaveBanner(null), 12000);
+    return () => window.clearTimeout(t);
+  }, [draftSaveBanner]);
+
   const setAck = (patch) => setProfile((p) => ({ ...p, acknowledgement: { ...p.acknowledgement, ...patch } }));
   const setPersonal = (patch) => setProfile((p) => ({ ...p, personal: { ...p.personal, ...patch } }));
 
@@ -628,6 +699,10 @@ export function MemberFullProfileForm({
       sheetFileName: sheetFile ? sheetFile.name : "",
       notes: profile.internalNotes || "",
     });
+    clearMemberProfileDraft(String(memberEmail ?? "").trim());
+    setDraftSaveBanner(null);
+    setLastDraftSavedAt(null);
+    setDraftImageBackupNote(false);
   };
 
   const pr = profile.personal;
@@ -652,6 +727,32 @@ export function MemberFullProfileForm({
         Complete all sections that apply. Fields marked <span className="text-red-600">*</span> match the paper form. Board
         approval checkboxes are recorded by staff; you may leave resolution references blank unless instructed.
       </p>
+
+      <div className="space-y-2">
+        <p className="rounded-2xl border border-[#004aad]/25 bg-[#004aad]/5 px-4 py-3 text-sm font-medium leading-relaxed text-slate-800">
+          Your answers are saved automatically in this browser while you work. You can close the tab, refresh, or lose
+          connection briefly and pick up where you left off on this device. Submitting the form clears this saved draft.
+        </p>
+        {draftSaveBanner === "restored" ? (
+          <p
+            className="rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm font-semibold text-emerald-950"
+            role="status"
+          >
+            Restored your saved progress from this browser.
+          </p>
+        ) : null}
+        {lastDraftSavedAt ? (
+          <p className="text-xs font-medium text-slate-500" aria-live="polite">
+            Draft saved locally at {new Date(lastDraftSavedAt).toLocaleString()}.
+          </p>
+        ) : null}
+        {draftImageBackupNote ? (
+          <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
+            Browser storage was almost full, so your uploaded signature image was not kept in the automatic backup. Your
+            other fields are saved; add the signature again before submitting if needed.
+          </p>
+        ) : null}
+      </div>
 
       {localError ? (
         <div className="rounded-2xl bg-red-50 p-3 text-center text-sm font-bold text-red-700">{localError}</div>
