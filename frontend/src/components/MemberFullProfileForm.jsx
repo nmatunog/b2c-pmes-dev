@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileSpreadsheet, Loader2, Lock } from "lucide-react";
+import { B2CLogo } from "./B2CLogo.jsx";
 import { createEmptyMemberProfile } from "../lib/memberFullProfileSchema.js";
 import { profileToCsvString } from "../lib/memberProfileFlatten.js";
+
+/** Printed on the membership sheet letterhead; also merged into submit/CSV export. */
+const OFFICIAL_COOPERATIVE_ADDRESS =
+  "Block 1 Lot 2D G Ouano Street, Umapad, Mandaue City, Cebu Philippines";
+const OFFICIAL_COOPERATIVE_EMAIL = "b2ccoop@gmail.com";
 
 function Text({
   label,
@@ -61,7 +67,15 @@ export function MemberFullProfileForm({ memberEmail, onSubmitSuccess, submitting
   const [sheetFile, setSheetFile] = useState(/** @type {File | null} */ (null));
 
   const csvBlobUrl = useMemo(() => {
-    const csv = profileToCsvString(profile);
+    const forExport = {
+      ...profile,
+      cooperative: {
+        ...profile.cooperative,
+        address: OFFICIAL_COOPERATIVE_ADDRESS,
+        emailAddress: OFFICIAL_COOPERATIVE_EMAIL,
+      },
+    };
+    const csv = profileToCsvString(forExport);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     return URL.createObjectURL(blob);
   }, [profile]);
@@ -70,7 +84,6 @@ export function MemberFullProfileForm({ memberEmail, onSubmitSuccess, submitting
     return () => URL.revokeObjectURL(csvBlobUrl);
   }, [csvBlobUrl]);
 
-  const setCoop = (patch) => setProfile((p) => ({ ...p, cooperative: { ...p.cooperative, ...patch } }));
   const setAck = (patch) => setProfile((p) => ({ ...p, acknowledgement: { ...p.acknowledgement, ...patch } }));
   const setPersonal = (patch) => setProfile((p) => ({ ...p, personal: { ...p.personal, ...patch } }));
   const setMother = (patch) => setProfile((p) => ({ ...p, mother: { ...p.mother, ...patch } }));
@@ -109,7 +122,11 @@ export function MemberFullProfileForm({ memberEmail, onSubmitSuccess, submitting
     }
     const merged = {
       ...profile,
-      cooperative: { ...profile.cooperative, emailAddress: profile.cooperative.emailAddress || memberEmail || "" },
+      cooperative: {
+        ...profile.cooperative,
+        address: OFFICIAL_COOPERATIVE_ADDRESS,
+        emailAddress: OFFICIAL_COOPERATIVE_EMAIL,
+      },
       contact: { ...profile.contact, emailAddress: profile.contact.emailAddress || memberEmail || "" },
     };
     await onSubmitSuccess({
@@ -166,11 +183,30 @@ export function MemberFullProfileForm({ memberEmail, onSubmitSuccess, submitting
         </label>
       </div>
 
-      <Section title="Cooperative header" defaultOpen>
-        <Text label="Cooperative address" value={profile.cooperative.address} onChange={(v) => setCoop({ address: v })} />
-        <Text label="Email address" value={profile.cooperative.emailAddress} onChange={(v) => setCoop({ emailAddress: v })} />
-        <Text label="Telephone number" value={profile.cooperative.telephoneNumber} onChange={(v) => setCoop({ telephoneNumber: v })} />
-      </Section>
+      <div
+        className="rounded-2xl border border-[#004aad]/20 bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-4"
+        role="group"
+        aria-label="B2C cooperative letterhead"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
+          <div className="flex shrink-0 justify-center sm:justify-start">
+            <B2CLogo size="sm" className="max-h-9 sm:max-h-10" />
+          </div>
+          <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#004aad]">Official address</p>
+            <p className="text-sm font-semibold leading-snug text-slate-800">{OFFICIAL_COOPERATIVE_ADDRESS}</p>
+            <p className="pt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#004aad]">Email</p>
+            <p className="text-sm font-semibold">
+              <a
+                href={`mailto:${OFFICIAL_COOPERATIVE_EMAIL}`}
+                className="text-[#004aad] underline-offset-2 hover:underline"
+              >
+                {OFFICIAL_COOPERATIVE_EMAIL}
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
 
       <Section title="Acknowledgement (RA 9520, 9510, 9160)">
         <label className="flex cursor-pointer items-start gap-3 sm:col-span-2">
