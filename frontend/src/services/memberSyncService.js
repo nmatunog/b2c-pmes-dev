@@ -36,6 +36,11 @@ export async function syncMemberToPostgres(user, fullName) {
   if (!res.ok) {
     if (import.meta.env.DEV) {
       console.warn("[memberSync]", res.status, data);
+      if (res.status === 401) {
+        console.warn(
+          "[memberSync] 401: Nest requires a valid Firebase ID token (same project as FIREBASE_* in backend/.env) or matching MEMBER_SYNC_SECRET. Fix backend env or leave MEMBER_SYNC_SECRET unset for local open sync.",
+        );
+      }
     }
     return null;
   }

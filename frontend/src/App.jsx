@@ -268,6 +268,8 @@ export default function App() {
   const [logIn, setLogIn] = useState({ email: "", password: "" });
   /** Single screen for member sign-in vs register */
   const [memberAuthMode, setMemberAuthMode] = useState(/** @type {"signup" | "login"} */ ("login"));
+  /** Pioneer reclaim: import email is fixed; signup collects password + prefilled roster names only. */
+  const [pioneerClaimAuthActive, setPioneerClaimAuthActive] = useState(false);
   /** Staff email after successful admin dashboard login (for identity ribbon). */
   const [staffSessionEmail, setStaffSessionEmail] = useState(null);
 
@@ -658,7 +660,7 @@ export default function App() {
     setFormData((prev) => ({ ...prev, email: user.email || prev.email }));
   }, [appState, user]);
 
-  /** After pioneer reclaim, prefill member auth email/DOB from sessionStorage. */
+  /** After pioneer reclaim, prefill member auth + roster fields; membership form reads `b2c_pioneer_membership_prefill`. */
   useEffect(() => {
     if (appState !== "member_auth") return;
     try {
@@ -667,13 +669,45 @@ export default function App() {
       const p = JSON.parse(raw);
       sessionStorage.removeItem("b2c_pioneer_prefill");
       const email = typeof p.email === "string" ? p.email.trim() : "";
+      const pioneerClaim = p.pioneerClaim === true;
+      const fn = typeof p.firstName === "string" ? p.firstName : "";
+      const mn = typeof p.middleName === "string" ? p.middleName : "";
+      const ln = typeof p.lastName === "string" ? p.lastName : "";
+      const tin = typeof p.tinNo === "string" ? p.tinNo : "";
       if (email) {
-        setSignUp((s) => ({ ...s, email }));
+        setSignUp((s) => ({
+          ...s,
+          email,
+          ...(fn ? { firstName: fn } : {}),
+          ...(mn !== undefined ? { middleName: mn } : {}),
+          ...(ln ? { lastName: ln } : {}),
+        }));
         setLogIn((l) => ({ ...l, email }));
+      }
+      if (pioneerClaim && email) {
+        setPioneerClaimAuthActive(true);
+        try {
+          sessionStorage.setItem(
+            "b2c_pioneer_membership_prefill",
+            JSON.stringify({
+              firstName: fn,
+              middleName: mn,
+              lastName: ln,
+              tinNo: tin,
+            }),
+          );
+        } catch {
+          /* ignore */
+        }
       }
     } catch {
       /* ignore */
     }
+  }, [appState]);
+
+  useEffect(() => {
+    if (appState === "member_auth") return;
+    setPioneerClaimAuthActive(false);
   }, [appState]);
 
   /** LOI header shows formData name/email — fill gaps when opening from member portal (user may skip registration PMES form). */
@@ -1044,23 +1078,11 @@ export default function App() {
     const fn = signUp.firstName.trim();
     const ln = signUp.lastName.trim();
     const mn = signUp.middleName.trim();
-    const phone = signUp.phone.trim();
-    const addr = signUp.residenceAddress.trim();
     const email = signUp.email.trim();
+    const pioneerSignup = pioneerClaimAuthActive;
+
     if (!fn || !ln) {
       setError("First name and last name are required.");
-      return;
-    }
-    if (!signUp.dob) {
-      setError("Date of birth is required.");
-      return;
-    }
-    if (!phone) {
-      setError("Mobile number is required.");
-      return;
-    }
-    if (!addr) {
-      setError("Residence address is required.");
       return;
     }
     if (!email || !signUp.password) {
@@ -1071,10 +1093,34 @@ export default function App() {
       setError("Passwords do not match.");
       return;
     }
+
+    let phone = signUp.phone.trim();
+    let addr = signUp.residenceAddress.trim();
+    let dob = signUp.dob;
+    if (!pioneerSignup) {
+      if (!dob) {
+        setError("Date of birth is required.");
+        return;
+      }
+      if (!phone) {
+        setError("Mobile number is required.");
+        return;
+      }
+      if (!addr) {
+        setError("Residence address is required.");
+        return;
+      }
+    } else {
+      if (!phone) phone = "+639000000000";
+      if (!addr) addr = "(Complete in membership profile)";
+      if (!dob) dob = "1900-01-01";
+    }
+
     const fullName = composeFullName(fn, mn, ln);
     setLoading(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, signUp.password);
+      await cred.user.getIdToken(true);
       await updateProfile(cred.user, { displayName: fullName }).catch(() => null);
       if (import.meta.env.VITE_API_BASE_URL?.trim()) {
         void syncMemberToPostgres(cred.user, fullName);
@@ -1087,12 +1133,29 @@ export default function App() {
         lastName: ln,
         fullName,
         phone,
-        dob: signUp.dob,
+        dob,
         residenceAddress: addr,
       }));
       setLogIn({ email, password: "" });
       setPmesPaused(false);
       queueSignupLiveActivityFromDevice();
+
+      if (pioneerSignup) {
+        setPioneerClaimAuthActive(false);
+        try {
+          const life = await PmesService.fetchMembershipLifecycle(email);
+          setMembershipLifecycle(life);
+          if (life?.isLegacyFounderImport) {
+            setAppState(life.canAccessFullMemberPortal ? "member_portal" : "member_pending");
+          } else {
+            setAppState("member_pending");
+          }
+        } catch {
+          setAppState("member_pending");
+        }
+        return;
+      }
+
       setAppState("consent");
     } catch (err) {
       setError(mapFirebaseAuthError(err?.code));
@@ -1450,9 +1513,11 @@ export default function App() {
               {isSignup ? "Create your cooperative login" : "Welcome back, member"}
             </h1>
             <p className="relative z-10 mt-5 max-w-md text-base font-medium leading-relaxed text-white/88 sm:text-lg">
-              {isSignup
-                ? "One account for PMES modules, your exam, and your certificate. Next: privacy notice, then the seminar."
-                : "Pick up where you left off — modules, exam, certificate, or Letter of Intent."}
+              {isSignup && pioneerClaimAuthActive
+                ? "Create a password for the login email tied to your pioneer roster row. Next: member onboarding and your digital membership form."
+                : isSignup
+                  ? "One account for PMES modules, your exam, and your certificate. Next: privacy notice, then the seminar."
+                  : "Pick up where you left off — modules, exam, certificate, or Letter of Intent."}
             </p>
             <ul className="relative z-10 mt-8 hidden max-w-md space-y-3 text-sm font-semibold leading-snug text-white/90 sm:block">
               <li className="flex gap-3">
@@ -1519,7 +1584,53 @@ export default function App() {
                 </div>
               )}
               <div className="mt-6 space-y-4 sm:mt-8 sm:space-y-5">
-                {isSignup ? (
+                {isSignup && pioneerClaimAuthActive ? (
+                  <>
+                    <p className="text-sm font-medium leading-relaxed text-slate-600">
+                      Names below are from your pioneer roster check — change only if something was mistyped.
+                    </p>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="relative">
+                        <User className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
+                        <input
+                          type="text"
+                          name="given-name"
+                          autoComplete="given-name"
+                          className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
+                          placeholder="First name"
+                          value={signUp.firstName}
+                          onChange={(e) => setSignUp((s) => ({ ...s, firstName: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div className="relative">
+                        <User className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
+                        <input
+                          type="text"
+                          name="additional-name"
+                          autoComplete="additional-name"
+                          className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
+                          placeholder="Optional middle name"
+                          value={signUp.middleName}
+                          onChange={(e) => setSignUp((s) => ({ ...s, middleName: e.target.value }))}
+                        />
+                      </div>
+                      <div className="relative">
+                        <User className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
+                        <input
+                          type="text"
+                          name="family-name"
+                          autoComplete="family-name"
+                          className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
+                          placeholder="Last name"
+                          value={signUp.lastName}
+                          onChange={(e) => setSignUp((s) => ({ ...s, lastName: e.target.value }))}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : isSignup ? (
                   <>
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div className="relative">
@@ -1598,24 +1709,34 @@ export default function App() {
                     </div>
                   </>
                 ) : null}
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
-                  <input
-                    type={isSignup ? "email" : "text"}
-                    autoComplete={isSignup ? "email" : "username"}
-                    className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
-                    placeholder={
-                      isSignup ? "Email address" : "Email, callsign, or label (e.g. delacruz-2)"
-                    }
-                    value={isSignup ? signUp.email : logIn.email}
-                    onChange={(e) =>
-                      isSignup
-                        ? setSignUp((s) => ({ ...s, email: e.target.value }))
-                        : setLogIn((l) => ({ ...l, email: e.target.value }))
-                    }
-                    required
-                  />
-                </div>
+                {pioneerClaimAuthActive ? (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Login email (assigned for your import)</p>
+                    <p className="mt-1 break-all font-mono text-sm font-bold text-slate-900">{isSignup ? signUp.email : logIn.email}</p>
+                    <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600">
+                      You won&apos;t use this address for mail — add your real email on the membership form after sign-in.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
+                    <input
+                      type={isSignup ? "email" : "text"}
+                      autoComplete={isSignup ? "email" : "username"}
+                      className="input-field !py-[1.1rem] !pl-12 !text-base sm:!text-lg"
+                      placeholder={
+                        isSignup ? "Email address" : "Email, callsign, or label (e.g. delacruz-2)"
+                      }
+                      value={isSignup ? signUp.email : logIn.email}
+                      onChange={(e) =>
+                        isSignup
+                          ? setSignUp((s) => ({ ...s, email: e.target.value }))
+                          : setLogIn((l) => ({ ...l, email: e.target.value }))
+                      }
+                      required
+                    />
+                  </div>
+                )}
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
                   <input
@@ -1655,7 +1776,7 @@ export default function App() {
                 className="btn-primary mt-8 flex w-full items-center justify-center gap-2 !py-4 text-base font-black sm:!py-5 sm:text-lg"
               >
                 {loading ? <Loader2 className="animate-spin" /> : null}
-                {isSignup ? "Create account & continue" : "Sign in"}
+                {isSignup ? (pioneerClaimAuthActive ? "Create password & continue" : "Create account & continue") : "Sign in"}
               </button>
               {!isSignup ? (
                 <button
@@ -1852,6 +1973,11 @@ export default function App() {
                               "b2c_pioneer_prefill",
                               JSON.stringify({
                                 email: pioneerReclaimSignInEmail,
+                                pioneerClaim: true,
+                                firstName: pioneerReclaimFirstName,
+                                middleName: pioneerReclaimMiddleName,
+                                lastName: pioneerReclaimLastName,
+                                tinNo: pioneerReclaimTin,
                               }),
                             );
                           } catch {
@@ -1873,6 +1999,11 @@ export default function App() {
                               "b2c_pioneer_prefill",
                               JSON.stringify({
                                 email: pioneerReclaimSignInEmail,
+                                pioneerClaim: true,
+                                firstName: pioneerReclaimFirstName,
+                                middleName: pioneerReclaimMiddleName,
+                                lastName: pioneerReclaimLastName,
+                                tinNo: pioneerReclaimTin,
                               }),
                             );
                           } catch {

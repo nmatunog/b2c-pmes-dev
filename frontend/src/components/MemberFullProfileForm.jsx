@@ -95,6 +95,35 @@ export function MemberFullProfileForm({
     });
   }, [assignedMemberId]);
 
+  /** Pioneer reclaim: names + TIN from roster check (set in App via sessionStorage). */
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("b2c_pioneer_membership_prefill");
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      sessionStorage.removeItem("b2c_pioneer_membership_prefill");
+      const fn = typeof o.firstName === "string" ? o.firstName.trim() : "";
+      const mn = typeof o.middleName === "string" ? o.middleName.trim() : "";
+      const ln = typeof o.lastName === "string" ? o.lastName.trim() : "";
+      const tin = typeof o.tinNo === "string" ? o.tinNo.replace(/\D/g, "") : "";
+      setProfile((p) => ({
+        ...p,
+        personal: {
+          ...p.personal,
+          ...(fn ? { firstName: fn } : {}),
+          ...(mn ? { middleName: mn } : {}),
+          ...(ln ? { lastName: ln } : {}),
+        },
+        registrationNoExpiry: {
+          ...p.registrationNoExpiry,
+          ...(tin ? { tinNo: tin } : {}),
+        },
+      }));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => {
     const c = String(assignedCallsign ?? "").trim();
     if (!c) return;
