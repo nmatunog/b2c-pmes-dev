@@ -729,7 +729,7 @@ export default function LandingPage({
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <a href="#top" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+          <a href="/" className="flex min-w-0 items-center gap-2.5 sm:gap-3" aria-label="Home">
             <B2CLogo size="sm" className="shrink-0" />
             <div className="min-w-0 flex flex-col leading-tight">
               <span className="truncate text-sm font-bold tracking-tight text-stone-900 sm:text-base lg:text-lg">
