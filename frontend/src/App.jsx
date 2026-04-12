@@ -1623,7 +1623,8 @@ export default function App() {
               <div>
                 <h1 className="text-2xl font-black uppercase tracking-tight text-[#004aad]">Founding pioneer</h1>
                 <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
-                  If you were on the roster before this app, confirm the email and birth date we have on file. Then use{" "}
+                  If you were on the roster before this app, confirm the email and birth date we have on file (birth date must
+                  match exactly, format <span className="font-mono font-bold text-slate-800">YYYY-MM-DD</span>). Then use{" "}
                   <strong>that same email</strong> to sign in or create your account so your digital membership form opens.
                 </p>
               </div>
@@ -1668,19 +1669,26 @@ export default function App() {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="pioneer-dob">
-                      Date of birth (same format as records, e.g. YYYY-MM-DD)
+                      Date of birth
                     </label>
+                    <p className="mb-2 text-xs font-medium leading-relaxed text-slate-600">
+                      Use <span className="font-mono font-bold text-slate-800">YYYY-MM-DD</span> (e.g.{" "}
+                      <span className="font-mono">1985-06-15</span>). It must match the date stored for your roster row.
+                    </p>
                     <input
                       id="pioneer-dob"
-                      type="text"
-                      inputMode="numeric"
+                      type="date"
                       autoComplete="bday"
-                      placeholder="YYYY-MM-DD"
-                      className="input-field w-full"
+                      className="input-field w-full font-mono text-slate-900"
                       value={pioneerReclaimDob}
                       onChange={(ev) => setPioneerReclaimDob(ev.target.value)}
                       required
                     />
+                    <p className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium leading-relaxed text-slate-700">
+                      <strong className="text-slate-900">No birth date on the import?</strong> We may have stored the placeholder{" "}
+                      <span className="font-mono font-bold">1900-01-01</span>. Enter that here to verify, then put your real date
+                      of birth in the full membership form.
+                    </p>
                   </div>
                   {pioneerReclaimError ? (
                     <div className="rounded-2xl bg-red-50 p-3 text-center text-sm font-bold text-red-800">{pioneerReclaimError}</div>
@@ -1746,9 +1754,10 @@ export default function App() {
                 ) : null}
                 {pioneerReclaimEligible === false ? (
                   <p className="text-sm font-medium leading-relaxed text-slate-600">
-                    We couldn&apos;t match a pioneer row that still needs a profile. Check the email and DOB (including format),
-                    or contact the cooperative office. If you already finished the digital form, you won&apos;t see a match
-                    here.
+                    We couldn&apos;t match a pioneer row that still needs a profile. Check the email, try DOB as{" "}
+                    <span className="font-mono font-bold">YYYY-MM-DD</span>, or if your import had no DOB try{" "}
+                    <span className="font-mono font-bold">1900-01-01</span>. Contact the cooperative office if needed. If you
+                    already finished the digital form, you won&apos;t see a match here.
                   </p>
                 ) : null}
               </>
