@@ -59,6 +59,7 @@ import { PortalHomeBar } from "./components/PortalHomeBar.jsx";
 import { B2CLogo } from "./components/B2CLogo.jsx";
 import { ReferralEngine } from "./components/ReferralEngine.jsx";
 import { MemberLifecyclePortal } from "./components/MemberLifecyclePortal.jsx";
+import { MemberSubmissionAckScreen } from "./components/MemberSubmissionAckScreen.jsx";
 import { PIONEER_POINTS_PER_JOIN } from "./lib/referralTiers.js";
 import { derivePmesIntent } from "./lib/pmesIntent.js";
 import {
@@ -93,6 +94,7 @@ const MEMBER_AUTH_REQUIRED_STATES = new Set([
   "registration",
   "member_portal",
   "member_pending",
+  "member_submission_success",
   "seminar",
   "exam",
   "result",
@@ -367,6 +369,12 @@ export default function App() {
   /** PostgreSQL membership pipeline when `VITE_API_BASE_URL` is set */
   const [membershipLifecycle, setMembershipLifecycle] = useState(/** @type {Record<string, unknown> | null} */ (null));
   const [membershipLoading, setMembershipLoading] = useState(false);
+  /** Snapshot for the post–full-profile confirmation screen (Member ID, email). */
+  const [memberSubmissionAck, setMemberSubmissionAck] = useState(
+    /** @type {null | { memberIdNo: string; memberIdIsProvisional: boolean; email: string; displayName: string; alternatePublicHandle: string }} */ (
+      null
+    ),
+  );
   const [membershipPipeline, setMembershipPipeline] = useState(/** @type {unknown[]} */ ([]));
   /** Admin member registry (full membership submissions) */
   const [registryRows, setRegistryRows] = useState(/** @type {unknown[]} */ ([]));
@@ -2781,8 +2789,17 @@ export default function App() {
                   notes: notes ?? "",
                   signal: abortSignal,
                 });
-                await refreshMembershipLifecycle();
-                setAppState("member_portal");
+                const row = await refreshMembershipLifecycle();
+                const r = row && typeof row === "object" ? /** @type {Record<string, unknown>} */ (row) : {};
+                setMemberSubmissionAck({
+                  memberIdNo: typeof r.memberIdNo === "string" ? r.memberIdNo.trim() : "",
+                  memberIdIsProvisional: r.memberIdIsProvisional === true,
+                  email: user.email,
+                  displayName: memberDisplayName || "Member",
+                  alternatePublicHandle:
+                    typeof r.alternatePublicHandle === "string" ? r.alternatePublicHandle.trim() : "",
+                });
+                setAppState("member_submission_success");
               }}
             />
             {showLegacyInvitePanel && user ? (
@@ -2796,6 +2813,42 @@ export default function App() {
             ) : null}
           </div>
         </div>
+      </>
+    );
+  }
+
+  if (appState === "member_submission_success") {
+    const ack = memberSubmissionAck;
+    return (
+      <>
+        {identityRibbon}
+        {portalHomeBar}
+        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        {ack ? (
+          <MemberSubmissionAckScreen
+            displayName={ack.displayName}
+            email={ack.email}
+            memberIdNo={ack.memberIdNo}
+            memberIdIsProvisional={ack.memberIdIsProvisional}
+            alternatePublicHandle={ack.alternatePublicHandle}
+            onContinueToPortal={() => {
+              setMemberSubmissionAck(null);
+              setAppState("member_portal");
+            }}
+          />
+        ) : (
+          <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-100/80 p-8">
+            <Loader2 className="h-12 w-12 animate-spin text-[#004aad]" aria-hidden />
+            <p className="text-sm font-semibold text-slate-600">Loading confirmation…</p>
+            <button
+              type="button"
+              className="text-sm font-bold text-[#004aad] underline"
+              onClick={() => setAppState("member_portal")}
+            >
+              Skip to member portal
+            </button>
+          </div>
+        )}
       </>
     );
   }

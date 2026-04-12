@@ -819,7 +819,8 @@ export function MemberFullProfileForm({
       setFormToast({
         type: "success",
         title: "Form received",
-        message: "Your membership form was submitted successfully. Continuing to the member portal…",
+        message:
+          "Your membership form was submitted successfully. Next you’ll see your Member ID and login confirmation, then you can open the member portal.",
       });
       clearMemberProfileDraft(String(memberEmail ?? "").trim());
       setDraftSaveBanner(null);
