@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateLoiDto } from "./dto/create-loi.dto";
@@ -20,6 +21,99 @@ export type MembershipStage =
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+function digitsOnly(s: string | undefined): string {
+  return String(s ?? "").replace(/\D/g, "");
+}
+
+function composeLegacyFullName(row: ImportLegacyPioneerRowDto): string | null {
+  const direct = row.fullName?.trim();
+  if (direct) return direct;
+  const f = row.firstName?.trim() ?? "";
+  const m = row.middleName?.trim() ?? "";
+  const l = row.lastName?.trim() ?? "";
+  if (!f && !l) return null;
+  return [f, m, l].filter(Boolean).join(" ").trim() || null;
+}
+
+function resolveLegacyGender(row: ImportLegacyPioneerRowDto): string | null {
+  const g = row.gender?.trim() || row.sexGender?.trim();
+  if (g) return g;
+  const sh = row.sheet;
+  if (sh && typeof sh === "object") {
+    const raw = (sh as Record<string, unknown>)["Sex/Gender"] ?? (sh as Record<string, unknown>).sexGender;
+    if (typeof raw === "string" && raw.trim()) return raw.trim();
+  }
+  return null;
+}
+
+function synthesizeLegacyImportEmail(row: ImportLegacyPioneerRowDto): string {
+  const fromRow = row.email?.trim();
+  if (fromRow) return normalizeEmail(fromRow);
+  const tin = digitsOnly(row.tinNo);
+  if (tin.length >= 6) return normalizeEmail(`tin-${tin}@b2c-registry.example.com`);
+  return normalizeEmail(`legacy-${randomUUID()}@b2c-registry.example.com`);
+}
+
+function buildLegacyMailingAddress(row: ImportLegacyPioneerRowDto): string | null {
+  const parts = [
+    row.street?.trim(),
+    row.barangay?.trim(),
+    row.cityMunicipality?.trim(),
+    row.province?.trim(),
+  ].filter(Boolean);
+  if (parts.length === 0) {
+    const sh = row.sheet;
+    if (sh && typeof sh === "object") {
+      const o = sh as Record<string, unknown>;
+      const p = [o.Street, o.Barangay, o["City/ Municipality"], o.Province]
+        .map((x) => (typeof x === "string" ? x.trim() : ""))
+        .filter(Boolean);
+      if (p.length) return p.join(", ");
+    }
+    return null;
+  }
+  return parts.join(", ");
+}
+
+function buildRegistryImportSnapshot(
+  row: ImportLegacyPioneerRowDto,
+  meta: { resolvedEmail: string; dobPlaceholder: boolean },
+): Prisma.InputJsonValue {
+  const flat: Record<string, unknown> = {
+    email: row.email ?? null,
+    fullName: row.fullName ?? null,
+    lastName: row.lastName ?? null,
+    firstName: row.firstName ?? null,
+    middleName: row.middleName ?? null,
+    phone: row.phone ?? null,
+    dob: row.dob ?? null,
+    gender: row.gender ?? null,
+    sexGender: row.sexGender ?? null,
+    registryTimestamp: row.registryTimestamp ?? null,
+    civilStatus: row.civilStatus ?? null,
+    street: row.street ?? null,
+    barangay: row.barangay ?? null,
+    cityMunicipality: row.cityMunicipality ?? null,
+    province: row.province ?? null,
+    tinNo: row.tinNo ?? null,
+    initialSubscriptionAmount: row.initialSubscriptionAmount ?? null,
+    paidUpShareAmount: row.paidUpShareAmount ?? null,
+    religion: row.religion ?? null,
+    resolvedEmail: meta.resolvedEmail,
+    dobPlaceholder: meta.dobPlaceholder,
+    importedAt: new Date().toISOString(),
+  };
+  const sheet = row.sheet && typeof row.sheet === "object" ? { ...(row.sheet as object) } : {};
+  const merged = { ...sheet, ...flat };
+  for (const k of Object.keys(merged)) {
+    const v = merged[k as keyof typeof merged];
+    if (v === undefined || v === null || v === "") {
+      delete merged[k as keyof typeof merged];
+    }
+  }
+  return merged as Prisma.InputJsonValue;
 }
 
 type ParticipantWithRelations = Participant & {
@@ -329,12 +423,24 @@ export class PmesService {
 
   /**
    * Admin: bulk-create participants positioned at AWAITING_FULL_PROFILE (PMES passed, LOI/fees/board satisfied).
+   * Accepts full B2C registry columns (names split, address, TIN, amounts, religion, `sheet` passthrough) plus
+   * optional email/phone/dob — missing email is synthesized from TIN or a stable placeholder; missing dob uses
+   * a placeholder until staff updates the row for reclaim.
    */
   async importLegacyPioneers(rows: ImportLegacyPioneerRowDto[]) {
     const created: string[] = [];
     const skipped: { email: string; reason: string }[] = [];
     for (const row of rows) {
-      const email = normalizeEmail(row.email);
+      const fullName = composeLegacyFullName(row);
+      if (!fullName || fullName.length < 2) {
+        skipped.push({ email: row.email ?? "(no email)", reason: "fullName_or_name_parts_required" });
+        continue;
+      }
+
+      const genderRaw = resolveLegacyGender(row);
+      const gender = (genderRaw && genderRaw.length > 0 ? genderRaw : "Unknown").slice(0, 80);
+
+      const email = synthesizeLegacyImportEmail(row);
       const existing = await this.prisma.participant.findUnique({ where: { email } });
       if (existing) {
         skipped.push({
@@ -343,15 +449,37 @@ export class PmesService {
         });
         continue;
       }
+
+      const dobRaw = row.dob?.trim();
+      const dobPlaceholder = !dobRaw || dobRaw.length < 4;
+      const dob = dobPlaceholder ? "1900-01-01" : dobRaw.slice(0, 64);
+
+      const phone = row.phone?.trim() && row.phone.trim().length >= 5 ? row.phone.trim().slice(0, 80) : "+639000000000";
+
+      const mailing = buildLegacyMailingAddress(row);
+      const tinDigits = digitsOnly(row.tinNo);
+      const civil = row.civilStatus?.trim().slice(0, 80) ?? null;
+      const memberId = tinDigits.length > 0 ? tinDigits.slice(0, 80) : null;
+
+      const snapshot = buildRegistryImportSnapshot(row, { resolvedEmail: email, dobPlaceholder });
+
+      const loiAddress =
+        mailing?.trim() ||
+        "(Imported — confirm or update in your membership form)";
+
       try {
         await this.prisma.participant.create({
           data: {
             email,
-            fullName: row.fullName.trim(),
-            phone: row.phone.trim(),
-            dob: row.dob.trim(),
-            gender: row.gender.trim(),
+            fullName: fullName.slice(0, 500),
+            phone,
+            dob,
+            gender,
+            civilStatus: civil,
+            memberIdNo: memberId,
+            mailingAddress: mailing,
             legacyPioneerImport: true,
+            registryImportSnapshot: snapshot,
             initialFeesPaidAt: new Date(),
             boardApprovedAt: new Date(),
             pmesRecords: {
@@ -362,7 +490,7 @@ export class PmesService {
             },
             loiSubmission: {
               create: {
-                address: "(Imported — confirm or update in your membership form)",
+                address: loiAddress.slice(0, 2000),
                 occupation: "Legacy pioneer",
                 employer: "—",
                 initialCapital: 0,
@@ -443,6 +571,7 @@ export class PmesService {
     return {
       registry: this.buildRegistryRow(p),
       lifecycle: this.toLifecyclePayload(p),
+      registryImportSnapshot: p.registryImportSnapshot ?? null,
       loiSubmission: p.loiSubmission,
       memberProfileSnapshot: snapshot,
       fullProfileMeta: envelope

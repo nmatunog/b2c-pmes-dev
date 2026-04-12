@@ -53,6 +53,8 @@ model Participant {
   memberIdNo            String?
   /** Preloaded roster row (admin import): member reclaims Firebase account + completes digital profile */
   legacyPioneerImport   Boolean   @default(false)
+  /** Full legacy sheet row (B2C registry columns + extras) for audit and reclaim support */
+  registryImportSnapshot Json?
   pmesRecords   PmesRecord[]
   loiSubmission LoiSubmission?
 }

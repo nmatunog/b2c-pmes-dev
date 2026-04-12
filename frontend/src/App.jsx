@@ -264,9 +264,26 @@ export default function App() {
   const [pioneerReclaimLoading, setPioneerReclaimLoading] = useState(false);
   const [pioneerReclaimError, setPioneerReclaimError] = useState(null);
   const [pioneerReclaimEligible, setPioneerReclaimEligible] = useState(/** @type {boolean | null} */ (null));
-  const [legacyImportJson, setLegacyImportJson] = useState(
-    '[\n  { "email": "member@example.com", "fullName": "Juan Dela Cruz", "phone": "+639171234567", "dob": "1985-06-15", "gender": "Male" }\n]',
-  );
+  const [legacyImportJson, setLegacyImportJson] = useState(`[
+  {
+    "lastName": "Academia",
+    "firstName": "Mary Kate",
+    "middleName": "Momongan",
+    "sexGender": "Female",
+    "registryTimestamp": "1/25/25 12:33",
+    "civilStatus": "Married",
+    "street": "Saint Matthew Street",
+    "barangay": "Tabok",
+    "cityMunicipality": "Mandaue",
+    "province": "Cebu",
+    "tinNo": "207863868",
+    "initialSubscriptionAmount": "4,000.00",
+    "paidUpShareAmount": "1,000.00",
+    "email": "member@example.com",
+    "phone": "+639171234567",
+    "dob": "1985-06-15"
+  }
+]`);
   const [legacyImportMsg, setLegacyImportMsg] = useState(null);
   const [legacyImportLoading, setLegacyImportLoading] = useState(false);
   const [adminCreds, setAdminCreds] = useState({ email: "", password: "" });
@@ -2944,11 +2961,13 @@ export default function App() {
             <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Legacy pioneer import</h2>
             <p className="mt-1 text-sm font-medium text-slate-600">
               Preload roster members so they can use <strong>Pioneer roster — link your account</strong> on the home menu. Paste a
-              JSON array of objects with <code className="rounded bg-slate-200 px-1">email</code>,{" "}
-              <code className="rounded bg-slate-200 px-1">fullName</code>, <code className="rounded bg-slate-200 px-1">phone</code>,{" "}
-              <code className="rounded bg-slate-200 px-1">dob</code> (match reclaim form, e.g. YYYY-MM-DD),{" "}
-              <code className="rounded bg-slate-200 px-1">gender</code>. Rows are created at{" "}
-              <strong>AWAITING_FULL_PROFILE</strong> (PMES passed, fees &amp; board marked for digital onboarding).
+              JSON array: you can send the full B2C registry shape (<code className="rounded bg-slate-200 px-1">lastName</code>,{" "}
+              <code className="rounded bg-slate-200 px-1">firstName</code>, <code className="rounded bg-slate-200 px-1">middleName</code>,{" "}
+              <code className="rounded bg-slate-200 px-1">civilStatus</code>, address fields, <code className="rounded bg-slate-200 px-1">tinNo</code>, share amounts,{" "}
+              <code className="rounded bg-slate-200 px-1">religion</code>, optional <code className="rounded bg-slate-200 px-1">sheet</code> for extra columns).{" "}
+              <code className="rounded bg-slate-200 px-1">email</code>, <code className="rounded bg-slate-200 px-1">phone</code>, and{" "}
+              <code className="rounded bg-slate-200 px-1">dob</code> are optional; missing email is synthesized from TIN when possible. Rows are stored with a full snapshot and created at{" "}
+              <strong>AWAITING_FULL_PROFILE</strong>. Export Sheets as TSV and run <code className="rounded bg-slate-200 px-1">node scripts/legacy-import-tsv-to-json.mjs</code> to build JSON.
             </p>
             <textarea
               className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-4 font-mono text-xs leading-relaxed text-slate-800 shadow-inner"
