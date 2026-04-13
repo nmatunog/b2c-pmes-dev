@@ -2089,11 +2089,10 @@ export default function App() {
             }
             void goJoinUnified();
           }}
-          onLogin={() => {
-            pendingPostAuthUnifiedJoinRef.current = false;
-            setMemberAuthMode("login");
-            setAppState("member_auth");
+          onInlineAuthSuccess={() => {
+            pendingPostAuthUnifiedJoinRef.current = true;
           }}
+          onOpenFullMemberAuth={beginJoinAsGuest}
           onLogout={handleLogout}
           onContinuePmes={user && resumePmesSuggested ? continuePmesFromLanding : undefined}
           onStartPmes={() => {

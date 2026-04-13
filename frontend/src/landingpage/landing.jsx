@@ -4,6 +4,7 @@ import { MemberSpotlight } from "../components/MemberSpotlight.jsx";
 import { COOPERATIVE_NAME, COOPERATIVE_REGION, PUBLIC_MEMBER_COUNT } from "../constants/cooperativeBrand.js";
 import { PRIVACY_NOTICE_HEADING, PRIVACY_NOTICE_PARAGRAPHS } from "../constants/privacyAgreement.js";
 import { EarningsSimulator } from "./EarningsSimulator.jsx";
+import { MarketingAuthModal } from "./MarketingAuthModal.jsx";
 import { BylawsModal } from "./BylawsModal.jsx";
 import { LandingFaqAssistant } from "./LandingFaqAssistant.jsx";
 import { pickRandomActivityMessage } from "./cebuActivityMock.js";
@@ -52,7 +53,6 @@ export default function LandingPage({
   /** When true, hide PMES entry points — user has moved past PMES in the pipeline. */
   hidePmesEntry = false,
   onJoinUs,
-  onLogin,
   onLogout,
   onContinuePmes,
   onStartPmes,
@@ -63,11 +63,17 @@ export default function LandingPage({
   /** Signed-in: navigate to full member portal (dashboard); not the profile intake form. */
   onMemberPortal,
   onMemberProfile,
+  /** After inline landing sign-up, parent sets join intent (e.g. continue to PMES path). */
+  onInlineAuthSuccess,
+  /** Opens full-screen member auth (callsign, extended registration). */
+  onOpenFullMemberAuth,
 }) {
   const ACTUAL_MEMBER_COUNT = PUBLIC_MEMBER_COUNT;
   const INITIAL_INVESTMENT = 1500;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  /** `login` | `signup` when marketing modal is open */
+  const [marketingAuthView, setMarketingAuthView] = useState(null);
   const [language, setLanguage] = useState("en");
   const [memberPortalOpen, setMemberPortalOpen] = useState(false);
   const [orientationActive, setOrientationActive] = useState(false);
@@ -84,6 +90,29 @@ export default function LandingPage({
   /** Full mock line e.g. "New signup from IT Park" — Cebu-wide random (see cebuActivityMock.js). */
   const [activityLine, setActivityLine] = useState(() => pickRandomActivityMessage());
   const [formattedYesterday, setFormattedYesterday] = useState("");
+
+  const openMarketingAuth = (view) => {
+    setMemberPortalOpen(false);
+    setIsMenuOpen(false);
+    setMarketingAuthView(view);
+  };
+
+  const closeMarketingAuth = () => setMarketingAuthView(null);
+
+  /** Primary “Join” / Create account — inline modal for guests; unified join when already signed in. */
+  const joinCta = () => {
+    if (authUser) {
+      onJoinUs?.();
+      return;
+    }
+    openMarketingAuth("signup");
+  };
+
+  /** “Sign in” on the landing — inline modal; full screen reserved for callsign / extended form. */
+  const loginCta = () => {
+    if (authUser) return;
+    openMarketingAuth("login");
+  };
 
   useEffect(() => {
     const yesterday = new Date();
@@ -220,6 +249,12 @@ export default function LandingPage({
   }, []);
 
   useEffect(() => {
+    if (authUser && marketingAuthView) {
+      setMarketingAuthView(null);
+    }
+  }, [authUser, marketingAuthView]);
+
+  useEffect(() => {
     if (!pathGateMessage) return undefined;
     const t = window.setTimeout(() => setPathGateMessage(null), 10000);
     return () => window.clearTimeout(t);
@@ -244,7 +279,7 @@ export default function LandingPage({
       setPathGateMessage("Configure Firebase in frontend/.env to use member services.");
       return;
     }
-    onJoinUs?.();
+    joinCta();
   };
 
   /** Signed-in: app member portal. Guests: open modal (PMES entry, pioneer reclaim, certificate) — do not skip straight to login. */
@@ -387,7 +422,7 @@ export default function LandingPage({
                   onClick={() => {
                     setMemberPortalOpen(false);
                     setIsMenuOpen(false);
-                    onLogin?.();
+                    openMarketingAuth("login");
                   }}
                   className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-semibold text-white shadow-md shadow-blue-600/15 transition-all hover:bg-blue-700"
                 >
@@ -404,7 +439,7 @@ export default function LandingPage({
                   onClick={() => {
                     setMemberPortalOpen(false);
                     setIsMenuOpen(false);
-                    onJoinUs?.();
+                    openMarketingAuth("signup");
                   }}
                   className="text-center text-sm font-bold text-blue-600 underline-offset-2 hover:underline"
                 >
@@ -640,7 +675,7 @@ export default function LandingPage({
                 onClick={() => {
                   setOrientationActive(false);
                   setOrientationStep(0);
-                  onJoinUs?.();
+                  openMarketingAuth("signup");
                 }}
                 className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:bg-blue-700 active:scale-[0.99]"
               >
@@ -652,7 +687,7 @@ export default function LandingPage({
                 onClick={() => {
                   setOrientationActive(false);
                   setOrientationStep(0);
-                  onLogin?.();
+                  openMarketingAuth("login");
                 }}
                 className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-stone-300 bg-white px-6 py-3.5 text-base font-semibold text-stone-800 transition-all hover:border-blue-400 hover:text-blue-800"
               >
@@ -693,6 +728,17 @@ export default function LandingPage({
         Skip to main content
       </a>
       <MemberPortalModal />
+      <MarketingAuthModal
+        open={Boolean(marketingAuthView)}
+        view={marketingAuthView}
+        onClose={closeMarketingAuth}
+        onSwitchView={(v) => setMarketingAuthView(v)}
+        onOpenPrivacy={() => {
+          setPrivacyActive(true);
+        }}
+        onSignupSuccess={onInlineAuthSuccess}
+        onOpenFullMemberAuth={onOpenFullMemberAuth}
+      />
       <OrientationExperience />
       <PrivacyModal />
       <BylawsModal active={bylawsActive} onClose={() => setBylawsActive(false)} pdfUrl={BYLAWS_PDF_URL} />
@@ -772,7 +818,7 @@ export default function LandingPage({
               </button>
             ) : null}
             {!authUser && (
-              <button type="button" onClick={() => onLogin?.()} className="font-medium text-stone-700 transition-colors hover:text-blue-700">
+              <button type="button" onClick={() => loginCta()} className="font-medium text-stone-700 transition-colors hover:text-blue-700">
                 Sign in
               </button>
             )}
@@ -784,7 +830,7 @@ export default function LandingPage({
             <button
               type="button"
               onClick={() => {
-                onJoinUs?.();
+                joinCta();
                 setIsMenuOpen(false);
               }}
               className="rounded-full bg-gradient-to-b from-blue-600 to-blue-700 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-blue-600"
@@ -839,7 +885,7 @@ export default function LandingPage({
               {!authUser && (
                 <button
                   type="button"
-                  onClick={() => onLogin?.()}
+                  onClick={() => loginCta()}
                   className="min-h-[44px] rounded-xl border border-stone-200 py-2.5 text-stone-700"
                 >
                   Sign in
@@ -853,7 +899,7 @@ export default function LandingPage({
               <button
                 type="button"
                 onClick={() => {
-                  onJoinUs?.();
+                  joinCta();
                   setIsMenuOpen(false);
                 }}
                 className="min-h-[48px] rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 py-3 font-bold text-white shadow-lg shadow-blue-600/25"
@@ -961,14 +1007,14 @@ export default function LandingPage({
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
                   <button
                     type="button"
-                    onClick={() => onJoinUs?.()}
+                    onClick={() => joinCta()}
                     className="min-h-[44px] rounded-full bg-gradient-to-b from-stone-800 to-stone-900 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-stone-900/20 transition hover:from-stone-700 hover:to-stone-800"
                   >
                     Create free account
                   </button>
                   <button
                     type="button"
-                    onClick={() => onLogin?.()}
+                    onClick={() => loginCta()}
                     className="min-h-[44px] rounded-full border border-white/60 bg-white/50 px-6 py-2.5 text-sm font-bold text-stone-800 shadow-sm backdrop-blur-sm transition hover:bg-white/70"
                   >
                     I already have one
@@ -1042,9 +1088,9 @@ export default function LandingPage({
         </div>
       </section>
 
-      <EarningsSimulator onJoinClick={() => onJoinUs?.()} />
+      <EarningsSimulator onJoinClick={() => joinCta()} />
 
-      <MemberSpotlight onJoinClick={() => onJoinUs?.()} memberCount={totalMembers} />
+      <MemberSpotlight onJoinClick={() => joinCta()} memberCount={totalMembers} />
 
       <section id="your-path" className="mesh-path relative py-16 text-white sm:py-24 lg:py-28" aria-labelledby="path-heading">
         <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-stretch gap-12 px-4 sm:px-6 lg:flex-row lg:items-start lg:gap-16 lg:px-8">
@@ -1114,7 +1160,7 @@ export default function LandingPage({
                   <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
                     <button
                       type="button"
-                      onClick={() => onJoinUs?.()}
+                      onClick={() => joinCta()}
                       className="group flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-stone-800 to-stone-950 py-3.5 text-base font-bold text-white shadow-xl shadow-stone-900/35 transition-all hover:from-stone-700 hover:to-stone-900 sm:py-4"
                     >
                       <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
@@ -1122,7 +1168,7 @@ export default function LandingPage({
                     </button>
                     <button
                       type="button"
-                      onClick={() => onLogin?.()}
+                      onClick={() => loginCta()}
                       className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/85 py-3.5 text-base font-bold text-stone-800 shadow-md backdrop-blur-sm transition-all hover:bg-white sm:py-4"
                     >
                       <LogIn className="h-5 w-5 shrink-0" aria-hidden />
