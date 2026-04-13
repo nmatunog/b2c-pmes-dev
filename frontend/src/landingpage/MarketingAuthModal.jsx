@@ -3,6 +3,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { Loader2, LogIn, UserPlus, X } from "lucide-react";
 import { auth, isFirebaseConfigured } from "../services/firebase.js";
 import { signupWithEmailPasswordAndNeonSync } from "../services/memberSignupNeon.js";
+import { resolveFirebaseLoginEmail } from "../services/resolveFirebaseLoginEmail.js";
 
 function firebaseAuthMessage(code) {
   switch (code) {
@@ -24,9 +25,9 @@ function firebaseAuthMessage(code) {
 }
 
 /**
- * Lightweight email/password sign-in or sign-up on the marketing landing (stays on the page).
+ * Email/password sign-in or sign-up on the marketing landing (stays on the page).
+ * Sign-in accepts email, callsign, member ID, or alternate label (same resolution as `App.jsx`).
  * Sign-up uses the same Neon handshake as `App.jsx` via {@link signupWithEmailPasswordAndNeonSync}.
- * Callsign / member-ID login remains on the full member auth screen (`onOpenFullMemberAuth`).
  */
 export function MarketingAuthModal({
   open,
@@ -89,12 +90,23 @@ export function MarketingAuthModal({
         onSignupSuccess?.();
         onClose();
       } else {
-        await signInWithEmailAndPassword(auth, email.trim(), password);
+        const resolved = await resolveFirebaseLoginEmail(email.trim(), "signin");
+        if (!resolved.ok) {
+          setError(resolved.message);
+          return;
+        }
+        await signInWithEmailAndPassword(auth, resolved.email, password);
         onClose();
       }
     } catch (err) {
       const code = err && typeof err === "object" && "code" in err ? err.code : undefined;
-      setError(firebaseAuthMessage(typeof code === "string" ? code : undefined));
+      if (typeof code === "string" && code.startsWith("auth/")) {
+        setError(firebaseAuthMessage(code));
+      } else if (err instanceof Error && err.message) {
+        setError(err.message);
+      } else {
+        setError(firebaseAuthMessage(undefined));
+      }
     } finally {
       setLoading(false);
       setSyncHint(null);
@@ -134,7 +146,7 @@ export function MarketingAuthModal({
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
             {isSignup
               ? "Quick registration — you’ll continue to consent and PMES in the app."
-              : "Use the email and password for your B2C account."}
+              : "Use your email, callsign, member ID, or alternate label — same as the full member sign-in."}
           </p>
         </div>
 
@@ -168,16 +180,17 @@ export function MarketingAuthModal({
           ) : null}
           <div>
             <label htmlFor={`${formId}-email`} className="mb-1.5 block text-xs font-semibold text-stone-600">
-              Email
+              {isSignup ? "Email" : "Email, callsign, or member ID"}
             </label>
             <input
               id={`${formId}-email`}
               name="email"
-              type="email"
-              autoComplete="email"
+              type={isSignup ? "email" : "text"}
+              autoComplete={isSignup ? "email" : "username"}
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder={isSignup ? "" : "e.g. you@domain.com or your callsign"}
               className="w-full rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-stone-900 outline-none transition-shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
@@ -253,9 +266,9 @@ export function MarketingAuthModal({
                   onOpenFullMemberAuth(isSignup ? "signup" : "login");
                 }}
               >
-                Use full sign-up / sign-in
+                Open full member registration
               </button>
-              <span className="block mt-1">(callsign, member ID, or extended registration form)</span>
+              <span className="block mt-1">(extended form, pioneer flow, and portal options)</span>
             </p>
           ) : null}
         </div>

@@ -44,6 +44,7 @@ import { LOIForm } from "./components/LOIForm";
 import { pcmToWav, preloadAudioUrl } from "./lib/audio";
 import { auth, db, appId, isFirebaseConfigured } from "./services/firebase";
 import { PmesService } from "./services/pmesService";
+import { resolveFirebaseLoginEmail } from "./services/resolveFirebaseLoginEmail.js";
 import { clearPmesProgress, loadPmesProgress, savePmesProgress } from "./services/pmesProgressService";
 import { syncMemberToPostgres } from "./services/memberSyncService.js";
 import { requestTts } from "./services/ttsApi";
@@ -1187,31 +1188,14 @@ export default function App() {
       return;
     }
     const raw = logIn.email.trim();
-    if (!raw) {
-      setError("Enter your email, callsign, or alternate label.");
-      return;
-    }
     setLoading(true);
     try {
-      let firebaseEmail = raw;
-      if (!raw.includes("@")) {
-        const api = (import.meta.env.VITE_API_BASE_URL || "").trim();
-        if (!api) {
-          setError("To sign in with a callsign or label, set VITE_API_BASE_URL to your API.");
-          return;
-        }
-        const resolved = await PmesService.resolveLoginEmail(raw);
-        if (!resolved?.email) {
-          setError(
-            "No account found for that login. Try your email, callsign, member ID, or alternate label (e.g. cruz-2).",
-          );
-          return;
-        }
-        firebaseEmail = resolved.email;
-      } else {
-        firebaseEmail = raw.toLowerCase();
+      const resolved = await resolveFirebaseLoginEmail(raw, "signin");
+      if (!resolved.ok) {
+        setError(resolved.message);
+        return;
       }
-      await signInWithEmailAndPassword(auth, firebaseEmail, logIn.password);
+      await signInWithEmailAndPassword(auth, resolved.email, logIn.password);
     } catch (err) {
       const code = err && typeof err === "object" && "code" in err ? err.code : undefined;
       if (typeof code === "string" && code.startsWith("auth/")) {
@@ -1228,29 +1212,14 @@ export default function App() {
 
   const handleForgotPassword = async () => {
     const raw = logIn.email.trim();
-    if (!raw) {
-      setError("Enter your email, callsign, or alternate label above, then tap Forgot password again.");
-      return;
-    }
     setError(null);
     try {
-      let firebaseEmail = raw;
-      if (!raw.includes("@")) {
-        const api = (import.meta.env.VITE_API_BASE_URL || "").trim();
-        if (!api) {
-          setError("Configure VITE_API_BASE_URL to reset password using a callsign or label.");
-          return;
-        }
-        const resolved = await PmesService.resolveLoginEmail(raw);
-        if (!resolved?.email) {
-          setError("No account found for that login.");
-          return;
-        }
-        firebaseEmail = resolved.email;
-      } else {
-        firebaseEmail = raw.toLowerCase();
+      const resolved = await resolveFirebaseLoginEmail(raw, "forgot");
+      if (!resolved.ok) {
+        setError(resolved.message);
+        return;
       }
-      await sendPasswordResetEmail(auth, firebaseEmail);
+      await sendPasswordResetEmail(auth, resolved.email);
       setError(null);
       alert("Password reset email sent. Check your inbox.");
     } catch (err) {
