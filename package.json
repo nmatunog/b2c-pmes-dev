@@ -1,13 +1,10 @@
 {
   "name": "b2c-pmes",
   "private": true,
-  "description": "Next.js App Router at repo root (app/, next.config.mjs) for Edge API routes and Cloudflare Pages. Nest backend in backend/; Vite member UI in frontend/.",
+  "description": "Workspace helper scripts (backend and frontend live in subfolders).",
   "scripts": {
-    "build": "next build",
-    "start": "next start -p 3040",
     "restart": "bash scripts/restart-dev.sh",
     "dev": "bash scripts/restart-dev.sh",
-    "dev:next": "next dev -p 3040",
     "next:dev": "next dev -p 3040",
     "next:build": "next build",
     "next:start": "next start -p 3040"
