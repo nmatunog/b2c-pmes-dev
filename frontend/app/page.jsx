@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
 function getFirebaseApp() {
   const config = {
@@ -20,6 +20,7 @@ function getFirebaseApp() {
 }
 
 export default function Home() {
+  const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -64,10 +65,32 @@ export default function Home() {
     }
     try {
       const auth = getAuth(app);
-      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await handleAuth(cred);
+      if (mode === "signup") {
+        const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        await handleAuth(cred);
+      } else {
+        let loginEmail = email.trim();
+        if (!loginEmail.includes("@")) {
+          const resolved = await fetch(
+            `/api/pmes/member/resolve-login-email?login=${encodeURIComponent(loginEmail)}`,
+          );
+          if (resolved.status === 404) {
+            throw new Error("No account found for that login.");
+          }
+          if (!resolved.ok) {
+            throw new Error(`Login lookup failed (${resolved.status})`);
+          }
+          const json = await resolved.json();
+          if (!json?.email) {
+            throw new Error("No email mapped for this login.");
+          }
+          loginEmail = String(json.email).trim();
+        }
+        await signInWithEmailAndPassword(auth, loginEmail.toLowerCase(), password);
+        setStatus("Signed in successfully.");
+      }
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Sign-up or sync failed");
+      setStatus(err instanceof Error ? err.message : "Sign-in / sign-up failed");
     }
   }
 
@@ -81,32 +104,42 @@ export default function Home() {
       </p>
 
       <section style={{ marginTop: "1.5rem" }}>
-        <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Demo sign-up → sync</h2>
+        <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Demo auth</h2>
         {!firebaseReady ? (
           <p style={{ color: "#b45309" }}>
             Configure <code>NEXT_PUBLIC_FIREBASE_*</code> in <code>.env.local</code> (same values as{" "}
             <code>frontend/.env</code> but with the <code>NEXT_PUBLIC_</code> prefix).
           </p>
         ) : null}
+        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+          <button type="button" onClick={() => setMode("signin")} disabled={mode === "signin"}>
+            Sign in
+          </button>
+          <button type="button" onClick={() => setMode("signup")} disabled={mode === "signup"}>
+            Sign up
+          </button>
+        </div>
         <form onSubmit={onSubmit} style={{ display: "grid", gap: "0.75rem", marginTop: "0.75rem", maxWidth: "22rem" }}>
+          {mode === "signup" ? (
+            <label>
+              Full name
+              <input
+                style={{ display: "block", width: "100%", marginTop: "0.25rem" }}
+                value={fullName}
+                onChange={(ev) => setFullName(ev.target.value)}
+                autoComplete="name"
+                required
+              />
+            </label>
+          ) : null}
           <label>
-            Full name
+            {mode === "signup" ? "Email" : "Email, callsign, or member ID"}
             <input
-              style={{ display: "block", width: "100%", marginTop: "0.25rem" }}
-              value={fullName}
-              onChange={(ev) => setFullName(ev.target.value)}
-              autoComplete="name"
-              required
-            />
-          </label>
-          <label>
-            Email
-            <input
-              type="email"
+              type={mode === "signup" ? "email" : "text"}
               style={{ display: "block", width: "100%", marginTop: "0.25rem" }}
               value={email}
               onChange={(ev) => setEmail(ev.target.value)}
-              autoComplete="email"
+              autoComplete={mode === "signup" ? "email" : "username"}
               required
             />
           </label>
@@ -117,12 +150,12 @@ export default function Home() {
               style={{ display: "block", width: "100%", marginTop: "0.25rem" }}
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
-              autoComplete="new-password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               required
               minLength={6}
             />
           </label>
-          <button type="submit">Sign up &amp; sync member</button>
+          <button type="submit">{mode === "signup" ? "Sign up & sync member" : "Sign in"}</button>
         </form>
         {status ? (
           <p style={{ marginTop: "1rem", whiteSpace: "pre-wrap" }} role="status">
