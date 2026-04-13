@@ -30,5 +30,6 @@ for k in "${VARS[@]}"; do
   ARGS+=(--var "$k:$v")
 done
 
+npm run preflight:api
 npm run cf:build
 npx wrangler deploy --config wrangler.jsonc --keep-vars "${ARGS[@]}"
