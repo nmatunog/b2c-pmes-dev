@@ -12,8 +12,16 @@ export DEV_REMOTE_URL='https://github.com/ORG/B2C-PMES-dev.git'
 
 ## One-time: create the dev repo on GitHub
 
-1. GitHub → **New repository** → name e.g. `B2C-PMES-dev`.
-2. **Do not** add README, `.gitignore`, or license (keep it empty).
+1. Open **[github.com/new](https://github.com/new)** while logged into the **same account** that owns `B2C-PMES` (e.g. `nmatunog`).
+2. Repository name: e.g. **`B2C-PMES-dev`**.
+3. **Do not** add README, `.gitignore`, or license (keep it empty), then **Create repository**.
+
+If you see **`Repository not found`** on push, the repo is missing, the name/owner in `DEV_REMOTE_URL` is wrong, or you are not logged into GitHub with a user that can push there. For a failed half-run, remove the bad remote and retry after creating the repo:
+
+```bash
+git remote remove dev
+bash scripts/github/bootstrap-dev-remotes.sh
+```
 
 ## One-time: dev remote + switch `origin` to dev
 

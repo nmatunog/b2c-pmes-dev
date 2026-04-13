@@ -19,6 +19,24 @@ if [[ -z "$DEV_URL" ]]; then
   exit 1
 fi
 
+# Fail fast with a clear message (same as git push when repo was never created on GitHub).
+if ! git ls-remote "$DEV_URL" &>/dev/null; then
+  echo "" >&2
+  echo "Cannot access: $DEV_URL" >&2
+  echo "GitHub returns this when the repo does not exist yet, the URL is wrong, or you have no access." >&2
+  echo "" >&2
+  echo "Do this first:" >&2
+  echo "  1. Open https://github.com/new (logged into the same account that owns your production repo)." >&2
+  echo "  2. Repository name: e.g. B2C-PMES-dev — leave it EMPTY (no README, no .gitignore, no license)." >&2
+  echo "  3. Create repository, then run this script again." >&2
+  echo "" >&2
+  echo "If the repo lives under another owner or name, set the URL explicitly, e.g.:" >&2
+  echo "  git remote remove $REMOTE_NAME 2>/dev/null || true" >&2
+  echo "  DEV_REMOTE_URL='https://github.com/OWNER/REPO.git' bash scripts/github/push-initial-to-dev.sh" >&2
+  echo "" >&2
+  exit 1
+fi
+
 if git remote get-url "$REMOTE_NAME" &>/dev/null; then
   echo "Remote '$REMOTE_NAME' already exists ($(git remote get-url "$REMOTE_NAME"))."
 else
