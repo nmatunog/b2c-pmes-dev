@@ -26,10 +26,6 @@ export default function Home() {
   const [fullName, setFullName] = useState("");
   const [status, setStatus] = useState("");
 
-  const firebaseReady = Boolean(
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  );
-
   /**
    * Runs after Firebase Email/Password sign-up succeeds: persists uid/email/fullName to Neon via Edge API.
    */
@@ -105,12 +101,6 @@ export default function Home() {
 
       <section style={{ marginTop: "1.5rem" }}>
         <h2 style={{ fontSize: "1rem", fontWeight: 700 }}>Demo auth</h2>
-        {!firebaseReady ? (
-          <p style={{ color: "#b45309" }}>
-            Configure <code>NEXT_PUBLIC_FIREBASE_*</code> in <code>.env.local</code> (same values as{" "}
-            <code>frontend/.env</code> but with the <code>NEXT_PUBLIC_</code> prefix).
-          </p>
-        ) : null}
         <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
           <button type="button" onClick={() => setMode("signin")} disabled={mode === "signin"}>
             Sign in
