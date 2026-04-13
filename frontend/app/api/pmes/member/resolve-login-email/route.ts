@@ -12,9 +12,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: "login query parameter is required", statusCode: 400 }, { status: 400 });
   }
 
-  const sql = getSql();
-
   try {
+    const sql = getSql();
     if (raw.includes("@")) {
       const email = normalizeEmail(raw);
       const rows = await sql`
@@ -70,7 +69,9 @@ export async function GET(request: Request) {
     return notFound();
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Lookup failed";
-    return NextResponse.json({ message: msg, statusCode: 500 }, { status: 500 });
+    const isDbConfig = msg.includes("DATABASE_URL");
+    const status = isDbConfig ? 503 : 500;
+    return NextResponse.json({ message: msg, statusCode: status }, { status });
   }
 }
 

@@ -89,7 +89,14 @@ export default function Home() {
             throw new Error("No account found for that login.");
           }
           if (!resolved.ok) {
-            throw new Error(`Login lookup failed (${resolved.status})`);
+            let detail = `Login lookup failed (${resolved.status})`;
+            try {
+              const errBody = await resolved.json();
+              if (errBody?.message) detail = errBody.message;
+            } catch {
+              /* non-JSON */
+            }
+            throw new Error(detail);
           }
           const json = await resolved.json();
           if (!json?.email) {
