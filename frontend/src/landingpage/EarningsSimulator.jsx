@@ -1,14 +1,16 @@
 import { useId, useState } from "react";
 import { Activity, ArrowUpRight, Calculator, History } from "lucide-react";
+import {
+  EST_DIVIDEND_RATE,
+  EST_REFUND_RATE,
+  computeEarningsProjection,
+} from "../lib/earningsProjection.js";
 
 /**
- * Illustrative member-value calculator: same logic as the legacy earnings dashboard
+ * Illustrative member-value calculator: same logic as `earningsimulator/earningsdashboard.jsx`
  * (weekly spend → patronage estimate; share capital + contributions → dividend estimate).
  * Not a promise of returns — blends with landing dark sections (mesh-path family).
  */
-
-const EST_REFUND_RATE = 0.05;
-const EST_DIVIDEND_RATE = 0.05;
 
 export function EarningsSimulator({ onJoinClick }) {
   const idPrefix = useId();
@@ -16,11 +18,11 @@ export function EarningsSimulator({ onJoinClick }) {
   const [shareCapital, setShareCapital] = useState(1000);
   const [monthlyContribution, setMonthlyContribution] = useState(200);
 
-  const annualRefund = weeklySpend * 4 * 12 * EST_REFUND_RATE;
-  const averageAnnualCapital = shareCapital + monthlyContribution * 6;
-  const annualDividend = averageAnnualCapital * EST_DIVIDEND_RATE;
-  const totalAnnualEarnings = annualRefund + annualDividend;
-  const totalEquityYearOne = shareCapital + monthlyContribution * 12;
+  const { annualRefund, annualDividend, totalAnnualEarnings, totalEquityYearOne } = computeEarningsProjection({
+    weeklySpend,
+    shareCapital,
+    monthlyContribution,
+  });
 
   return (
     <section
