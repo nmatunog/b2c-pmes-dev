@@ -11,7 +11,6 @@ const N = FAQ_CHATBOT_NAME;
 export const LANDING_FAQ_ASSISTANT = {
   en: {
     title: N,
-    subtitle: "FAQ · Scripted answers, optional AI follow-up",
     openLabel: `Open ${N} FAQ`,
     closeLabel: `Close ${N}`,
     placeholder: "Ask about fees, shares, joining…",
@@ -28,7 +27,6 @@ export const LANDING_FAQ_ASSISTANT = {
   },
   ceb: {
     title: N,
-    subtitle: "FAQ · Scripted + optional AI",
     openLabel: `Ablihi ang FAQ ni ${N}`,
     closeLabel: `Sirhi si ${N}`,
     placeholder: "Pangutana bahin sa bayad, shares, pag-apil…",

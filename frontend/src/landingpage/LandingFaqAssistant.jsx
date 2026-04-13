@@ -148,7 +148,6 @@ export function LandingFaqAssistant({ language = "en", onOpenBylaws }) {
             <h2 id={`${panelId}-title`} className="text-sm font-bold leading-tight">
               {strings.title}
             </h2>
-            <p className="mt-0.5 text-[11px] font-medium leading-snug text-sky-100/95">{strings.subtitle}</p>
           </div>
           <button
             type="button"
