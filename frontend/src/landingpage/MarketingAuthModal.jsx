@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { Loader2, LogIn, UserPlus, X } from "lucide-react";
+import { CheckCircle2, Loader2, LogIn, PlayCircle, UserPlus, X } from "lucide-react";
 import { auth, isFirebaseConfigured } from "../services/firebase.js";
 import { signupWithEmailPasswordAndNeonSync } from "../services/memberSignupNeon.js";
 import { resolveFirebaseLoginEmail } from "../services/resolveFirebaseLoginEmail.js";
@@ -29,6 +29,7 @@ function firebaseAuthMessage(code) {
  * Email/password sign-in or sign-up on the marketing landing (stays on the page).
  * Sign-in accepts email, callsign, member ID, or alternate label (same resolution as `App.jsx`).
  * Sign-up uses the same Neon handshake as `App.jsx` via {@link signupWithEmailPasswordAndNeonSync}.
+ * After sign-up, a dedicated screen offers **Start PMES** so users need not find the nav button.
  */
 export function MarketingAuthModal({
   open,
@@ -36,7 +37,8 @@ export function MarketingAuthModal({
   onClose,
   onSwitchView,
   onOpenPrivacy,
-  onSignupSuccess,
+  /** Called when the user taps **Start PMES** on the post–sign-up screen (e.g. queue activity + `goJoinUnified`). */
+  onAfterSignupStartPmes,
   onOpenFullMemberAuth,
 }) {
   const formId = useId();
@@ -47,14 +49,21 @@ export function MarketingAuthModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [syncHint, setSyncHint] = useState(null);
+  /** Inline sign-up succeeded — show CTA to PMES before closing. */
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setError(null);
       setSyncHint(null);
       setLoading(false);
+      setSignupSuccess(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    setSignupSuccess(false);
+  }, [view]);
 
   useEffect(() => {
     if (open) {
@@ -88,8 +97,7 @@ export function MarketingAuthModal({
           password,
           fullName: fullName.trim(),
         });
-        onSignupSuccess?.();
-        onClose();
+        setSignupSuccess(true);
       } else {
         const resolved = await resolveFirebaseLoginEmail(email.trim(), "signin");
         if (!resolved.ok) {
@@ -139,19 +147,50 @@ export function MarketingAuthModal({
 
         <div className="mb-8 text-center">
           <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl shadow-md ${ctaPrimary}`}>
-            {isSignup ? <UserPlus className="h-7 w-7" aria-hidden /> : <LogIn className="h-7 w-7" aria-hidden />}
+            {signupSuccess ? (
+              <CheckCircle2 className="h-7 w-7 text-white" aria-hidden />
+            ) : isSignup ? (
+              <UserPlus className="h-7 w-7" aria-hidden />
+            ) : (
+              <LogIn className="h-7 w-7" aria-hidden />
+            )}
           </div>
           <h2 id={`${formId}-title`} className="text-xl font-bold tracking-tight text-stone-900 sm:text-2xl">
-            {isSignup ? "Create your account" : "Sign in"}
+            {signupSuccess ? "You’re in" : isSignup ? "Create your account" : "Sign in"}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">
-            {isSignup
-              ? "Quick registration — you’ll continue to consent and PMES in the app."
-              : "Use your email, callsign, member ID, or alternate label — same as the full member sign-in."}
+            {signupSuccess
+              ? "Your account is ready. Start the Pre-Membership Education Seminar (PMES) when you’re ready — privacy notice first, then the module cards."
+              : isSignup
+                ? "Quick registration — then you can jump straight into PMES from the next screen."
+                : "Use your email, callsign, member ID, or alternate label — same as the full member sign-in."}
           </p>
         </div>
 
-        {error ? (
+        {signupSuccess ? (
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => {
+                onAfterSignupStartPmes?.();
+                onClose();
+              }}
+              className={`flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-base font-bold shadow-lg ${ctaPrimary} ${ctaPrimaryFocus}`}
+            >
+              <PlayCircle className="h-6 w-6 shrink-0 opacity-95" aria-hidden />
+              Start PMES
+            </button>
+            <button
+              type="button"
+              onClick={() => onClose()}
+              className="w-full rounded-xl py-2.5 text-sm font-semibold text-stone-600 transition hover:bg-stone-50 hover:text-stone-800"
+            >
+              I’ll explore the site first
+            </button>
+          </div>
+        ) : null}
+
+        {!signupSuccess && error ? (
           <div
             className="mb-4 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-800"
             role="alert"
@@ -160,6 +199,7 @@ export function MarketingAuthModal({
           </div>
         ) : null}
 
+        {!signupSuccess ? (
         <form className="space-y-4" onSubmit={handleSubmit}>
           {isSignup ? (
             <div>
@@ -248,7 +288,9 @@ export function MarketingAuthModal({
             </p>
           ) : null}
         </form>
+        ) : null}
 
+        {!signupSuccess ? (
         <div className="mt-6 space-y-3 border-t border-stone-100 pt-6 text-center text-sm">
           <button
             type="button"
@@ -273,6 +315,7 @@ export function MarketingAuthModal({
             </p>
           ) : null}
         </div>
+        ) : null}
       </div>
     </div>
   );

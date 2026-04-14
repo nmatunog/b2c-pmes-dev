@@ -64,8 +64,8 @@ export default function LandingPage({
   /** Signed-in: navigate to full member portal (dashboard); not the profile intake form. */
   onMemberPortal,
   onMemberProfile,
-  /** After inline landing sign-up, parent sets join intent (e.g. continue to PMES path). */
-  onInlineAuthSuccess,
+  /** After inline sign-up, user taps **Start PMES** — parent runs join path (e.g. live activity + `goJoinUnified`). */
+  onAfterSignupStartPmes,
   /** Opens full-screen member auth (callsign, extended registration). */
   onOpenFullMemberAuth,
 }) {
@@ -737,7 +737,7 @@ export default function LandingPage({
         onOpenPrivacy={() => {
           setPrivacyActive(true);
         }}
-        onSignupSuccess={onInlineAuthSuccess}
+        onAfterSignupStartPmes={onAfterSignupStartPmes}
         onOpenFullMemberAuth={onOpenFullMemberAuth}
       />
       <OrientationExperience />

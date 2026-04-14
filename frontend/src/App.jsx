@@ -2058,8 +2058,9 @@ export default function App() {
             }
             void goJoinUnified();
           }}
-          onInlineAuthSuccess={() => {
-            pendingPostAuthUnifiedJoinRef.current = true;
+          onAfterSignupStartPmes={() => {
+            queueSignupLiveActivityFromDevice();
+            void goJoinUnified();
           }}
           onOpenFullMemberAuth={beginJoinAsGuest}
           onLogout={handleLogout}
