@@ -7,25 +7,12 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
  * `.open-next/assets` unless you copy `dist` into the deploy pipeline. Point `b2ccoop.com` at the Pages
  * project; keep this Worker for `/api/*` (or a `*.workers.dev` host).
  */
-/** CORS for browsers calling the Worker from `b2ccoop.com` / Pages (`VITE_API_BASE_URL` uses `/pmes/…`, not `/api/…`). */
-const corsHeaders = [
-  { key: "Access-Control-Allow-Origin", value: "*" },
-  { key: "Access-Control-Allow-Methods", value: "GET,POST,PATCH,DELETE,OPTIONS" },
-  { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization, x-member-sync-secret" },
-];
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /** Ensures ACAO on responses even if Edge middleware is not merged (OpenNext + Workers). */
-  async headers() {
-    return [
-      { source: "/pmes/:path*", headers: corsHeaders },
-      { source: "/health", headers: corsHeaders },
-      { source: "/auth/sync-member", headers: corsHeaders },
-      { source: "/ai/:path*", headers: corsHeaders },
-      { source: "/api/:path*", headers: corsHeaders },
-    ];
-  },
+  /**
+   * CORS: set only in `middleware.ts` (and `OPTIONS` / helpers on specific routes). Do **not** duplicate
+   * `Access-Control-Allow-Origin` here — Next `headers()` + middleware both apply → `*, *` and browsers reject.
+   */
   /** Same URL path as Nest (`POST /auth/sync-member`) so the Vite client does not need changes. */
   async rewrites() {
     return [
