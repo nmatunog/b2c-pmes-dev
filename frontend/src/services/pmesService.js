@@ -8,8 +8,12 @@ const useRest = () => Boolean(apiBase());
 async function parseApiErrorMessage(response) {
   const text = await response.text();
   if (!text?.trim()) return `Request failed (${response.status})`;
+  const raw = text.trim();
+  if (/^<!doctype html/i.test(raw) || /^<html/i.test(raw) || /<body[\s>]/i.test(raw)) {
+    return "API endpoint misconfigured (received HTML page). Please try again later or contact support.";
+  }
   try {
-    const j = JSON.parse(text);
+    const j = JSON.parse(raw);
     const m = j?.message;
     if (m != null) {
       return Array.isArray(m) ? m.map((x) => String(x)).join("; ") : String(m);
@@ -17,7 +21,7 @@ async function parseApiErrorMessage(response) {
   } catch {
     /* plain text body */
   }
-  return text.trim();
+  return raw;
 }
 
 async function staffLoginRequest(email, password) {
@@ -106,7 +110,7 @@ export const PmesService = {
       const response = await fetch(`${apiBase()}/pmes/certificate?${params}`);
       if (response.status === 404) return null;
       if (!response.ok) {
-        throw new Error((await response.text()) || "Certificate lookup failed");
+        throw new Error(await parseApiErrorMessage(response));
       }
       return response.json();
     }
@@ -262,8 +266,7 @@ export const PmesService = {
     if (!useRest() || !String(email || "").trim()) return null;
     const response = await fetch(`${apiBase()}/pmes/membership-lifecycle?email=${encodeURIComponent(String(email).trim())}`);
     if (!response.ok) {
-      const t = await response.text();
-      throw new Error(t?.trim() || `Membership status failed (${response.status})`);
+      throw new Error(await parseApiErrorMessage(response));
     }
     return response.json();
   },
@@ -307,7 +310,7 @@ export const PmesService = {
       signal,
     });
     if (!response.ok) {
-      throw new Error((await response.text()) || "Full profile submission failed");
+      throw new Error(await parseApiErrorMessage(response));
     }
     return response.json();
   },
@@ -324,7 +327,7 @@ export const PmesService = {
       body: JSON.stringify({ email: String(email || "").trim(), callsign }),
     });
     if (!response.ok) {
-      throw new Error((await response.text()) || "Could not update callsign");
+      throw new Error(await parseApiErrorMessage(response));
     }
     return response.json();
   },

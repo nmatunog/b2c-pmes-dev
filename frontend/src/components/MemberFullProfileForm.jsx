@@ -58,6 +58,24 @@ function getSignaturePrintedName(profile) {
   return sig || ack;
 }
 
+/** Normalize human-readable names: trim ends and collapse repeated spaces. */
+function normalizeNameSpacing(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Preserve in-progress typing (including spaces) in controlled inputs.
+ * Submit-time validation still uses `getSignaturePrintedName()` which trims.
+ * @param {{ acknowledgement: { memberSignatureOverPrintedName?: string }; signature: { memberSignatureOverPrintedName?: string } }} profile
+ */
+function getSignaturePrintedNameInputValue(profile) {
+  const sig = String(profile.signature?.memberSignatureOverPrintedName ?? "");
+  if (sig.length > 0) return sig;
+  return String(profile.acknowledgement?.memberSignatureOverPrintedName ?? "");
+}
+
 /** @param {unknown} err */
 function formatSubmitError(err) {
   if (err && typeof err === "object" && "name" in err && err.name === "AbortError") {
@@ -774,7 +792,7 @@ export function MemberFullProfileForm({
       });
       return;
     }
-    const printed = getSignaturePrintedName(profile);
+    const printed = normalizeNameSpacing(getSignaturePrintedName(profile));
     if (!printed) {
       setMemberSigPrintedNameError("Enter your full name as it should appear as signature over printed name.");
       setFormToast({
@@ -982,7 +1000,7 @@ export function MemberFullProfileForm({
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <Text
             label="Signature over printed name (type your full name)"
-            value={getSignaturePrintedName(profile)}
+            value={getSignaturePrintedNameInputValue(profile)}
             onChange={(v) => {
               setAck({ memberSignatureOverPrintedName: v });
               setSig({ memberSignatureOverPrintedName: v });
@@ -1580,7 +1598,7 @@ export function MemberFullProfileForm({
       <Section title="Member signature">
         <Text
           label="Signature over printed name"
-          value={getSignaturePrintedName(profile)}
+          value={getSignaturePrintedNameInputValue(profile)}
           onChange={(v) => {
             setAck({ memberSignatureOverPrintedName: v });
             setSig({ memberSignatureOverPrintedName: v });
