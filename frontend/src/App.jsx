@@ -3120,54 +3120,58 @@ export default function App() {
     return (
       <>
         {identityRibbon}{portalHomeBar}
-        <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-8">
+        <div className="flex min-h-screen items-center justify-center bg-[#004aad]/5 p-4 sm:p-8 lg:p-12">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <form onSubmit={handleAdminLoginSubmit} className="card-senior w-full max-w-md space-y-8">
-          <div className="text-center">
-            <B2CLogo size="lg" align="center" className="mb-4" />
-            <Briefcase className="mx-auto h-14 w-14 text-[#004aad]" aria-hidden />
-            <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Staff access</p>
-            <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl">Admin sign in</h1>
-            <p className="mt-3 text-base font-medium leading-relaxed text-slate-600">
-              Superuser and admin accounts live in the API database. Create the bootstrap superuser once with{" "}
-              <code className="rounded bg-slate-100 px-1 text-sm">npm run create-superuser</code> in{" "}
-              <code className="rounded bg-slate-100 px-1 text-sm">backend/</code>. Admins are created by the superuser from
-              the dashboard.
-            </p>
+        <form onSubmit={handleAdminLoginSubmit} className="card-senior w-full max-w-4xl space-y-8 p-6 sm:p-10">
+          <div className="grid gap-8 lg:grid-cols-5 lg:items-center">
+            <div className="text-center lg:col-span-3 lg:text-left">
+              <B2CLogo size="lg" align="center" className="mb-4 lg:mx-0" />
+              <Briefcase className="mx-auto h-14 w-14 text-[#004aad] lg:mx-0" aria-hidden />
+              <p className="text-xs font-black uppercase tracking-widest text-[#004aad]/80">Staff access</p>
+              <h1 className="mt-2 text-3xl font-black uppercase tracking-tighter text-[#004aad] sm:text-4xl lg:text-5xl">Admin sign in</h1>
+              <p className="mt-3 text-base font-medium leading-relaxed text-slate-600 lg:max-w-xl">
+                Superuser and admin accounts live in the API database. Create the bootstrap superuser once with{" "}
+                <code className="rounded bg-slate-100 px-1 text-sm">npm run create-superuser</code> in{" "}
+                <code className="rounded bg-slate-100 px-1 text-sm">backend/</code>. Admins are created by the superuser from
+                the dashboard.
+              </p>
+            </div>
+            <div className="space-y-4 lg:col-span-2">
+              {error ? <div className="rounded-2xl bg-amber-50 p-4 text-center font-bold text-amber-900">{error}</div> : null}
+              <div className="relative">
+                <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+                <input
+                  type="email"
+                  autoComplete="username"
+                  className="input-field pl-12"
+                  placeholder="Admin email"
+                  value={adminCreds.email}
+                  onChange={(e) => setAdminCreds((c) => ({ ...c, email: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  className="input-field pl-12"
+                  placeholder="Password"
+                  value={adminCreds.password}
+                  onChange={(e) => setAdminCreds((c) => ({ ...c, password: e.target.value }))}
+                  required
+                  minLength={6}
+                />
+              </div>
+              <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg sm:text-xl">
+                {loading ? <Loader2 className="animate-spin" /> : null}
+                Open master list
+              </button>
+              <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
+                Back to home
+              </button>
+            </div>
           </div>
-          {error && <div className="rounded-2xl bg-amber-50 p-4 text-center font-bold text-amber-900">{error}</div>}
-          <div className="relative">
-            <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-            <input
-              type="email"
-              autoComplete="username"
-              className="input-field pl-12"
-              placeholder="Admin email"
-              value={adminCreds.email}
-              onChange={(e) => setAdminCreds((c) => ({ ...c, email: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
-            <input
-              type="password"
-              autoComplete="current-password"
-              className="input-field pl-12"
-              placeholder="Password"
-              value={adminCreds.password}
-              onChange={(e) => setAdminCreds((c) => ({ ...c, password: e.target.value }))}
-              required
-              minLength={6}
-            />
-          </div>
-          <button type="submit" disabled={loading} className="btn-primary flex w-full items-center justify-center gap-2 py-5 text-lg sm:text-xl">
-            {loading ? <Loader2 className="animate-spin" /> : null}
-            Open master list
-          </button>
-          <button type="button" onClick={() => setAppState("landing")} className="w-full font-bold text-slate-500 hover:text-[#004aad]">
-            Back to home
-          </button>
         </form>
       </div>
       </>
