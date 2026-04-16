@@ -49,13 +49,13 @@ const OFFICIAL_COOPERATIVE_EMAIL = "b2ccoop@gmail.com";
 const SUBMIT_TIMEOUT_MS = 120_000;
 
 /**
- * Printed name appears under Acknowledgement and again under Member signature; either counts for submit.
+ * Printed name is captured once in Member signature. Legacy drafts may still have it only under acknowledgement — read both until migrated on edit.
  * @param {{ acknowledgement: { memberSignatureOverPrintedName?: string }; signature: { memberSignatureOverPrintedName?: string } }} profile
  */
 function getSignaturePrintedName(profile) {
   const sig = String(profile.signature?.memberSignatureOverPrintedName ?? "").trim();
-  const ack = String(profile.acknowledgement?.memberSignatureOverPrintedName ?? "").trim();
-  return sig || ack;
+  if (sig) return sig;
+  return String(profile.acknowledgement?.memberSignatureOverPrintedName ?? "").trim();
 }
 
 /** Normalize human-readable names: trim ends and collapse repeated spaces. */
@@ -66,8 +66,7 @@ function normalizeNameSpacing(value) {
 }
 
 /**
- * Preserve in-progress typing (including spaces) in controlled inputs.
- * Submit-time validation still uses `getSignaturePrintedName()` which trims.
+ * Single input at bottom of form; show legacy acknowledgement value if present until user types in signature.
  * @param {{ acknowledgement: { memberSignatureOverPrintedName?: string }; signature: { memberSignatureOverPrintedName?: string } }} profile
  */
 function getSignaturePrintedNameInputValue(profile) {
@@ -798,7 +797,7 @@ export function MemberFullProfileForm({
       setFormToast({
         type: "error",
         title: "Signature name required",
-        message: "Enter your full name in “Signature over printed name” (Acknowledgement or Member signature section), then submit again.",
+        message: "Enter your full name in “Signature over printed name” in the Member signature section at the end of the form, then submit again.",
       });
       return;
     }
@@ -997,16 +996,11 @@ export function MemberFullProfileForm({
             </span>
           </label>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Text
-            label="Signature over printed name (type your full name)"
-            value={getSignaturePrintedNameInputValue(profile)}
-            onChange={(v) => {
-              setAck({ memberSignatureOverPrintedName: v });
-              setSig({ memberSignatureOverPrintedName: v });
-            }}
-          />
-        </div>
+        <p className="mt-4 text-sm font-medium leading-relaxed text-slate-600">
+          Your typed signature and optional drawn or uploaded signature are captured once, in the{" "}
+          <span className="font-semibold text-slate-800">Member signature</span> section at the end of this form — after you
+          finish the rest of your profile.
+        </p>
       </div>
 
       <Section title="Personal information" defaultOpen>
@@ -1597,11 +1591,11 @@ export function MemberFullProfileForm({
 
       <Section title="Member signature">
         <Text
-          label="Signature over printed name"
+          label="Signature over printed name (type your full name)"
           value={getSignaturePrintedNameInputValue(profile)}
           onChange={(v) => {
-            setAck({ memberSignatureOverPrintedName: v });
             setSig({ memberSignatureOverPrintedName: v });
+            setAck({ memberSignatureOverPrintedName: "" });
             setMemberSigPrintedNameError(null);
           }}
           required
@@ -1722,7 +1716,7 @@ export function MemberFullProfileForm({
                 : !phGeo
                   ? "Wait for place-of-birth lists to finish loading, then tap Submit."
                   : !getSignaturePrintedName(profile)
-                    ? "Enter your full name in “Signature over printed name” (top or bottom of the form), then submit."
+                    ? "Enter your full name in “Signature over printed name” in Member signature below, then submit."
                     : "Ready to submit when your entries are complete."}
         </p>
         <button
