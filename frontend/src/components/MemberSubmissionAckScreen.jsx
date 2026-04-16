@@ -96,7 +96,8 @@ export function MemberSubmissionAckScreen({
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Account login email (Firebase)</p>
                   <p className="break-all text-sm font-semibold text-slate-800">{login}</p>
                   <p className="mt-1 text-xs font-medium text-slate-600">
-                    Used only to sign in to this app. It does not change when you set a different contact email on the form.
+                  Used only to sign in to this app. When your old login was a generated placeholder, the system may
+                  auto-align this to your official contact email.
                   </p>
                 </div>
               </li>
