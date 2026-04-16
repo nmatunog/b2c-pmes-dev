@@ -4,6 +4,7 @@ import { computeAlternatePublicHandle } from "@/lib/pmes-edge/callsign";
 import { validateAndNormalizeCallsignInput } from "@/lib/pmes-edge/callsign-validate";
 import { assertMemberEmailMatchesFirebaseToken } from "@/lib/pmes-edge/member-bearer";
 import { normalizeEmail } from "@/lib/pmes-edge/norm";
+import { isMissingMemberProfileStampColumnError } from "@/lib/pmes-edge/pg-stamp-fallback";
 
 type Body = {
   email?: string;
@@ -51,15 +52,26 @@ export async function PATCH(request: Request) {
 
   try {
     if (!raw) {
-      const updated = await sql`
-        UPDATE "Participant"
-        SET
-          callsign = NULL,
-          "memberProfileConcurrencyStamp" = "memberProfileConcurrencyStamp" + 1
-        WHERE id = ${participant.id}::uuid
-        RETURNING callsign, "lastNameKey", "lastNameSeq"
-      `;
-      const u = (updated as { callsign: string | null; lastNameKey: string | null; lastNameSeq: number | null }[])[0]!;
+      let updated: { callsign: string | null; lastNameKey: string | null; lastNameSeq: number | null }[];
+      try {
+        updated = (await sql`
+          UPDATE "Participant"
+          SET
+            callsign = NULL,
+            "memberProfileConcurrencyStamp" = "memberProfileConcurrencyStamp" + 1
+          WHERE id = ${participant.id}::uuid
+          RETURNING callsign, "lastNameKey", "lastNameSeq"
+        `) as typeof updated;
+      } catch (e) {
+        if (!isMissingMemberProfileStampColumnError(e)) throw e;
+        updated = (await sql`
+          UPDATE "Participant"
+          SET callsign = NULL
+          WHERE id = ${participant.id}::uuid
+          RETURNING callsign, "lastNameKey", "lastNameSeq"
+        `) as typeof updated;
+      }
+      const u = updated[0]!;
       return NextResponse.json({
         success: true as const,
         callsign: null as string | null,
@@ -89,15 +101,26 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const updated = await sql`
-      UPDATE "Participant"
-      SET
-        callsign = ${normalized},
-        "memberProfileConcurrencyStamp" = "memberProfileConcurrencyStamp" + 1
-      WHERE id = ${participant.id}::uuid
-      RETURNING callsign, "lastNameKey", "lastNameSeq"
-    `;
-    const u = (updated as { callsign: string | null; lastNameKey: string | null; lastNameSeq: number | null }[])[0]!;
+    let updated: { callsign: string | null; lastNameKey: string | null; lastNameSeq: number | null }[];
+    try {
+      updated = (await sql`
+        UPDATE "Participant"
+        SET
+          callsign = ${normalized},
+          "memberProfileConcurrencyStamp" = "memberProfileConcurrencyStamp" + 1
+        WHERE id = ${participant.id}::uuid
+        RETURNING callsign, "lastNameKey", "lastNameSeq"
+      `) as typeof updated;
+    } catch (e) {
+      if (!isMissingMemberProfileStampColumnError(e)) throw e;
+      updated = (await sql`
+        UPDATE "Participant"
+        SET callsign = ${normalized}
+        WHERE id = ${participant.id}::uuid
+        RETURNING callsign, "lastNameKey", "lastNameSeq"
+      `) as typeof updated;
+    }
+    const u = updated[0]!;
     return NextResponse.json({
       success: true as const,
       callsign: normalized,

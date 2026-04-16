@@ -57,7 +57,7 @@ export function toLifecyclePayload(row: AdminLifecycleRow) {
     boardApproved: board,
     fullProfileCompleted: profile,
     canAccessFullMemberPortal: stage === "FULL_MEMBER",
-    profileRecordVersion: row.memberProfileConcurrencyStamp,
+    profileRecordVersion: row.memberProfileConcurrencyStamp ?? 0,
     isLegacyFounderImport: Boolean(row.legacyPioneerImport),
     memberIdNo: row.memberIdNo,
     callsign: row.callsign,

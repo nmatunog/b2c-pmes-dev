@@ -53,7 +53,7 @@ export function toLifecyclePayload(participant: ParticipantWithRels) {
     boardApproved: board,
     fullProfileCompleted: profile,
     canAccessFullMemberPortal: stage === "FULL_MEMBER",
-    profileRecordVersion: participant.memberProfileConcurrencyStamp,
+    profileRecordVersion: participant.memberProfileConcurrencyStamp ?? 0,
     isLegacyFounderImport: participant.legacyPioneerImport,
     memberIdNo: participant.memberIdNo,
     callsign: participant.callsign,

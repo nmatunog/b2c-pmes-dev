@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import { isMissingMemberProfileStampColumnError } from "@/lib/pmes-edge/pg-stamp-fallback";
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -44,19 +45,41 @@ export async function loadParticipantWithRelsByEmail(
   sql: Sql,
   email: string,
 ): Promise<ParticipantWithRels | null> {
-  const rows = await sql`
-    SELECT
-      id, "fullName", email, phone, dob, gender, "createdAt",
-      "legacyPioneerImport", "memberIdNo", "tinNo",
-      "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
-      "memberProfileConcurrencyStamp",
-      callsign, "lastNameKey", "lastNameSeq"
-    FROM "Participant"
-    WHERE email = ${email}
-    LIMIT 1
-  `;
-  const p = (rows as ParticipantCore[])[0];
-  if (!p) return null;
+  let rows: unknown[];
+  try {
+    rows = await sql`
+      SELECT
+        id, "fullName", email, phone, dob, gender, "createdAt",
+        "legacyPioneerImport", "memberIdNo", "tinNo",
+        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
+        "memberProfileConcurrencyStamp",
+        callsign, "lastNameKey", "lastNameSeq"
+      FROM "Participant"
+      WHERE email = ${email}
+      LIMIT 1
+    `;
+  } catch (e) {
+    if (!isMissingMemberProfileStampColumnError(e)) throw e;
+    rows = await sql`
+      SELECT
+        id, "fullName", email, phone, dob, gender, "createdAt",
+        "legacyPioneerImport", "memberIdNo", "tinNo",
+        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
+        callsign, "lastNameKey", "lastNameSeq"
+      FROM "Participant"
+      WHERE email = ${email}
+      LIMIT 1
+    `;
+  }
+  const raw = (rows as Omit<ParticipantCore, "memberProfileConcurrencyStamp">[])[0];
+  if (!raw) return null;
+  const p: ParticipantCore = {
+    ...raw,
+    memberProfileConcurrencyStamp:
+      typeof (raw as ParticipantCore).memberProfileConcurrencyStamp === "number"
+        ? (raw as ParticipantCore).memberProfileConcurrencyStamp
+        : 0,
+  };
   return loadRelationsForParticipant(sql, p);
 }
 
@@ -64,19 +87,41 @@ export async function loadParticipantWithRelsById(
   sql: Sql,
   id: string,
 ): Promise<ParticipantWithRels | null> {
-  const rows = await sql`
-    SELECT
-      id, "fullName", email, phone, dob, gender, "createdAt",
-      "legacyPioneerImport", "memberIdNo", "tinNo",
-      "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
-      "memberProfileConcurrencyStamp",
-      callsign, "lastNameKey", "lastNameSeq"
-    FROM "Participant"
-    WHERE id = ${id}
-    LIMIT 1
-  `;
-  const p = (rows as ParticipantCore[])[0];
-  if (!p) return null;
+  let rows: unknown[];
+  try {
+    rows = await sql`
+      SELECT
+        id, "fullName", email, phone, dob, gender, "createdAt",
+        "legacyPioneerImport", "memberIdNo", "tinNo",
+        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
+        "memberProfileConcurrencyStamp",
+        callsign, "lastNameKey", "lastNameSeq"
+      FROM "Participant"
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+  } catch (e) {
+    if (!isMissingMemberProfileStampColumnError(e)) throw e;
+    rows = await sql`
+      SELECT
+        id, "fullName", email, phone, dob, gender, "createdAt",
+        "legacyPioneerImport", "memberIdNo", "tinNo",
+        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
+        callsign, "lastNameKey", "lastNameSeq"
+      FROM "Participant"
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+  }
+  const raw = (rows as Omit<ParticipantCore, "memberProfileConcurrencyStamp">[])[0];
+  if (!raw) return null;
+  const p: ParticipantCore = {
+    ...raw,
+    memberProfileConcurrencyStamp:
+      typeof (raw as ParticipantCore).memberProfileConcurrencyStamp === "number"
+        ? (raw as ParticipantCore).memberProfileConcurrencyStamp
+        : 0,
+  };
   return loadRelationsForParticipant(sql, p);
 }
 
