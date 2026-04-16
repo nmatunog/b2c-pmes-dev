@@ -12,6 +12,7 @@
     "db:down": "docker compose down",
     "hash-admin-password": "node scripts/hash-admin-password.js",
     "create-superuser": "node scripts/create-superuser.js",
+    "migrate:placeholder-login-emails": "node scripts/migrate-placeholder-login-emails.js",
     "test": "jest",
     "test:watch": "jest --watch"
   },
