@@ -30,6 +30,7 @@ const nextConfig = {
       { source: "/pmes/admin/member-registry", destination: "/api/pmes/admin/member-registry" },
       { source: "/pmes/admin/participants/:path*", destination: "/api/pmes/admin/participants/:path*" },
       { source: "/pmes/submit", destination: "/api/pmes/submit" },
+      { source: "/pmes/full-profile", destination: "/api/pmes/full-profile" },
       { source: "/pmes/loi", destination: "/api/pmes/loi" },
       { source: "/pmes/certificate", destination: "/api/pmes/certificate" },
       { source: "/pmes/membership-lifecycle", destination: "/api/pmes/membership-lifecycle" },
