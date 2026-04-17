@@ -776,13 +776,13 @@ export default function LandingPage({
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <a href="/" className="flex min-w-0 items-center gap-2.5 sm:gap-3" aria-label="Home">
-            <B2CLogo size="sm" className="shrink-0" />
+          <a href="/" className="flex min-w-0 items-center gap-3 sm:gap-3.5" aria-label="Home">
+            <B2CLogo size="md" className="shrink-0" />
             <div className="min-w-0 flex flex-col leading-tight">
-              <span className="truncate text-sm font-bold tracking-tight text-stone-900 sm:text-base lg:text-lg">
+              <span className="truncate text-base font-bold tracking-tight text-stone-900 sm:text-lg lg:text-xl">
                 {COOPERATIVE_NAME}
               </span>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-600 sm:text-[11px]">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-600 sm:text-xs">
                 {COOPERATIVE_REGION}
               </span>
             </div>
@@ -973,7 +973,7 @@ export default function LandingPage({
             </span>
             <span>Cebu · member-owned</span>
           </p>
-          <h1 className="mb-4 max-w-3xl text-[2rem] font-extrabold leading-[1.12] tracking-tight text-stone-900 sm:mb-5 sm:text-4xl md:text-5xl lg:max-w-4xl lg:text-[3.25rem]">
+          <h1 className="mb-4 max-w-4xl text-[2.35rem] font-extrabold leading-[1.1] tracking-tight text-stone-900 sm:mb-5 sm:text-5xl md:text-6xl lg:text-[4rem]">
             Shop smarter,{" "}
             <span className="bg-gradient-to-r from-indigo-600 via-sky-500 to-teal-600 bg-clip-text text-transparent">
               together
