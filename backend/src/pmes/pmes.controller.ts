@@ -10,8 +10,10 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from "@nestjs/common";
+import type { Request } from "express";
 import { Throttle } from "@nestjs/throttler";
 import { CertificateQueryDto } from "./dto/certificate-query.dto";
 import { CreateLoiDto } from "./dto/create-loi.dto";
@@ -22,13 +24,17 @@ import { SetCallsignDto } from "./dto/set-callsign.dto";
 import { UpdateMemberLoginEmailDto } from "./dto/update-member-login-email.dto";
 import { SubmitFullProfileDto } from "./dto/submit-full-profile.dto";
 import { SuperuserSetMemberIdDto } from "./dto/superuser-set-member-id.dto";
+import { BodVoteDto } from "./dto/bod-vote.dto";
+import { SecretaryConfirmDto } from "./dto/secretary-confirm.dto";
 import { UpdateParticipantMembershipDto } from "./dto/update-participant-membership.dto";
 import { AdminUpdateParticipantDto } from "./dto/admin-update-participant.dto";
 import { AdminResetMemberPasswordDto } from "./dto/admin-reset-member-password.dto";
 import { AuthService } from "../auth/auth.service";
-import { StaffJwtGuard } from "../auth/staff-jwt.guard";
+import { StaffJwtGuard, type StaffJwtPayload } from "../auth/staff-jwt.guard";
 import { SuperuserGuard } from "../auth/superuser.guard";
 import { PmesService } from "./pmes.service";
+
+type StaffRequest = Request & { staffUser: StaffJwtPayload };
 
 @Controller("pmes")
 export class PmesController {
@@ -150,8 +156,22 @@ export class PmesController {
 
   @Patch("admin/participant/membership")
   @UseGuards(StaffJwtGuard)
-  adminParticipantMembership(@Body() dto: UpdateParticipantMembershipDto) {
-    return this.pmes.updateParticipantMembership(dto);
+  adminParticipantMembership(@Req() req: StaffRequest, @Body() dto: UpdateParticipantMembershipDto) {
+    return this.pmes.updateParticipantMembership(dto, req.staffUser);
+  }
+
+  /** Board director (or superuser): cast / update yes-no on membership application. */
+  @Post("admin/participant/bod-vote")
+  @UseGuards(StaffJwtGuard)
+  adminBodVote(@Req() req: StaffRequest, @Body() dto: BodVoteDto) {
+    return this.pmes.recordBodVote(dto.participantId, dto.approve, req.staffUser);
+  }
+
+  /** Secretary (or superuser): assign Board Resolution no. and final board approval. */
+  @Post("admin/participant/secretary-confirm")
+  @UseGuards(StaffJwtGuard)
+  adminSecretaryConfirm(@Req() req: StaffRequest, @Body() dto: SecretaryConfirmDto) {
+    return this.pmes.recordSecretaryBoardConfirmation(dto.participantId, req.staffUser);
   }
 
   /** Admin: searchable member registry (full members by default). */

@@ -31,14 +31,17 @@ import {
   initialsFromFullName,
   parseYearFromDob,
 } from "./member-public-id";
-import type { LoiSubmission, Participant, PmesRecord } from "@prisma/client";
+import { StaffRole, type LoiSubmission, type Participant, type PmesRecord } from "@prisma/client";
+import type { StaffJwtRole } from "../auth/staff-jwt.guard";
+import { BOD_DIRECTOR_SEATS, BOD_MAJORITY_APPROVALS } from "./board-workflow.constants";
 
 export type MembershipStage =
   | "NO_PARTICIPANT"
   | "PMES_NOT_PASSED"
   | "AWAITING_LOI"
   | "AWAITING_PAYMENT"
-  | "PENDING_BOARD"
+  | "AWAITING_BOD_VOTE"
+  | "AWAITING_SECRETARY_RESOLUTION"
   | "AWAITING_FULL_PROFILE"
   | "FULL_MEMBER";
 
@@ -533,20 +536,46 @@ export class PmesService {
         registrationGender: null as string | null,
         registrationPhone: null as string | null,
         referralRewards,
+        bodApproveVoteCount: 0,
+        bodMajorityReached: false,
+        bodMajorityRequired: BOD_MAJORITY_APPROVALS,
+        bodDirectorSeats: BOD_DIRECTOR_SEATS,
+        boardResolutionNo: null as string | null,
       };
     }
     const withMemberId = await this.ensureMemberPublicId(participant);
-    const life = this.toLifecyclePayload(withMemberId);
+    const yesVotes = await this.prisma.boardApprovalVote.count({
+      where: { participantId: withMemberId.id, approve: true },
+    });
+    const life = this.toLifecyclePayload(withMemberId, yesVotes);
     const referralRewards = await this.referralRewardsForParticipant(withMemberId.id);
     return { ...life, referralRewards };
   }
 
-  async updateParticipantMembership(dto: UpdateParticipantMembershipDto) {
+  async updateParticipantMembership(
+    dto: UpdateParticipantMembershipDto,
+    staff: { sub: string; role: StaffJwtRole },
+  ) {
     const p = await this.prisma.participant.findUnique({ where: { id: dto.participantId } });
     if (!p) throw new NotFoundException("Participant not found");
 
     if (dto.initialFeesPaid !== true && dto.boardApproved !== true) {
       throw new BadRequestException("Set initialFeesPaid and/or boardApproved to true to record a step.");
+    }
+
+    if (dto.initialFeesPaid === true) {
+      const ok = ["superuser", "admin", "treasurer"].includes(staff.role);
+      if (!ok) {
+        throw new ForbiddenException("Only Treasurer (or Admin / Superuser) can confirm fee payment.");
+      }
+    }
+
+    if (dto.boardApproved === true) {
+      if (staff.role !== "superuser") {
+        throw new ForbiddenException(
+          "Use Secretary confirmation to record Board approval with a resolution number. Superuser may override here for legacy support.",
+        );
+      }
     }
 
     const data: {
@@ -569,7 +598,141 @@ export class PmesService {
         loiSubmission: true,
       },
     });
-    return this.toLifecyclePayload(updated);
+    const votes = await this.prisma.boardApprovalVote.count({
+      where: { participantId: dto.participantId, approve: true },
+    });
+    return this.toLifecyclePayload(updated, votes);
+  }
+
+  /** Board Director (or Superuser) casts / updates approval vote; majority (3) sets `bodMajorityReachedAt`. */
+  async recordBodVote(participantId: string, approve: boolean, staff: { sub: string; role: StaffJwtRole }) {
+    if (staff.role !== "superuser" && staff.role !== "board_director") {
+      throw new ForbiddenException("Only Board directors (or Superuser) may cast BOD votes.");
+    }
+    const actor = await this.prisma.staffUser.findUnique({ where: { id: staff.sub } });
+    if (!actor) throw new ForbiddenException("Staff account not found");
+    if (staff.role === "board_director" && actor.role !== StaffRole.BOARD_DIRECTOR) {
+      throw new ForbiddenException("Your account is not a Board director.");
+    }
+
+    const p = await this.prisma.participant.findUnique({ where: { id: participantId } });
+    if (!p) throw new NotFoundException("Participant not found");
+    if (p.boardApprovedAt) {
+      throw new BadRequestException("Board approval is already recorded for this member.");
+    }
+
+    await this.prisma.boardApprovalVote.upsert({
+      where: {
+        participantId_staffUserId: { participantId, staffUserId: staff.sub },
+      },
+      create: { participantId, staffUserId: staff.sub, approve },
+      update: { approve },
+    });
+
+    await this.syncBodMajorityFlag(participantId);
+
+    const updated = await this.prisma.participant.findUnique({
+      where: { id: participantId },
+      include: {
+        pmesRecords: { orderBy: { timestamp: "desc" } },
+        loiSubmission: true,
+      },
+    });
+    if (!updated) throw new NotFoundException("Participant not found");
+    const votes = await this.prisma.boardApprovalVote.count({
+      where: { participantId, approve: true },
+    });
+    return this.toLifecyclePayload(updated, votes);
+  }
+
+  /** Secretary issues the next Board Resolution number and sets final `boardApprovedAt`. */
+  async recordSecretaryBoardConfirmation(participantId: string, staff: { sub: string; role: StaffJwtRole }) {
+    if (staff.role !== "superuser" && staff.role !== "secretary") {
+      throw new ForbiddenException("Only the Secretary (or Superuser) may issue the Board resolution.");
+    }
+    const actor = await this.prisma.staffUser.findUnique({ where: { id: staff.sub } });
+    if (!actor) throw new ForbiddenException("Staff account not found");
+    if (staff.role === "secretary" && actor.role !== StaffRole.SECRETARY) {
+      throw new ForbiddenException("Your account is not the Secretary.");
+    }
+
+    const p = await this.prisma.participant.findUnique({ where: { id: participantId } });
+    if (!p) throw new NotFoundException("Participant not found");
+    if (p.boardApprovedAt) {
+      throw new BadRequestException("Board approval is already recorded.");
+    }
+    if (!p.bodMajorityReachedAt) {
+      throw new BadRequestException(
+        `BOD majority (${BOD_MAJORITY_APPROVALS} approving votes) is required before the Secretary can issue a resolution.`,
+      );
+    }
+
+    const resolutionNo = await this.allocateNextBoardResolutionNo();
+
+    const updated = await this.prisma.participant.update({
+      where: { id: participantId },
+      data: {
+        boardResolutionNo: resolutionNo,
+        boardApprovedAt: new Date(),
+      },
+      include: {
+        pmesRecords: { orderBy: { timestamp: "desc" } },
+        loiSubmission: true,
+      },
+    });
+    const votes = await this.prisma.boardApprovalVote.count({
+      where: { participantId, approve: true },
+    });
+    return this.toLifecyclePayload(updated, votes);
+  }
+
+  private async syncBodMajorityFlag(participantId: string) {
+    const p = await this.prisma.participant.findUnique({ where: { id: participantId } });
+    if (!p || p.boardApprovedAt) return;
+    const yes = await this.prisma.boardApprovalVote.count({
+      where: { participantId, approve: true },
+    });
+    const reach = yes >= BOD_MAJORITY_APPROVALS;
+    await this.prisma.participant.update({
+      where: { id: participantId },
+      data: {
+        bodMajorityReachedAt: reach ? (p.bodMajorityReachedAt ?? new Date()) : null,
+      },
+    });
+  }
+
+  /** Format `APR-2026-001` — sequence resets each calendar month (NNN within month-year). */
+  private async allocateNextBoardResolutionNo(): Promise<string> {
+    const MONTHS = [
+      "JAN",
+      "FEB",
+      "MAR",
+      "APR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AUG",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DEC",
+    ] as const;
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth() + 1;
+    const label = `${MONTHS[month - 1]}-${year}-`;
+
+    const row = await this.prisma.$transaction(async (tx) => {
+      return tx.boardResolutionCounter.upsert({
+        where: {
+          year_month: { year, month },
+        },
+        create: { year, month, lastSeq: 1 },
+        update: { lastSeq: { increment: 1 } },
+      });
+    });
+
+    return `${label}${String(row.lastSeq).padStart(3, "0")}`;
   }
 
   async submitFullProfile(dto: SubmitFullProfileDto) {
@@ -1116,8 +1279,18 @@ export class PmesService {
       },
       orderBy: { createdAt: "desc" },
     });
+    const ids = participants.map((p) => p.id);
+    const voteGroups =
+      ids.length > 0
+        ? await this.prisma.boardApprovalVote.groupBy({
+            by: ["participantId"],
+            where: { participantId: { in: ids }, approve: true },
+            _count: { _all: true },
+          })
+        : [];
+    const voteMap = new Map(voteGroups.map((v) => [v.participantId, v._count._all]));
     return participants.map((p) => {
-      const life = this.toLifecyclePayload(p);
+      const life = this.toLifecyclePayload(p, voteMap.get(p.id) ?? 0);
       return {
         fullName: p.fullName,
         phone: p.phone,
@@ -1126,21 +1299,24 @@ export class PmesService {
     });
   }
 
-  private toLifecyclePayload(participant: ParticipantWithRelations) {
+  private toLifecyclePayload(participant: ParticipantWithRelations, bodApproveVoteCount = 0) {
     const email = participant.email;
     const passed = participant.pmesRecords.some((r) => r.passed);
     const hasLoi = !!participant.loiSubmission;
     const fees = !!participant.initialFeesPaidAt;
     const board = !!participant.boardApprovedAt;
     const profile = !!participant.fullProfileCompletedAt;
+    const bodMajority = !!participant.bodMajorityReachedAt;
 
     let stage: MembershipStage;
     if (!passed) stage = "PMES_NOT_PASSED";
     else if (!hasLoi) stage = "AWAITING_LOI";
     else if (!fees) stage = "AWAITING_PAYMENT";
-    else if (!board) stage = "PENDING_BOARD";
-    else if (!profile) stage = "AWAITING_FULL_PROFILE";
-    else stage = "FULL_MEMBER";
+    else if (board) {
+      if (!profile) stage = "AWAITING_FULL_PROFILE";
+      else stage = "FULL_MEMBER";
+    } else if (bodMajority) stage = "AWAITING_SECRETARY_RESOLUTION";
+    else stage = "AWAITING_BOD_VOTE";
 
     return {
       participantId: participant.id,
@@ -1152,6 +1328,11 @@ export class PmesService {
       boardApproved: board,
       fullProfileCompleted: profile,
       canAccessFullMemberPortal: stage === "FULL_MEMBER",
+      bodApproveVoteCount,
+      bodMajorityReached: bodMajority,
+      bodMajorityRequired: BOD_MAJORITY_APPROVALS,
+      bodDirectorSeats: BOD_DIRECTOR_SEATS,
+      boardResolutionNo: participant.boardResolutionNo ?? null,
       /** Matches `Participant.memberProfileConcurrencyStamp` for optimistic locking on full-profile submit. */
       profileRecordVersion: participant.memberProfileConcurrencyStamp,
       /** Pre-roster import: member already pledged elsewhere; digital PMES not required on this app. */

@@ -20,11 +20,18 @@ model StaffUser {
   createdById  String?
   createdBy    StaffUser?  @relation("StaffCreatedBy", fields: [createdById], references: [id])
   createdStaff StaffUser[] @relation("StaffCreatedBy")
+  boardVotes   BoardApprovalVote[]
 }
 
 enum StaffRole {
   SUPERUSER
   ADMIN
+  /** Confirms share capital + membership fee receipt */
+  TREASURER
+  /** Director vote toward majority approval */
+  BOARD_DIRECTOR
+  /** Issues Board Resolution number and final board approval gate */
+  SECRETARY
 }
 
 model Participant {
@@ -39,7 +46,11 @@ model Participant {
   createdAt     DateTime  @default(now())
   /** Set when treasury confirms share capital + membership fees received */
   initialFeesPaidAt   DateTime?
-  /** Set when the Board records approval in admin */
+  /** When at least 3 of 5 BOD votes to approve (see BoardApprovalVote). */
+  bodMajorityReachedAt DateTime?
+  /** Secretary-issued resolution id, e.g. APR-2026-001 (unique when set). */
+  boardResolutionNo   String?   @unique
+  /** Set when Secretary confirms BOD process and member may complete full profile */
   boardApprovedAt     DateTime?
   /** Member finished post-approval full profile + optional sheet upload */
   fullProfileCompletedAt DateTime?
@@ -79,10 +90,35 @@ model Participant {
   referralReferees          Participant[] @relation("ReferralAttribution")
   /** Set when this member completes full membership (referrer earns Pioneer Points once). */
   referralJoinCreditedAt    DateTime?
+  boardApprovalVotes        BoardApprovalVote[]
   pmesRecords   PmesRecord[]
   loiSubmission LoiSubmission?
 
   @@index([referredByParticipantId])
+}
+
+/** One vote per director per membership application (approve / not). */
+model BoardApprovalVote {
+  id            String   @id @default(uuid())
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  staffUserId   String
+  staffUser     StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+  approve       Boolean
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([participantId, staffUserId])
+  @@index([participantId])
+}
+
+/** Serial for Board Resolution numbers: MMM-YYYY-NNN (NNN per month-year). */
+model BoardResolutionCounter {
+  year    Int
+  month   Int
+  lastSeq Int @default(0)
+
+  @@id([year, month])
 }
 
 /** Atomic per-surname sequence for default alternate ids (lastname-1, lastname-2, …). */

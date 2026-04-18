@@ -33,8 +33,14 @@ export async function selectMembershipPipelineRows(sql: Sql): Promise<AdminLifec
         p.gender,
         p.phone,
         p."initialFeesPaidAt",
+        p."bodMajorityReachedAt",
+        p."boardResolutionNo",
         p."boardApprovedAt",
         p."fullProfileCompletedAt",
+        (
+          SELECT COUNT(*)::int FROM "BoardApprovalVote" b
+          WHERE b."participantId" = p.id AND b.approve = true
+        ) AS "bodApproveVoteCount",
         EXISTS (
           SELECT 1 FROM "PmesRecord" pr
           WHERE pr."participantId" = p.id AND pr.passed = true
@@ -101,8 +107,14 @@ export async function selectAdminLifecycleRowByParticipantId(
         p.gender,
         p.phone,
         p."initialFeesPaidAt",
+        p."bodMajorityReachedAt",
+        p."boardResolutionNo",
         p."boardApprovedAt",
         p."fullProfileCompletedAt",
+        (
+          SELECT COUNT(*)::int FROM "BoardApprovalVote" b
+          WHERE b."participantId" = p.id AND b.approve = true
+        ) AS "bodApproveVoteCount",
         EXISTS (
           SELECT 1 FROM "PmesRecord" pr
           WHERE pr."participantId" = p.id AND pr.passed = true
@@ -197,8 +209,14 @@ export async function selectParticipantDetailRow(
         p.gender,
         p.phone,
         p."initialFeesPaidAt",
+        p."bodMajorityReachedAt",
+        p."boardResolutionNo",
         p."boardApprovedAt",
         p."fullProfileCompletedAt",
+        (
+          SELECT COUNT(*)::int FROM "BoardApprovalVote" b
+          WHERE b."participantId" = p.id AND b.approve = true
+        ) AS "bodApproveVoteCount",
         p."fullProfileJson",
         p."memberProfileSnapshot",
         p."registryImportSnapshot",

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { EDGE_CORS_HEADERS, edgeCorsOptions } from "@/lib/edge-cors";
-import { requireStaff, unauthorized } from "@/lib/staff-edge-auth";
+import { requireStaff, unauthorized, forbidden } from "@/lib/staff-edge-auth";
 import { toLifecyclePayload } from "@/lib/pmes-edge/admin-lifecycle";
 import { selectAdminLifecycleRowByParticipantId } from "@/lib/pmes-edge/admin-participant-queries";
 
@@ -11,7 +11,7 @@ export function OPTIONS() {
 
 export async function PATCH(request: Request) {
   try {
-    await requireStaff(request);
+    const staff = await requireStaff(request);
     const body = (await request.json().catch(() => null)) as
       | { participantId?: string; initialFeesPaid?: boolean; boardApproved?: boolean }
       | null;
@@ -28,6 +28,16 @@ export async function PATCH(request: Request) {
       return NextResponse.json(
         { message: "Set initialFeesPaid and/or boardApproved to true to record a step.", statusCode: 400 },
         { status: 400, headers: EDGE_CORS_HEADERS },
+      );
+    }
+
+    if (initialFeesPaid && !["superuser", "admin", "treasurer"].includes(staff.role)) {
+      return forbidden("Only Treasurer (or Admin / Superuser) can confirm fee payment.", EDGE_CORS_HEADERS);
+    }
+    if (boardApproved && staff.role !== "superuser") {
+      return forbidden(
+        "Use Secretary confirmation to record Board approval with a resolution number. Superuser may override here for legacy support.",
+        EDGE_CORS_HEADERS,
       );
     }
 

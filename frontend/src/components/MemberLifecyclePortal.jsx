@@ -186,14 +186,31 @@ export function MemberLifecyclePortal({
         </section>
       ) : null}
 
-      {stage === "PENDING_BOARD" ? (
+      {stage === "AWAITING_BOD_VOTE" ? (
         <section className="card-senior space-y-4 border-slate-200 bg-slate-50/90 p-8 text-left">
           <div className="flex items-start gap-3">
             <Building2 className="h-10 w-10 shrink-0 text-[#004aad]" aria-hidden />
             <div>
-              <h2 className="text-xl font-black text-slate-900">Pending Board approval</h2>
+              <h2 className="text-xl font-black text-slate-900">Board of Directors review</h2>
               <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
-                Your payment is recorded. The Board reviews new members on a set schedule. You&apos;ll receive email when your status changes — no action needed here.
+                Your payment is recorded. Directors are voting on your application (a majority must approve before the
+                Secretary can issue a Board Resolution). No action needed here — we&apos;ll email you when your status
+                advances.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {stage === "AWAITING_SECRETARY_RESOLUTION" ? (
+        <section className="card-senior space-y-4 border-indigo-200 bg-indigo-50/50 p-8 text-left">
+          <div className="flex items-start gap-3">
+            <Building2 className="h-10 w-10 shrink-0 text-indigo-800" aria-hidden />
+            <div>
+              <h2 className="text-xl font-black text-slate-900">Awaiting Board Resolution</h2>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
+                A majority of the Board has recommended approval. The corporate Secretary will confirm and assign a Board
+                Resolution number next. You&apos;ll be able to complete your membership form right after that step.
               </p>
             </div>
           </div>

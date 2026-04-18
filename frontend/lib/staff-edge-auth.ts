@@ -1,7 +1,7 @@
 import { jwtVerify, SignJWT } from "jose";
 import { NextResponse } from "next/server";
 
-export type StaffRoleJwt = "admin" | "superuser";
+export type StaffRoleJwt = "admin" | "superuser" | "treasurer" | "board_director" | "secretary";
 export type StaffJwtPayload = { sub: string; role: StaffRoleJwt };
 
 const enc = new TextEncoder();
@@ -26,10 +26,11 @@ export async function verifyStaffToken(token: string): Promise<StaffJwtPayload> 
   const { payload } = await jwtVerify(token, jwtSecret());
   const role = payload?.role;
   const sub = payload?.sub;
-  if ((role !== "admin" && role !== "superuser") || typeof sub !== "string" || !sub.trim()) {
+  const allowed: StaffRoleJwt[] = ["superuser", "admin", "treasurer", "board_director", "secretary"];
+  if (typeof role !== "string" || !allowed.includes(role as StaffRoleJwt) || typeof sub !== "string" || !sub.trim()) {
     throw new Error("Invalid staff token");
   }
-  return { sub, role };
+  return { sub, role: role as StaffRoleJwt };
 }
 
 function extractBearerToken(request: Request): string | null {
@@ -51,6 +52,6 @@ export function unauthorized(message: string) {
   return NextResponse.json({ message, statusCode: 401 }, { status: 401 });
 }
 
-export function forbidden(message: string) {
-  return NextResponse.json({ message, statusCode: 403 }, { status: 403 });
+export function forbidden(message: string, headers?: Record<string, string>) {
+  return NextResponse.json({ message, statusCode: 403 }, { status: 403, headers });
 }

@@ -374,6 +374,38 @@ export const PmesService = {
     return response.json();
   },
 
+  async recordBodVote(accessToken, participantId, approve) {
+    if (!useRest()) throw new Error("API required");
+    const response = await fetch(`${apiBase()}/pmes/admin/participant/bod-vote`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ participantId, approve }),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiErrorMessage(response));
+    }
+    return response.json();
+  },
+
+  async recordSecretaryBoardConfirm(accessToken, participantId) {
+    if (!useRest()) throw new Error("API required");
+    const response = await fetch(`${apiBase()}/pmes/admin/participant/secretary-confirm`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ participantId }),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiErrorMessage(response));
+    }
+    return response.json();
+  },
+
   /**
    * Superuser only: delete one participant (all PMES rows + LOI). Removes a membership pipeline row.
    */

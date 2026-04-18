@@ -8,7 +8,9 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import type { Request } from "express";
 
-export type StaffJwtPayload = { sub: string; role: "admin" | "superuser" };
+export type StaffJwtRole = "superuser" | "admin" | "treasurer" | "board_director" | "secretary";
+
+export type StaffJwtPayload = { sub: string; role: StaffJwtRole };
 
 @Injectable()
 export class StaffJwtGuard implements CanActivate {
@@ -28,10 +30,12 @@ export class StaffJwtGuard implements CanActivate {
     try {
       const secret = this.config.get<string>("ADMIN_JWT_SECRET");
       const payload = this.jwt.verify<{ role?: string; sub?: string }>(token, { secret });
-      const role = payload?.role;
-      if (role !== "admin" && role !== "superuser") {
+      const allowed: StaffJwtRole[] = ["superuser", "admin", "treasurer", "board_director", "secretary"];
+      const roleRaw = payload?.role;
+      if (typeof roleRaw !== "string" || !allowed.includes(roleRaw as StaffJwtRole)) {
         throw new UnauthorizedException("Not a staff token");
       }
+      const role = roleRaw as StaffJwtRole;
       if (!payload?.sub) {
         throw new UnauthorizedException("Invalid staff token");
       }

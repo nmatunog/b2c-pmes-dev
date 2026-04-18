@@ -1,3 +1,5 @@
+import { BOD_DIRECTOR_SEATS, BOD_MAJORITY_APPROVALS } from "@/lib/pmes-edge/board-workflow.constants";
+
 export type AdminLifecycleRow = {
   id: string;
   email: string;
@@ -14,6 +16,10 @@ export type AdminLifecycleRow = {
   pmesPassed: boolean;
   loiSubmitted: boolean;
   initialFeesPaidAt: string | null;
+  bodMajorityReachedAt: string | null;
+  boardResolutionNo: string | null;
+  /** Yes votes from `BoardApprovalVote` (filled when column/query present). */
+  bodApproveVoteCount?: number | null;
   boardApprovedAt: string | null;
   fullProfileCompletedAt: string | null;
 };
@@ -34,19 +40,23 @@ export function toLifecyclePayload(row: AdminLifecycleRow) {
   const fees = Boolean(row.initialFeesPaidAt);
   const board = Boolean(row.boardApprovedAt);
   const profile = Boolean(row.fullProfileCompletedAt);
+  const bodMajority = Boolean(row.bodMajorityReachedAt);
   let stage:
     | "PMES_NOT_PASSED"
     | "AWAITING_LOI"
     | "AWAITING_PAYMENT"
-    | "PENDING_BOARD"
+    | "AWAITING_BOD_VOTE"
+    | "AWAITING_SECRETARY_RESOLUTION"
     | "AWAITING_FULL_PROFILE"
     | "FULL_MEMBER";
   if (!row.pmesPassed) stage = "PMES_NOT_PASSED";
   else if (!row.loiSubmitted) stage = "AWAITING_LOI";
   else if (!fees) stage = "AWAITING_PAYMENT";
-  else if (!board) stage = "PENDING_BOARD";
-  else if (!profile) stage = "AWAITING_FULL_PROFILE";
-  else stage = "FULL_MEMBER";
+  else if (board) {
+    if (!profile) stage = "AWAITING_FULL_PROFILE";
+    else stage = "FULL_MEMBER";
+  } else if (bodMajority) stage = "AWAITING_SECRETARY_RESOLUTION";
+  else stage = "AWAITING_BOD_VOTE";
   return {
     participantId: row.id,
     email: row.email,
@@ -71,5 +81,10 @@ export function toLifecyclePayload(row: AdminLifecycleRow) {
     registrationDob: row.dob,
     registrationGender: row.gender,
     registrationPhone: row.phone,
+    bodApproveVoteCount: typeof row.bodApproveVoteCount === "number" ? row.bodApproveVoteCount : 0,
+    bodMajorityReached: bodMajority,
+    bodMajorityRequired: BOD_MAJORITY_APPROVALS,
+    bodDirectorSeats: BOD_DIRECTOR_SEATS,
+    boardResolutionNo: row.boardResolutionNo,
   };
 }

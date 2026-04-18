@@ -52,7 +52,7 @@ export class AuthController {
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @UseGuards(StaffJwtGuard, SuperuserGuard)
   createStaffAdmin(@Req() req: StaffRequest, @Body() dto: CreateStaffAdminDto) {
-    return this.auth.createAdmin(req.staffUser.sub, dto.email, dto.password);
+    return this.auth.createAdmin(req.staffUser.sub, dto.email, dto.password, dto.role);
   }
 
   /** Superuser only: promote an existing admin account to superuser. */

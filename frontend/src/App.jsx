@@ -393,7 +393,9 @@ export default function App() {
   const [adminToast, setAdminToast] = useState(/** @type {null | { type: "success" | "error"; message: string }} */ (null));
   const [adminCreds, setAdminCreds] = useState({ email: "", password: "" });
   /** Staff JWT role after admin dashboard login; JWT also in sessionStorage for this tab (refresh-safe). */
-  const [staffRole, setStaffRole] = useState(/** @type {null | "admin" | "superuser"} */ (null));
+  const [staffRole, setStaffRole] = useState(
+    /** @type {null | "admin" | "superuser" | "treasurer" | "board_director" | "secretary"} */ (null),
+  );
   const [staffAccessToken, setStaffAccessToken] = useState(null);
   const [managedStaffAdmins, setManagedStaffAdmins] = useState([]);
   const [newStaffAdmin, setNewStaffAdmin] = useState({ email: "", password: "" });
@@ -4386,17 +4388,19 @@ export default function App() {
           <div className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-10">
             <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Membership pipeline</h2>
             <p className="mt-1 text-sm font-medium text-slate-600">
-              Record treasury receipt of share capital and membership fees, then Board approval. Members see the next step in
-              their portal automatically.
+              Treasurer confirms fees → Board directors vote (3 of 5 to recommend) → Secretary issues Board Resolution no. and
+              final approval. Superuser can override or remove rows.
             </p>
             <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <table className="w-full min-w-[52rem] text-left text-sm">
+              <table className="w-full min-w-[64rem] text-left text-sm">
                 <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-600">
                   <tr>
                     <th className="p-4">Participant</th>
                     <th className="p-4">Stage</th>
                     <th className="p-4">LOI</th>
-                    <th className="p-4">Fees paid</th>
+                    <th className="p-4">Fees</th>
+                    <th className="p-4">BOD yes</th>
+                    <th className="p-4">Resolution</th>
                     <th className="p-4">Board OK</th>
                     <th className="p-4">Actions</th>
                   </tr>
@@ -4404,13 +4408,25 @@ export default function App() {
                 <tbody>
                   {membershipPipeline.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center font-medium text-slate-500">
+                      <td colSpan={8} className="p-8 text-center font-medium text-slate-500">
                         No participants yet, or pipeline failed to load.
                       </td>
                     </tr>
                   ) : (
-                    membershipPipeline.map((row) => (
-                      <tr key={String(row.participantId)} className="border-t border-slate-100">
+                    membershipPipeline.map((row) => {
+                      const pid = String(row.participantId);
+                      const bodNeed = typeof row.bodMajorityRequired === "number" ? row.bodMajorityRequired : 3;
+                      const bodVotes = typeof row.bodApproveVoteCount === "number" ? row.bodApproveVoteCount : 0;
+                      const canTreasury =
+                        staffRole === "treasurer" || staffRole === "admin" || staffRole === "superuser";
+                      const canBod = staffRole === "board_director" || staffRole === "superuser";
+                      const canSecretary = staffRole === "secretary" || staffRole === "superuser";
+                      const needFees = row.loiSubmitted && !row.initialFeesPaid;
+                      const needBodVote = row.initialFeesPaid && !row.boardApproved;
+                      const needSecretary =
+                        row.initialFeesPaid && row.bodMajorityReached && !row.boardApproved;
+                      return (
+                      <tr key={pid} className="border-t border-slate-100">
                         <td className="p-4 align-top">
                           <p className="font-bold text-slate-900">{String(row.fullName ?? "—")}</p>
                           <p className="break-all text-xs text-slate-500">{String(row.email ?? "")}</p>
@@ -4418,16 +4434,20 @@ export default function App() {
                         <td className="p-4 align-top text-xs font-bold uppercase text-[#004aad]">{String(row.stage ?? "—")}</td>
                         <td className="p-4 align-top">{row.loiSubmitted ? "Yes" : "—"}</td>
                         <td className="p-4 align-top">{row.initialFeesPaid ? "Yes" : "—"}</td>
+                        <td className="p-4 align-top font-mono text-xs">
+                          {bodVotes}/{bodNeed} yes
+                        </td>
+                        <td className="p-4 align-top font-mono text-xs">{row.boardResolutionNo ? String(row.boardResolutionNo) : "—"}</td>
                         <td className="p-4 align-top">{row.boardApproved ? "Yes" : "—"}</td>
                         <td className="p-4 align-top">
                           <div className="flex flex-wrap gap-2">
-                            {row.loiSubmitted && !row.initialFeesPaid ? (
+                            {needFees && canTreasury ? (
                               <button
                                 type="button"
                                 className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold uppercase text-white hover:bg-amber-700"
                                 onClick={async () => {
                                   if (!staffAccessToken) return;
-                                  await PmesService.updateParticipantMembership(staffAccessToken, String(row.participantId), {
+                                  await PmesService.updateParticipantMembership(staffAccessToken, pid, {
                                     initialFeesPaid: true,
                                   });
                                   const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
@@ -4437,20 +4457,62 @@ export default function App() {
                                 Mark fees received
                               </button>
                             ) : null}
-                            {row.initialFeesPaid && !row.boardApproved ? (
+                            {needBodVote && canBod ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold uppercase text-white hover:bg-emerald-800"
+                                  onClick={async () => {
+                                    if (!staffAccessToken) return;
+                                    await PmesService.recordBodVote(staffAccessToken, pid, true);
+                                    const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
+                                    setMembershipPipeline(Array.isArray(next) ? next : []);
+                                  }}
+                                >
+                                  BOD yes
+                                </button>
+                                <button
+                                  type="button"
+                                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold uppercase text-slate-800 hover:bg-slate-50"
+                                  onClick={async () => {
+                                    if (!staffAccessToken) return;
+                                    await PmesService.recordBodVote(staffAccessToken, pid, false);
+                                    const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
+                                    setMembershipPipeline(Array.isArray(next) ? next : []);
+                                  }}
+                                >
+                                  BOD no
+                                </button>
+                              </>
+                            ) : null}
+                            {needSecretary && canSecretary ? (
                               <button
                                 type="button"
                                 className="rounded-lg bg-[#004aad] px-3 py-1.5 text-xs font-bold uppercase text-white hover:bg-[#003d99]"
                                 onClick={async () => {
                                   if (!staffAccessToken) return;
-                                  await PmesService.updateParticipantMembership(staffAccessToken, String(row.participantId), {
+                                  await PmesService.recordSecretaryBoardConfirm(staffAccessToken, pid);
+                                  const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
+                                  setMembershipPipeline(Array.isArray(next) ? next : []);
+                                }}
+                              >
+                                Issue resolution
+                              </button>
+                            ) : null}
+                            {staffRole === "superuser" && row.initialFeesPaid && !row.boardApproved ? (
+                              <button
+                                type="button"
+                                className="rounded-lg border border-dashed border-slate-400 px-3 py-1.5 text-xs font-bold uppercase text-slate-700 hover:bg-slate-100"
+                                onClick={async () => {
+                                  if (!staffAccessToken) return;
+                                  await PmesService.updateParticipantMembership(staffAccessToken, pid, {
                                     boardApproved: true,
                                   });
                                   const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
                                   setMembershipPipeline(Array.isArray(next) ? next : []);
                                 }}
                               >
-                                Board approved
+                                Board OK (override)
                               </button>
                             ) : null}
                             {staffRole === "superuser" ? (
@@ -4472,7 +4534,8 @@ export default function App() {
                           </div>
                         </td>
                       </tr>
-                    ))
+                      );
+                    })
                   )}
                 </tbody>
               </table>

@@ -12,12 +12,29 @@ import * as bcrypt from "bcryptjs";
 import * as admin from "firebase-admin";
 import { PrismaService } from "../prisma/prisma.service";
 import type { SyncMemberDto } from "./dto/sync-member.dto";
+import type { StaffJwtRole } from "./staff-jwt.guard";
 
 export type StaffLoginResponse = {
   accessToken: string;
   expiresIn: string;
-  role: "admin" | "superuser";
+  role: StaffJwtRole;
 };
+
+function staffRoleToJwt(role: StaffRole): StaffJwtRole {
+  switch (role) {
+    case StaffRole.SUPERUSER:
+      return "superuser";
+    case StaffRole.TREASURER:
+      return "treasurer";
+    case StaffRole.BOARD_DIRECTOR:
+      return "board_director";
+    case StaffRole.SECRETARY:
+      return "secretary";
+    case StaffRole.ADMIN:
+    default:
+      return "admin";
+  }
+}
 
 @Injectable()
 export class AuthService {
@@ -236,8 +253,7 @@ export class AuthService {
     if (!ok) {
       throw new UnauthorizedException("Invalid email or password");
     }
-    const roleJwt: "admin" | "superuser" =
-      staff.role === StaffRole.SUPERUSER ? "superuser" : "admin";
+    const roleJwt = staffRoleToJwt(staff.role);
     const accessToken = this.jwt.sign({ role: roleJwt, sub: staff.id });
     return { accessToken, expiresIn: "8h", role: roleJwt };
   }
@@ -264,10 +280,22 @@ export class AuthService {
     return { success: true, message: "Password updated" };
   }
 
-  async createAdmin(createdByStaffId: string, email: string, password: string) {
+  async createAdmin(createdByStaffId: string, email: string, password: string, role: StaffRole = StaffRole.ADMIN) {
     const creator = await this.prisma.staffUser.findUnique({ where: { id: createdByStaffId } });
     if (!creator || creator.role !== StaffRole.SUPERUSER) {
       throw new ForbiddenException("Only a superuser can create admins");
+    }
+    if (role === StaffRole.SUPERUSER) {
+      throw new BadRequestException("Cannot create another superuser via this endpoint");
+    }
+    const allowed: StaffRole[] = [
+      StaffRole.ADMIN,
+      StaffRole.TREASURER,
+      StaffRole.BOARD_DIRECTOR,
+      StaffRole.SECRETARY,
+    ];
+    if (!allowed.includes(role)) {
+      throw new BadRequestException("Invalid staff role for new account");
     }
     const normalized = email.trim().toLowerCase();
     const existing = await this.prisma.staffUser.findUnique({ where: { email: normalized } });
@@ -279,7 +307,7 @@ export class AuthService {
       data: {
         email: normalized,
         passwordHash,
-        role: StaffRole.ADMIN,
+        role,
         createdById: createdByStaffId,
       },
       select: {

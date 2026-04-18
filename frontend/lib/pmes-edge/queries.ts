@@ -15,6 +15,8 @@ export type ParticipantCore = {
   memberIdNo: string | null;
   tinNo: string | null;
   initialFeesPaidAt: string | Date | null;
+  bodMajorityReachedAt: string | Date | null;
+  boardResolutionNo: string | null;
   boardApprovedAt: string | Date | null;
   fullProfileCompletedAt: string | Date | null;
   memberProfileConcurrencyStamp: number;
@@ -35,6 +37,7 @@ export type LoiSubmissionRow = { id: string } | null;
 export type ParticipantWithRels = ParticipantCore & {
   pmesRecords: PmesRecordRow[];
   loiSubmission: LoiSubmissionRow;
+  bodApproveVoteCount: number;
 };
 
 function toDate(d: string | Date): Date {
@@ -51,7 +54,7 @@ export async function loadParticipantWithRelsByEmail(
       SELECT
         id, "fullName", email, phone, dob, gender, "createdAt",
         "legacyPioneerImport", "memberIdNo", "tinNo",
-        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
+        "initialFeesPaidAt", "bodMajorityReachedAt", "boardResolutionNo", "boardApprovedAt", "fullProfileCompletedAt",
         "memberProfileConcurrencyStamp",
         callsign, "lastNameKey", "lastNameSeq"
       FROM "Participant"
@@ -64,7 +67,7 @@ export async function loadParticipantWithRelsByEmail(
       SELECT
         id, "fullName", email, phone, dob, gender, "createdAt",
         "legacyPioneerImport", "memberIdNo", "tinNo",
-        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
+        "initialFeesPaidAt", "bodMajorityReachedAt", "boardResolutionNo", "boardApprovedAt", "fullProfileCompletedAt",
         callsign, "lastNameKey", "lastNameSeq"
       FROM "Participant"
       WHERE email = ${email}
@@ -93,7 +96,7 @@ export async function loadParticipantWithRelsById(
       SELECT
         id, "fullName", email, phone, dob, gender, "createdAt",
         "legacyPioneerImport", "memberIdNo", "tinNo",
-        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
+        "initialFeesPaidAt", "bodMajorityReachedAt", "boardResolutionNo", "boardApprovedAt", "fullProfileCompletedAt",
         "memberProfileConcurrencyStamp",
         callsign, "lastNameKey", "lastNameSeq"
       FROM "Participant"
@@ -106,7 +109,7 @@ export async function loadParticipantWithRelsById(
       SELECT
         id, "fullName", email, phone, dob, gender, "createdAt",
         "legacyPioneerImport", "memberIdNo", "tinNo",
-        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
+        "initialFeesPaidAt", "bodMajorityReachedAt", "boardResolutionNo", "boardApprovedAt", "fullProfileCompletedAt",
         callsign, "lastNameKey", "lastNameSeq"
       FROM "Participant"
       WHERE id = ${id}
@@ -139,10 +142,25 @@ async function loadRelationsForParticipant(
     SELECT id FROM "LoiSubmission" WHERE "participantId" = ${p.id} LIMIT 1
   `;
   const loi = (loiRows as { id: string }[])[0] ?? null;
+  let bodApproveVoteCount = 0;
+  try {
+    const voteRows = await sql`
+      SELECT COUNT(*)::int AS n
+      FROM "BoardApprovalVote"
+      WHERE "participantId" = ${p.id} AND approve = true
+    `;
+    bodApproveVoteCount = Number((voteRows as { n: number }[])[0]?.n ?? 0);
+  } catch (e) {
+    const code = typeof (e as { code?: string })?.code === "string" ? (e as { code: string }).code : "";
+    const msg = e instanceof Error ? e.message : String(e ?? "");
+    if (code !== "42P01" && !/BoardApprovalVote/i.test(msg)) throw e;
+  }
   return {
     ...p,
     createdAt: toDate(p.createdAt as string | Date),
     initialFeesPaidAt: p.initialFeesPaidAt ? toDate(p.initialFeesPaidAt as string | Date) : null,
+    bodMajorityReachedAt: p.bodMajorityReachedAt ? toDate(p.bodMajorityReachedAt as string | Date) : null,
+    boardResolutionNo: p.boardResolutionNo ?? null,
     boardApprovedAt: p.boardApprovedAt ? toDate(p.boardApprovedAt as string | Date) : null,
     fullProfileCompletedAt: p.fullProfileCompletedAt
       ? toDate(p.fullProfileCompletedAt as string | Date)
@@ -152,5 +170,6 @@ async function loadRelationsForParticipant(
       timestamp: toDate(r.timestamp as string | Date),
     })),
     loiSubmission: loi,
+    bodApproveVoteCount,
   };
 }

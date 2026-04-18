@@ -11,6 +11,7 @@ import {
   type ParticipantWithRels,
 } from "@/lib/pmes-edge/queries";
 import { getSql } from "@/lib/db";
+import { BOD_DIRECTOR_SEATS, BOD_MAJORITY_APPROVALS } from "@/lib/pmes-edge/board-workflow.constants";
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -19,7 +20,8 @@ export type MembershipStage =
   | "PMES_NOT_PASSED"
   | "AWAITING_LOI"
   | "AWAITING_PAYMENT"
-  | "PENDING_BOARD"
+  | "AWAITING_BOD_VOTE"
+  | "AWAITING_SECRETARY_RESOLUTION"
   | "AWAITING_FULL_PROFILE"
   | "FULL_MEMBER";
 
@@ -34,14 +36,17 @@ export function toLifecyclePayload(participant: ParticipantWithRels) {
   const fees = !!participant.initialFeesPaidAt;
   const board = !!participant.boardApprovedAt;
   const profile = !!participant.fullProfileCompletedAt;
+  const bodMajority = !!participant.bodMajorityReachedAt;
 
   let stage: MembershipStage;
   if (!passed) stage = "PMES_NOT_PASSED";
   else if (!hasLoi) stage = "AWAITING_LOI";
   else if (!fees) stage = "AWAITING_PAYMENT";
-  else if (!board) stage = "PENDING_BOARD";
-  else if (!profile) stage = "AWAITING_FULL_PROFILE";
-  else stage = "FULL_MEMBER";
+  else if (board) {
+    if (!profile) stage = "AWAITING_FULL_PROFILE";
+    else stage = "FULL_MEMBER";
+  } else if (bodMajority) stage = "AWAITING_SECRETARY_RESOLUTION";
+  else stage = "AWAITING_BOD_VOTE";
 
   return {
     participantId: participant.id,
@@ -67,6 +72,11 @@ export function toLifecyclePayload(participant: ParticipantWithRels) {
     registrationDob: participant.dob,
     registrationGender: participant.gender,
     registrationPhone: participant.phone,
+    bodApproveVoteCount: participant.bodApproveVoteCount,
+    bodMajorityReached: bodMajority,
+    bodMajorityRequired: BOD_MAJORITY_APPROVALS,
+    bodDirectorSeats: BOD_DIRECTOR_SEATS,
+    boardResolutionNo: participant.boardResolutionNo ?? null,
   };
 }
 
@@ -96,6 +106,11 @@ export function noParticipantLifecycle(email: string) {
     registrationGender: null as string | null,
     registrationPhone: null as string | null,
     referralRewards,
+    bodApproveVoteCount: 0,
+    bodMajorityReached: false,
+    bodMajorityRequired: BOD_MAJORITY_APPROVALS,
+    bodDirectorSeats: BOD_DIRECTOR_SEATS,
+    boardResolutionNo: null as string | null,
   };
 }
 

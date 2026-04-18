@@ -39,8 +39,19 @@ export function getJoinPipelineBanner({ useApi, lifecycle, pmesExamPassed }) {
   if (st === "AWAITING_PAYMENT") {
     return { step: "PAYMENT", message: "Next step: pay share capital and membership fee.", tone: "info" };
   }
-  if (st === "PENDING_BOARD") {
-    return { step: "BOD", message: "Awaiting Board approval — we will notify you by email.", tone: "info" };
+  if (st === "AWAITING_BOD_VOTE") {
+    return {
+      step: "BOD",
+      message: "Directors are voting on your application — we will notify you by email.",
+      tone: "info",
+    };
+  }
+  if (st === "AWAITING_SECRETARY_RESOLUTION") {
+    return {
+      step: "BOD",
+      message: "Awaiting Secretary Board Resolution — then you can complete your membership form.",
+      tone: "info",
+    };
   }
   if (st === "AWAITING_FULL_PROFILE") {
     return {
@@ -92,7 +103,7 @@ export function planJoinNavigation({
     if (stage === "AWAITING_FULL_PROFILE") {
       return { type: "state", value: "member_pending" };
     }
-    if (stage === "PENDING_BOARD") {
+    if (stage === "AWAITING_BOD_VOTE" || stage === "AWAITING_SECRETARY_RESOLUTION") {
       return { type: "state", value: "member_pending" };
     }
     if (stage === "AWAITING_PAYMENT") {
@@ -132,7 +143,8 @@ export function shouldHidePmesEntry({ useApi, lifecycle, pmesExamPassed }) {
   return (
     st === "AWAITING_LOI" ||
     st === "AWAITING_PAYMENT" ||
-    st === "PENDING_BOARD" ||
+    st === "AWAITING_BOD_VOTE" ||
+    st === "AWAITING_SECRETARY_RESOLUTION" ||
     st === "AWAITING_FULL_PROFILE" ||
     st === "FULL_MEMBER" ||
     lifecycle.canAccessFullMemberPortal === true
