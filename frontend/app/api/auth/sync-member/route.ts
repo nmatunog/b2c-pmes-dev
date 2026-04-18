@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { verifyFirebaseIdToken } from "@/lib/firebase-edge";
 import { edgeCorsOptions } from "@/lib/edge-cors";
+import { resolveReferrerParticipantId } from "@/lib/referral-edge";
 
 type SyncBody = {
   uid?: string;
   email?: string;
   fullName?: string;
+  referralCode?: string;
 };
 
 function extractBearer(authorization: string | null): string | null {
@@ -68,7 +70,7 @@ async function assertMemberSyncAuthorized(
   throw new Error("UNAUTHORIZED: Invalid or missing member sync authorization");
 }
 
-function validateBody(raw: SyncBody): { uid: string; email: string; fullName?: string } {
+function validateBody(raw: SyncBody): { uid: string; email: string; fullName?: string; referralCode?: string } {
   const uid = String(raw.uid ?? "").trim();
   const email = String(raw.email ?? "").trim();
   if (uid.length < 10 || uid.length > 128) {
@@ -81,7 +83,11 @@ function validateBody(raw: SyncBody): { uid: string; email: string; fullName?: s
   if (fn.length > 500) {
     throw new Error("BAD_REQUEST: fullName too long");
   }
-  return { uid, email, ...(fn ? { fullName: fn } : {}) };
+  const rc = raw.referralCode != null ? String(raw.referralCode).trim() : "";
+  if (rc.length > 48) {
+    throw new Error("BAD_REQUEST: referralCode too long");
+  }
+  return { uid, email, ...(fn ? { fullName: fn } : {}), ...(rc ? { referralCode: rc } : {}) };
 }
 
 function toIso(d: unknown): string {
@@ -103,7 +109,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  let dto: { uid: string; email: string; fullName?: string };
+  let dto: { uid: string; email: string; fullName?: string; referralCode?: string };
   try {
     dto = validateBody(body);
   } catch (e) {
@@ -130,6 +136,7 @@ export async function POST(request: Request) {
   const sql = getSql();
   const normalizedEmail = dto.email.trim().toLowerCase();
   const name = (dto.fullName?.trim() || normalizedEmail.split("@")[0] || "Member").slice(0, 500);
+  const referrerId = await resolveReferrerParticipantId(sql, dto.referralCode, dto.uid);
 
   type Row = {
     id: string;
@@ -184,7 +191,10 @@ export async function POST(request: Request) {
     const keepName = String(byEmail.fullName ?? "").trim() ? byEmail.fullName : name;
     const updated = await sql`
       UPDATE "Participant"
-      SET "firebaseUid" = ${dto.uid}, "fullName" = ${keepName}
+      SET
+        "firebaseUid" = ${dto.uid},
+        "fullName" = ${keepName},
+        "referredByParticipantId" = COALESCE("referredByParticipantId", ${referrerId})
       WHERE id = ${byEmail.id}
       RETURNING id, "firebaseUid", email, "fullName", "createdAt"
     `;
@@ -204,8 +214,8 @@ export async function POST(request: Request) {
 
   const id = crypto.randomUUID();
   const created = await sql`
-    INSERT INTO "Participant" (id, "firebaseUid", email, "fullName", phone, dob, gender)
-    VALUES (${id}, ${dto.uid}, ${normalizedEmail}, ${name}, 'pending', 'pending', 'unknown')
+    INSERT INTO "Participant" (id, "firebaseUid", email, "fullName", phone, dob, gender, "referredByParticipantId")
+    VALUES (${id}, ${dto.uid}, ${normalizedEmail}, ${name}, 'pending', 'pending', 'unknown', ${referrerId})
     RETURNING id, "firebaseUid", email, "fullName", "createdAt"
   `;
   const row = (created as Row[])[0];

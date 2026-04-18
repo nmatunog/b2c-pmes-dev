@@ -48,6 +48,14 @@ function normalizeEmail(email: string): string {
 
 const REGISTRY_PLACEHOLDER_SUFFIX = "@b2c-registry.example.com";
 
+/** Matches `frontend/src/lib/referralTiers.js` PIONEER_POINTS_PER_JOIN */
+const REFERRAL_PIONEER_POINTS_PER_JOIN = 50;
+
+function startOfCurrentUtcMonth(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+}
+
 /** Synthetic sign-in emails from legacy roster import (see `buildSynthetic…` in this service). */
 function isPlaceholderRegistryLoginEmail(email: string): boolean {
   return normalizeEmail(email).endsWith(REGISTRY_PLACEHOLDER_SUFFIX);
@@ -500,6 +508,11 @@ export class PmesService {
       },
     });
     if (!participant) {
+      const referralRewards = {
+        successfulJoinCount: 0,
+        pioneerPoints: 0,
+        invitesThisMonth: 0,
+      };
       return {
         participantId: null as string | null,
         email,
@@ -519,10 +532,13 @@ export class PmesService {
         registrationDob: null as string | null,
         registrationGender: null as string | null,
         registrationPhone: null as string | null,
+        referralRewards,
       };
     }
     const withMemberId = await this.ensureMemberPublicId(participant);
-    return this.toLifecyclePayload(withMemberId);
+    const life = this.toLifecyclePayload(withMemberId);
+    const referralRewards = await this.referralRewardsForParticipant(withMemberId.id);
+    return { ...life, referralRewards };
   }
 
   async updateParticipantMembership(dto: UpdateParticipantMembershipDto) {
@@ -709,11 +725,57 @@ export class PmesService {
       throw err;
     }
 
+    await this.maybeCreditReferralJoin(withMemberId.id);
+
     return {
       success: true,
       ...(migratedLoginEmail
         ? { loginEmailUpdated: true as const, newLoginEmail: migratedLoginEmail }
         : {}),
+    };
+  }
+
+  /**
+   * One-time: when a referred member reaches FULL_MEMBER, set `referralJoinCreditedAt` so the referrer earns Pioneer Points.
+   */
+  private async maybeCreditReferralJoin(participantId: string): Promise<void> {
+    const p = await this.prisma.participant.findUnique({
+      where: { id: participantId },
+      include: {
+        pmesRecords: { orderBy: { timestamp: "desc" } },
+        loiSubmission: true,
+      },
+    });
+    if (!p?.referredByParticipantId || p.referralJoinCreditedAt) return;
+    const passed = p.pmesRecords.some((r) => r.passed);
+    const hasLoi = !!p.loiSubmission;
+    const fees = !!p.initialFeesPaidAt;
+    const board = !!p.boardApprovedAt;
+    const profile = !!p.fullProfileCompletedAt;
+    if (!passed || !hasLoi || !fees || !board || !profile) return;
+    await this.prisma.participant.update({
+      where: { id: participantId },
+      data: { referralJoinCreditedAt: new Date() },
+    });
+  }
+
+  private async referralRewardsForParticipant(participantId: string) {
+    const monthStart = startOfCurrentUtcMonth();
+    const [successfulJoinCount, invitesThisMonth] = await Promise.all([
+      this.prisma.participant.count({
+        where: { referredByParticipantId: participantId, referralJoinCreditedAt: { not: null } },
+      }),
+      this.prisma.participant.count({
+        where: {
+          referredByParticipantId: participantId,
+          referralJoinCreditedAt: { gte: monthStart },
+        },
+      }),
+    ]);
+    return {
+      successfulJoinCount,
+      pioneerPoints: successfulJoinCount * REFERRAL_PIONEER_POINTS_PER_JOIN,
+      invitesThisMonth,
     };
   }
 

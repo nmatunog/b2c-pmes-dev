@@ -29,7 +29,7 @@ export class AuthController {
     @Body() dto: SyncMemberDto,
   ) {
     await this.auth.assertMemberSyncAuthorized(syncSecret, authorization, dto);
-    return this.auth.syncMember(dto.uid, dto.email, dto.fullName);
+    return this.auth.syncMember(dto.uid, dto.email, dto.fullName, dto.referralCode);
   }
 
   /** Staff sign-in (superuser or admin) — returns JWT for PMES admin routes. */

@@ -73,8 +73,16 @@ model Participant {
   memberProfileConcurrencyStamp Int @default(0)
   /** Full legacy sheet row (B2C registry columns + extras) for audit and reclaim support */
   registryImportSnapshot Json?
+  /** Member who referred this account (PIONEER-xxxxxxxx link); set once at first Firebase sync when valid. */
+  referredByParticipantId String?
+  referredBy                Participant?  @relation("ReferralAttribution", fields: [referredByParticipantId], references: [id], onDelete: SetNull)
+  referralReferees          Participant[] @relation("ReferralAttribution")
+  /** Set when this member completes full membership (referrer earns Pioneer Points once). */
+  referralJoinCreditedAt    DateTime?
   pmesRecords   PmesRecord[]
   loiSubmission LoiSubmission?
+
+  @@index([referredByParticipantId])
 }
 
 /** Atomic per-surname sequence for default alternate ids (lastname-1, lastname-2, …). */

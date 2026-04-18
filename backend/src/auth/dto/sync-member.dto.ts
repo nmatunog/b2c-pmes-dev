@@ -15,4 +15,10 @@ export class SyncMemberDto {
   @IsString()
   @MaxLength(500)
   fullName?: string;
+
+  /** From marketing link `/?ref=PIONEER-xxxxxxxx` — attributed once on first participant row link/create. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(48)
+  referralCode?: string;
 }

@@ -7,6 +7,7 @@ import {
 } from "@/lib/pmes-edge/lifecycle";
 import { normalizeEmail } from "@/lib/pmes-edge/norm";
 import { loadParticipantWithRelsByEmail } from "@/lib/pmes-edge/queries";
+import { fetchReferralRewards } from "@/lib/referral-edge";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -25,7 +26,9 @@ export async function GET(request: Request) {
 
   try {
     const withId = await ensureMemberPublicId(sql, participant);
-    return NextResponse.json(toLifecyclePayload(withId));
+    const base = toLifecyclePayload(withId);
+    const referralRewards = await fetchReferralRewards(sql, withId.id);
+    return NextResponse.json({ ...base, referralRewards });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Membership lifecycle failed";
     if (msg.includes("Could not allocate a unique member ID")) {

@@ -71,6 +71,11 @@ export function toLifecyclePayload(participant: ParticipantWithRels) {
 }
 
 export function noParticipantLifecycle(email: string) {
+  const referralRewards = {
+    successfulJoinCount: 0,
+    pioneerPoints: 0,
+    invitesThisMonth: 0,
+  };
   return {
     participantId: null as string | null,
     email: normalizeEmail(email),
@@ -90,6 +95,7 @@ export function noParticipantLifecycle(email: string) {
     registrationDob: null as string | null,
     registrationGender: null as string | null,
     registrationPhone: null as string | null,
+    referralRewards,
   };
 }
 

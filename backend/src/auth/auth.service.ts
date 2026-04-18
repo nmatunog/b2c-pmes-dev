@@ -317,12 +317,38 @@ export class AuthService {
   }
 
   /**
+   * Resolves `PIONEER-xxxxxxxx` (last 8 hex chars of referrer Firebase uid) to a single participant id.
+   * Returns undefined if invalid, ambiguous, or self-referral.
+   */
+  private async resolveReferrerParticipantIdFromPioneerCode(
+    referralCodeRaw: string | undefined,
+    newFirebaseUid: string,
+  ): Promise<string | undefined> {
+    const raw = String(referralCodeRaw ?? "").trim();
+    if (!raw) return undefined;
+    const m = raw.match(/^PIONEER-([a-fA-F0-9]{8})$/i);
+    if (!m?.[1]) return undefined;
+    const suffix = m[1].toUpperCase();
+    const rows = await this.prisma.$queryRaw<Array<{ id: string; firebaseUid: string | null }>>`
+      SELECT id, "firebaseUid" FROM "Participant"
+      WHERE "firebaseUid" IS NOT NULL
+      AND UPPER(RIGHT(REPLACE("firebaseUid", '-', ''), 8)) = ${suffix}
+      LIMIT 2
+    `;
+    if (rows.length !== 1) return undefined;
+    const refUid = String(rows[0]!.firebaseUid ?? "");
+    if (!refUid || refUid === newFirebaseUid) return undefined;
+    return rows[0]!.id;
+  }
+
+  /**
    * Bridge Firebase Auth → `Participant` (Neon/Postgres). Call after sign-up or first sign-in.
    * Upserts by `firebaseUid`, or links uid to an existing row matched by email (e.g. PMES created first).
    */
-  async syncMember(uid: string, email: string, fullName?: string) {
+  async syncMember(uid: string, email: string, fullName?: string, referralCode?: string) {
     const normalizedEmail = email.trim().toLowerCase();
     const name = (fullName?.trim() || normalizedEmail.split("@")[0] || "Member").slice(0, 500);
+    const referrerId = await this.resolveReferrerParticipantIdFromPioneerCode(referralCode, uid);
 
     const existingByUid = await this.prisma.participant.findUnique({ where: { firebaseUid: uid } });
     if (existingByUid) {
@@ -357,6 +383,9 @@ export class AuthService {
         data: {
           firebaseUid: uid,
           fullName: existingByEmail.fullName?.trim() ? existingByEmail.fullName : name,
+          ...(referrerId && !existingByEmail.referredByParticipantId
+            ? { referredByParticipantId: referrerId }
+            : {}),
         },
         select: {
           id: true,
@@ -381,6 +410,7 @@ export class AuthService {
         phone: "pending",
         dob: "pending",
         gender: "unknown",
+        ...(referrerId ? { referredByParticipantId: referrerId } : {}),
       },
       select: {
         id: true,

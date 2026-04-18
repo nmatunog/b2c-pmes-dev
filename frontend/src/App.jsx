@@ -273,6 +273,27 @@ export default function App() {
   }, [appState]);
 
   const [authReady, setAuthReady] = useState(false);
+
+  /** Store `?ref=PIONEER-...` for POST /auth/sync-member; strip from URL after capture. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get("ref")?.trim();
+      if (ref) {
+        if (!sessionStorage.getItem("b2c_pmes_referral_code")) {
+          sessionStorage.setItem("b2c_pmes_referral_code", ref);
+        }
+        params.delete("ref");
+        const qs = params.toString();
+        const next = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, "", next);
+      }
+    } catch {
+      /* sessionStorage / history may be unavailable */
+    }
+  }, []);
+
   const [signUp, setSignUp] = useState({
     firstName: "",
     middleName: "",
@@ -400,8 +421,6 @@ export default function App() {
   const [courseAudioEnabled, setCourseAudioEnabledState] = useState(readCourseAudioPreference);
   /** True when the member left PMES for the marketing home but has not finished the flow (resume later). */
   const [pmesPaused, setPmesPaused] = useState(false);
-  /** Pioneer referral stats — wire to API when joins are tracked server-side. */
-  const [pioneerReferral] = useState(() => ({ successfulJoinCount: 0, invitesThisMonth: 0 }));
   /** PostgreSQL membership pipeline when `VITE_API_BASE_URL` is set */
   const [membershipLifecycle, setMembershipLifecycle] = useState(/** @type {Record<string, unknown> | null} */ (null));
   const [membershipLoading, setMembershipLoading] = useState(false);
@@ -3175,7 +3194,15 @@ export default function App() {
     const referralCodePending = user?.uid
       ? `PIONEER-${String(user.uid).replace(/-/g, "").slice(-8).toUpperCase()}`
       : "PIONEER-PENDING";
-    const pioneerPointsPending = pioneerReferral.successfulJoinCount * PIONEER_POINTS_PER_JOIN;
+    const rr = membershipLifecycle?.referralRewards;
+    const pioneerReferralStats = {
+      successfulJoinCount: typeof rr?.successfulJoinCount === "number" ? rr.successfulJoinCount : 0,
+      invitesThisMonth: typeof rr?.invitesThisMonth === "number" ? rr.invitesThisMonth : 0,
+      pioneerPoints:
+        typeof rr?.pioneerPoints === "number"
+          ? rr.pioneerPoints
+          : (typeof rr?.successfulJoinCount === "number" ? rr.successfulJoinCount * PIONEER_POINTS_PER_JOIN : 0),
+    };
     const showLegacyInvitePanel =
       Boolean(membershipLifecycle?.isLegacyFounderImport) &&
       String(membershipLifecycle?.stage || "") === "AWAITING_FULL_PROFILE";
@@ -3288,9 +3315,9 @@ export default function App() {
               <ReferralEngine
                 memberName={memberDisplayName || "Member"}
                 referralCode={referralCodePending}
-                successfulJoinCount={pioneerReferral.successfulJoinCount}
-                pioneerPoints={pioneerPointsPending}
-                invitesThisMonth={pioneerReferral.invitesThisMonth}
+                successfulJoinCount={pioneerReferralStats.successfulJoinCount}
+                pioneerPoints={pioneerReferralStats.pioneerPoints}
+                invitesThisMonth={pioneerReferralStats.invitesThisMonth}
               />
             ) : null}
           </div>
@@ -3342,7 +3369,18 @@ export default function App() {
     const referralCode = user?.uid
       ? `PIONEER-${String(user.uid).replace(/-/g, "").slice(-8).toUpperCase()}`
       : "PIONEER-PENDING";
-    const pioneerPoints = pioneerReferral.successfulJoinCount * PIONEER_POINTS_PER_JOIN;
+    const rrPortal = membershipLifecycle?.referralRewards;
+    const pioneerReferralStatsPortal = {
+      successfulJoinCount: typeof rrPortal?.successfulJoinCount === "number" ? rrPortal.successfulJoinCount : 0,
+      invitesThisMonth: typeof rrPortal?.invitesThisMonth === "number" ? rrPortal.invitesThisMonth : 0,
+      pioneerPoints:
+        typeof rrPortal?.pioneerPoints === "number"
+          ? rrPortal.pioneerPoints
+          : (typeof rrPortal?.successfulJoinCount === "number"
+              ? rrPortal.successfulJoinCount * PIONEER_POINTS_PER_JOIN
+              : 0),
+    };
+    const pioneerPoints = pioneerReferralStatsPortal.pioneerPoints;
     return (
       <>
         {identityRibbon}{portalHomeBar}
@@ -3419,9 +3457,9 @@ export default function App() {
               <ReferralEngine
                 memberName={memberDisplayName || "Member"}
                 referralCode={referralCode}
-                successfulJoinCount={pioneerReferral.successfulJoinCount}
+                successfulJoinCount={pioneerReferralStatsPortal.successfulJoinCount}
                 pioneerPoints={pioneerPoints}
-                invitesThisMonth={pioneerReferral.invitesThisMonth}
+                invitesThisMonth={pioneerReferralStatsPortal.invitesThisMonth}
               />
             ) : null}
           </div>

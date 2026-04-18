@@ -5,6 +5,7 @@ import { normalizeEmail } from "@/lib/pmes-edge/norm";
 import { loadParticipantWithRelsByEmail } from "@/lib/pmes-edge/queries";
 import { validateAndNormalizeCallsignInput } from "@/lib/pmes-edge/callsign-validate";
 import { isMissingMemberProfileStampColumnError } from "@/lib/pmes-edge/pg-stamp-fallback";
+import { maybeCreditReferralJoin } from "@/lib/referral-edge";
 
 type Body = {
   email?: string;
@@ -229,6 +230,7 @@ export async function POST(request: Request) {
         `;
       }
     }
+    await maybeCreditReferralJoin(sql, withId.id);
     return NextResponse.json({ success: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Full profile submit failed";
