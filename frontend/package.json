@@ -15,7 +15,7 @@
     "cf:deploy:safe": "npm run preflight:api && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf:deploy:web": "npm run cf:build && wrangler deploy --config wrangler.b2c-pmes-web.jsonc",
     "cf:deploy:web:safe": "npm run preflight:api && npm run cf:build && wrangler deploy --config wrangler.b2c-pmes-web.jsonc",
-    "pages:deploy:safe": "npm run preflight:api && vite build && wrangler pages deploy dist --project-name b2c-pmes-web-ui",
+    "pages:deploy:safe": "npm run preflight:api && vite build && wrangler pages deploy --cwd cloudflare-pages-ui --project-name b2c-pmes-web-ui",
     "vite:dev": "vite",
     "vite:build": "vite build",
     "vite:preview": "vite preview",

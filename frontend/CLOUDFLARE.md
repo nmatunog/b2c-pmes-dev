@@ -122,7 +122,7 @@ Local Wrangler preview can use **`frontend/.dev.vars.example`** as a template fo
 
 ## Vite app (separate stack)
 
-The marketing UI under **`frontend/src`** is built with **`npm run vite:build`** → **`dist/`**. That is a **separate** deploy (Cloudflare **Pages** project **`b2c-pmes-web-ui`** in this repo’s `pages:deploy:safe` script). This document covers only the **Next.js** OpenNext Worker. For the full production picture (apex domain, API URL, CORS), see **[../docs/OPERATIONS.md](../docs/OPERATIONS.md)**.
+The marketing UI under **`frontend/src`** is built with **`npm run vite:build`** → **`dist/`**. Deploy with **`npm run pages:deploy:safe`** (Cloudflare **Pages** project **`b2c-pmes-web-ui`**). Pages-only Wrangler config lives in **`frontend/cloudflare-pages-ui/wrangler.jsonc`** (`pages_build_output_dir` → **`../dist`**) so Wrangler does not mix Pages settings with the OpenNext **`frontend/wrangler.jsonc`** Worker config (which would error or warn). This document covers only the **Next.js** OpenNext Worker. For the full production picture (apex domain, API URL, CORS), see **[../docs/OPERATIONS.md](../docs/OPERATIONS.md)**.
 
 ---
 
