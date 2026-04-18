@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   EmailAuthProvider,
@@ -37,6 +37,7 @@ import {
   Sparkles,
   User,
   UserPlus,
+  X,
 } from "lucide-react";
 import { queueSignupLiveActivityFromDevice } from "./lib/signupLiveActivity.js";
 import { modules } from "./constants/modules";
@@ -74,6 +75,16 @@ import {
   shouldHidePmesEntry,
 } from "./lib/joinJourney.js";
 import { resolveMemberPortalAccess } from "./lib/membershipAccess.js";
+import { countMembershipInboxByStage, staffPipelineInboxSummary } from "./lib/membershipInboxCounts.js";
+
+/** Pipeline row flags — BOD votes only while majority not yet reached. */
+function flagsFromPipelineRow(row) {
+  const needFees = row.loiSubmitted && !row.initialFeesPaid;
+  const needBodVote =
+    row.initialFeesPaid && row.loiSubmitted && !row.boardApproved && !row.bodMajorityReached;
+  const needSecretary = row.initialFeesPaid && row.bodMajorityReached && !row.boardApproved;
+  return { needFees, needBodVote, needSecretary };
+}
 
 /**
  * Gemini prebuilt voices currently accepted in production include Aoede.
@@ -449,6 +460,8 @@ export default function App() {
     ),
   );
   const [membershipPipeline, setMembershipPipeline] = useState(/** @type {unknown[]} */ ([]));
+  /** Admin dashboard: participant card opened from pipeline name click. */
+  const [pipelineDetailRow, setPipelineDetailRow] = useState(/** @type {Record<string, unknown> | null} */ (null));
   /** Admin member registry (full membership submissions) */
   const [registryRows, setRegistryRows] = useState(/** @type {unknown[]} */ ([]));
   const [registryTotal, setRegistryTotal] = useState(0);
@@ -1037,8 +1050,27 @@ export default function App() {
     return () => clearTimeout(id);
   }, [adminToast]);
 
+  const refreshMembershipPipelineRows = useCallback(async () => {
+    if (!staffAccessToken) return [];
+    const rows = await PmesService.fetchMembershipPipeline(staffAccessToken);
+    const list = Array.isArray(rows) ? rows : [];
+    setMembershipPipeline(list);
+    return list;
+  }, [staffAccessToken]);
+
+  const afterPipelineMutation = useCallback(async () => {
+    const list = await refreshMembershipPipelineRows();
+    setPipelineDetailRow((prev) => {
+      if (!prev) return null;
+      const id = String(prev.participantId);
+      const next = list.find((x) => String(x.participantId) === id);
+      return next ?? null;
+    });
+  }, [refreshMembershipPipelineRows]);
+
   useEffect(() => {
-    if (appState !== "admin_dashboard" || !staffAccessToken) return;
+    if (!staffAccessToken) return;
+    if (appState !== "admin_dashboard" && appState !== "landing") return;
     let cancelled = false;
     void PmesService.fetchMembershipPipeline(staffAccessToken)
       .then((rows) => {
@@ -1061,7 +1093,7 @@ export default function App() {
               type: "error",
               message: "Admin session expired or invalid. Sign in to the admin portal again.",
             });
-          } else {
+          } else if (appState === "admin_dashboard") {
             setAdminToast({
               type: "error",
               message: msg?.trim() || "Membership pipeline could not be loaded.",
@@ -1073,6 +1105,10 @@ export default function App() {
       cancelled = true;
     };
   }, [appState, staffAccessToken]);
+
+  useEffect(() => {
+    if (appState !== "admin_dashboard") setPipelineDetailRow(null);
+  }, [appState]);
 
   useEffect(() => {
     if (appState !== "admin_dashboard" || !staffAccessToken) return;
@@ -1268,6 +1304,9 @@ export default function App() {
       await PmesService.deleteParticipant(staffAccessToken, row.participantId);
       setMembershipPipeline((list) =>
         Array.isArray(list) ? list.filter((r) => String(r.participantId) !== String(row.participantId)) : [],
+      );
+      setPipelineDetailRow((p) =>
+        p && String(p.participantId) === String(row.participantId) ? null : p,
       );
     } catch (e) {
       window.alert(e instanceof Error ? e.message : "Delete failed.");
@@ -1675,6 +1714,15 @@ export default function App() {
     lifecycle: membershipLifecycle,
     pmesExamPassed,
   });
+
+  const staffInboxCounts = useMemo(
+    () => countMembershipInboxByStage(membershipPipeline),
+    [membershipPipeline],
+  );
+  const staffInboxSummary = useMemo(
+    () => staffPipelineInboxSummary(staffRole, staffInboxCounts),
+    [staffRole, staffInboxCounts],
+  );
 
   const memberIdentityForBanner =
     user && appState !== "member_auth" && !staffForBanner
@@ -2425,6 +2473,14 @@ export default function App() {
             registrationNavRef.current = "portal";
             setAppState("registration");
           }}
+          staffPipelineInbox={
+            useApiMembership && staffAccessToken && staffInboxSummary
+              ? {
+                  lines: staffInboxSummary.lines,
+                  onOpenAdmin: () => setAppState("admin_dashboard"),
+                }
+              : null
+          }
         />
       </>
     );
@@ -3662,6 +3718,26 @@ export default function App() {
               Logout
             </button>
           </div>
+          {staffInboxSummary && useApiMembership ? (
+            <div className="border-b border-amber-200 bg-amber-50/95 px-6 py-4 lg:px-10">
+              <div className="flex gap-3">
+                <Briefcase className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" aria-hidden />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-900/80">Cooperative inbox</p>
+                  <ul className="mt-2 list-inside list-disc space-y-1 text-sm font-semibold text-amber-950">
+                    {staffInboxSummary.lines.map((line, idx) => (
+                      <li key={`${idx}-${line.slice(0, 48)}`} className="leading-snug">
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-xs font-medium text-amber-900/80">
+                    Use the <strong>Membership pipeline</strong> table below to open a member and record the action.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="border-b border-slate-200 bg-slate-50 px-6 py-8 lg:px-10">
             <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Staff password</h2>
             <p className="mt-1 text-sm font-medium text-slate-600">
@@ -4854,15 +4930,21 @@ export default function App() {
                         staffRole === "treasurer" || staffRole === "admin" || staffRole === "superuser";
                       const canBod = staffRole === "board_director" || staffRole === "superuser";
                       const canSecretary = staffRole === "secretary" || staffRole === "superuser";
-                      const needFees = row.loiSubmitted && !row.initialFeesPaid;
-                      const needBodVote = row.initialFeesPaid && row.loiSubmitted && !row.boardApproved;
-                      const needSecretary =
-                        row.initialFeesPaid && row.bodMajorityReached && !row.boardApproved;
+                      const { needFees, needBodVote, needSecretary } = flagsFromPipelineRow(row);
                       return (
                       <tr key={pid} className="border-t border-slate-100">
                         <td className="p-4 align-top">
-                          <p className="font-bold text-slate-900">{String(row.fullName ?? "—")}</p>
+                          <button
+                            type="button"
+                            className="text-left font-bold text-[#004aad] underline decoration-[#004aad]/35 underline-offset-2 hover:text-[#003580]"
+                            onClick={() => setPipelineDetailRow(/** @type {Record<string, unknown>} */ (row))}
+                          >
+                            {String(row.fullName ?? "—")}
+                          </button>
                           <p className="break-all text-xs text-slate-500">{String(row.email ?? "")}</p>
+                          {row.phone ? (
+                            <p className="mt-1 text-xs text-slate-500">{String(row.phone)}</p>
+                          ) : null}
                         </td>
                         <td className="p-4 align-top text-xs font-bold uppercase text-[#004aad]">{String(row.stage ?? "—")}</td>
                         <td className="p-4 align-top">{row.loiSubmitted ? "Yes" : "—"}</td>
@@ -4883,8 +4965,7 @@ export default function App() {
                                   await PmesService.updateParticipantMembership(staffAccessToken, pid, {
                                     initialFeesPaid: true,
                                   });
-                                  const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
-                                  setMembershipPipeline(Array.isArray(next) ? next : []);
+                                  await afterPipelineMutation();
                                 }}
                               >
                                 Mark fees received
@@ -4898,8 +4979,7 @@ export default function App() {
                                   onClick={async () => {
                                     if (!staffAccessToken) return;
                                     await PmesService.recordBodVote(staffAccessToken, pid, true);
-                                    const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
-                                    setMembershipPipeline(Array.isArray(next) ? next : []);
+                                    await afterPipelineMutation();
                                   }}
                                 >
                                   BOD yes
@@ -4910,8 +4990,7 @@ export default function App() {
                                   onClick={async () => {
                                     if (!staffAccessToken) return;
                                     await PmesService.recordBodVote(staffAccessToken, pid, false);
-                                    const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
-                                    setMembershipPipeline(Array.isArray(next) ? next : []);
+                                    await afterPipelineMutation();
                                   }}
                                 >
                                   BOD no
@@ -4925,8 +5004,7 @@ export default function App() {
                                 onClick={async () => {
                                   if (!staffAccessToken) return;
                                   await PmesService.recordSecretaryBoardConfirm(staffAccessToken, pid);
-                                  const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
-                                  setMembershipPipeline(Array.isArray(next) ? next : []);
+                                  await afterPipelineMutation();
                                 }}
                               >
                                 Issue resolution
@@ -4941,8 +5019,7 @@ export default function App() {
                                   await PmesService.updateParticipantMembership(staffAccessToken, pid, {
                                     boardApproved: true,
                                   });
-                                  const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
-                                  setMembershipPipeline(Array.isArray(next) ? next : []);
+                                  await afterPipelineMutation();
                                 }}
                               >
                                 Board OK (override)
@@ -4976,6 +5053,153 @@ export default function App() {
           </div>
         </div>
       </div>
+      {pipelineDetailRow ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-900/50 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pipeline-card-title"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setPipelineDetailRow(null)}
+            aria-label="Close dialog"
+          />
+          <div className="relative max-h-[min(90vh,40rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <button
+              type="button"
+              className="absolute right-3 top-3 rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+              onClick={() => setPipelineDetailRow(null)}
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" aria-hidden />
+            </button>
+            {(() => {
+              const row = pipelineDetailRow;
+              const pid = String(row.participantId);
+              const bodNeed = typeof row.bodMajorityRequired === "number" ? row.bodMajorityRequired : 3;
+              const bodVotes = typeof row.bodApproveVoteCount === "number" ? row.bodApproveVoteCount : 0;
+              const canTreasury =
+                staffRole === "treasurer" || staffRole === "admin" || staffRole === "superuser";
+              const canBod = staffRole === "board_director" || staffRole === "superuser";
+              const canSecretary = staffRole === "secretary" || staffRole === "superuser";
+              const { needFees, needBodVote, needSecretary } = flagsFromPipelineRow(row);
+              return (
+                <>
+                  <h2 id="pipeline-card-title" className="pr-10 text-lg font-black uppercase tracking-tight text-slate-900">
+                    {String(row.fullName ?? "Member")}
+                  </h2>
+                  <p className="mt-1 break-all text-sm text-slate-600">{String(row.email ?? "")}</p>
+                  {row.phone ? <p className="mt-1 text-sm text-slate-500">{String(row.phone)}</p> : null}
+                  <dl className="mt-4 grid grid-cols-2 gap-2 text-xs sm:text-sm">
+                    <dt className="font-bold text-slate-500">Stage</dt>
+                    <dd className="font-bold uppercase text-[#004aad]">{String(row.stage ?? "—")}</dd>
+                    <dt className="font-bold text-slate-500">LOI</dt>
+                    <dd>{row.loiSubmitted ? "Yes" : "—"}</dd>
+                    <dt className="font-bold text-slate-500">Fees paid</dt>
+                    <dd>{row.initialFeesPaid ? "Yes" : "No"}</dd>
+                    <dt className="font-bold text-slate-500">BOD yes votes</dt>
+                    <dd className="font-mono">
+                      {bodVotes}/{bodNeed}
+                    </dd>
+                    <dt className="font-bold text-slate-500">Resolution</dt>
+                    <dd className="font-mono">{row.boardResolutionNo ? String(row.boardResolutionNo) : "—"}</dd>
+                    <dt className="font-bold text-slate-500">Board approved</dt>
+                    <dd>{row.boardApproved ? "Yes" : "No"}</dd>
+                  </dl>
+                  <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                    {needFees && canTreasury ? (
+                      <button
+                        type="button"
+                        className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold uppercase text-white hover:bg-amber-700"
+                        onClick={async () => {
+                          if (!staffAccessToken) return;
+                          await PmesService.updateParticipantMembership(staffAccessToken, pid, {
+                            initialFeesPaid: true,
+                          });
+                          await afterPipelineMutation();
+                        }}
+                      >
+                        Mark fees received
+                      </button>
+                    ) : null}
+                    {needBodVote && canBod ? (
+                      <>
+                        <button
+                          type="button"
+                          className="rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold uppercase text-white hover:bg-emerald-800"
+                          onClick={async () => {
+                            if (!staffAccessToken) return;
+                            await PmesService.recordBodVote(staffAccessToken, pid, true);
+                            await afterPipelineMutation();
+                          }}
+                        >
+                          Approve (BOD yes)
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold uppercase text-slate-800 hover:bg-slate-50"
+                          onClick={async () => {
+                            if (!staffAccessToken) return;
+                            await PmesService.recordBodVote(staffAccessToken, pid, false);
+                            await afterPipelineMutation();
+                          }}
+                        >
+                          BOD no
+                        </button>
+                      </>
+                    ) : null}
+                    {needSecretary && canSecretary ? (
+                      <button
+                        type="button"
+                        className="rounded-lg bg-[#004aad] px-4 py-2 text-xs font-bold uppercase text-white hover:bg-[#003d99]"
+                        onClick={async () => {
+                          if (!staffAccessToken) return;
+                          await PmesService.recordSecretaryBoardConfirm(staffAccessToken, pid);
+                          await afterPipelineMutation();
+                        }}
+                      >
+                        Issue resolution
+                      </button>
+                    ) : null}
+                    {staffRole === "superuser" && row.initialFeesPaid && !row.boardApproved ? (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-dashed border-slate-400 px-4 py-2 text-xs font-bold uppercase text-slate-700 hover:bg-slate-100"
+                        onClick={async () => {
+                          if (!staffAccessToken) return;
+                          await PmesService.updateParticipantMembership(staffAccessToken, pid, {
+                            boardApproved: true,
+                          });
+                          await afterPipelineMutation();
+                        }}
+                      >
+                        Board OK (override)
+                      </button>
+                    ) : null}
+                    {staffRole === "superuser" ? (
+                      <button
+                        type="button"
+                        disabled={deletingPipelineParticipantId === String(row.participantId)}
+                        onClick={() => handleDeletePipelineParticipant(row)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold uppercase text-red-800 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        {deletingPipelineParticipantId === String(row.participantId) ? (
+                          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        )}
+                        Remove account
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      ) : null}
       {adminToast ? (
         <div
           className={`fixed bottom-6 right-6 z-[60] flex max-w-md items-start gap-3 rounded-2xl border-2 px-4 py-3 shadow-xl sm:max-w-lg ${

@@ -11,6 +11,7 @@ import { ctaOutlineLight, ctaPrimary, ctaPrimaryFocus, ctaSecondary, ctaSecondar
 import { pickRandomActivityMessage } from "./cebuActivityMock.js";
 import { SIGNUP_LIVE_ACTIVITY_KEY } from "../lib/signupLiveActivity.js";
 import {
+  Briefcase,
   Users,
   ShieldCheck,
   Menu,
@@ -64,6 +65,8 @@ export default function LandingPage({
   /** Signed-in: navigate to full member portal (dashboard); not the profile intake form. */
   onMemberPortal,
   onMemberProfile,
+  /** Staff JWT on home: show pipeline action counts (Treasurer / BOD / Secretary). */
+  staffPipelineInbox = null,
   /** After inline sign-up, user taps **Start PMES** — parent runs join path (e.g. live activity + `goJoinUnified`). */
   onAfterSignupStartPmes,
   /** Opens full-screen member auth (callsign, extended registration). */
@@ -926,6 +929,33 @@ export default function LandingPage({
               <code className="rounded bg-amber-100/80 px-1">frontend/.env</code>.
             </div>
           )}
+
+          {staffPipelineInbox && Array.isArray(staffPipelineInbox.lines) && staffPipelineInbox.lines.length > 0 ? (
+            <div className="mb-6 w-full max-w-4xl rounded-2xl border border-amber-300/90 bg-amber-50 px-4 py-4 text-left shadow-sm sm:mb-8 sm:px-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 gap-3">
+                  <Briefcase className="mt-0.5 h-6 w-6 shrink-0 text-amber-800" aria-hidden />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-900/90">Cooperative inbox</p>
+                    <ul className="mt-2 space-y-1.5 text-sm font-semibold leading-snug text-amber-950">
+                      {staffPipelineInbox.lines.map((line, idx) => (
+                        <li key={`${idx}-${line.slice(0, 24)}`}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                {typeof staffPipelineInbox.onOpenAdmin === "function" ? (
+                  <button
+                    type="button"
+                    onClick={() => staffPipelineInbox.onOpenAdmin()}
+                    className="shrink-0 rounded-xl bg-amber-800 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:bg-amber-900 sm:min-h-[44px]"
+                  >
+                    Open pipeline
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           {authUser && joinPipelineBanner && (
             <div
