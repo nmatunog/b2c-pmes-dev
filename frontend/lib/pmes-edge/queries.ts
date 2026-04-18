@@ -67,7 +67,7 @@ export async function loadParticipantWithRelsByEmail(
       SELECT
         id, "fullName", email, phone, dob, gender, "createdAt",
         "legacyPioneerImport", "memberIdNo", "tinNo",
-        "initialFeesPaidAt", "bodMajorityReachedAt", "boardResolutionNo", "boardApprovedAt", "fullProfileCompletedAt",
+        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
         callsign, "lastNameKey", "lastNameSeq"
       FROM "Participant"
       WHERE email = ${email}
@@ -76,8 +76,14 @@ export async function loadParticipantWithRelsByEmail(
   }
   const raw = (rows as Omit<ParticipantCore, "memberProfileConcurrencyStamp">[])[0];
   if (!raw) return null;
+  const r = raw as {
+    bodMajorityReachedAt?: string | Date | null;
+    boardResolutionNo?: string | null;
+  };
   const p: ParticipantCore = {
     ...raw,
+    bodMajorityReachedAt: r.bodMajorityReachedAt ?? null,
+    boardResolutionNo: r.boardResolutionNo ?? null,
     memberProfileConcurrencyStamp:
       typeof (raw as ParticipantCore).memberProfileConcurrencyStamp === "number"
         ? (raw as ParticipantCore).memberProfileConcurrencyStamp
@@ -109,7 +115,7 @@ export async function loadParticipantWithRelsById(
       SELECT
         id, "fullName", email, phone, dob, gender, "createdAt",
         "legacyPioneerImport", "memberIdNo", "tinNo",
-        "initialFeesPaidAt", "bodMajorityReachedAt", "boardResolutionNo", "boardApprovedAt", "fullProfileCompletedAt",
+        "initialFeesPaidAt", "boardApprovedAt", "fullProfileCompletedAt",
         callsign, "lastNameKey", "lastNameSeq"
       FROM "Participant"
       WHERE id = ${id}
@@ -118,8 +124,14 @@ export async function loadParticipantWithRelsById(
   }
   const raw = (rows as Omit<ParticipantCore, "memberProfileConcurrencyStamp">[])[0];
   if (!raw) return null;
+  const r = raw as {
+    bodMajorityReachedAt?: string | Date | null;
+    boardResolutionNo?: string | null;
+  };
   const p: ParticipantCore = {
     ...raw,
+    bodMajorityReachedAt: r.bodMajorityReachedAt ?? null,
+    boardResolutionNo: r.boardResolutionNo ?? null,
     memberProfileConcurrencyStamp:
       typeof (raw as ParticipantCore).memberProfileConcurrencyStamp === "number"
         ? (raw as ParticipantCore).memberProfileConcurrencyStamp

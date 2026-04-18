@@ -1,11 +1,17 @@
 /**
- * Edge routes SELECT/UPDATE `memberProfileConcurrencyStamp` after Prisma migration. If production DB
- * has not run the migration yet, Postgres errors — detect and retry without the column (stamp = 0).
+ * Edge SQL often SELECTs columns added in later Prisma migrations. If production has not applied
+ * a migration yet, Postgres returns undefined_column — detect and retry with a slimmer SELECT.
+ *
+ * Covers: `memberProfileConcurrencyStamp`, BOD workflow (`bodMajorityReachedAt`, `boardResolutionNo`).
  */
 export function isMissingMemberProfileStampColumnError(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e ?? "");
-  if (!/memberProfileConcurrencyStamp/i.test(msg)) return false;
   const code = typeof (e as { code?: string })?.code === "string" ? (e as { code: string }).code : "";
+  const optional =
+    /memberProfileConcurrencyStamp/i.test(msg) ||
+    /bodMajorityReachedAt/i.test(msg) ||
+    /boardResolutionNo/i.test(msg);
+  if (!optional) return false;
   return (
     code === "42703" ||
     /does not exist/i.test(msg) ||
