@@ -1,3 +1,16 @@
+/** Chairman / Vice chairman / GM use JWT `admin` but may cast BOD votes (see staff login `dbRole`). */
+const BOARD_OFFICER_DB_ROLES = ["CHAIRMAN", "VICE_CHAIRMAN", "GENERAL_MANAGER"];
+
+/**
+ * UI + inbox: who may see BOD vote actions (JWT + optional Prisma `dbRole` from login).
+ */
+export function canCastBodVote(jwtRole, dbRole) {
+  if (!jwtRole) return false;
+  if (jwtRole === "superuser" || jwtRole === "board_director") return true;
+  if (jwtRole === "admin" && dbRole && BOARD_OFFICER_DB_ROLES.includes(dbRole)) return true;
+  return false;
+}
+
 /**
  * Count pipeline rows by cooperative stage for staff inbox prompts (Treasurer / BOD / Secretary).
  * Mirrors `toLifecyclePayload` stages in the API.
@@ -17,15 +30,20 @@ export function countMembershipInboxByStage(rows) {
 /**
  * @param {string | null} role — staff JWT role
  * @param {{ treasurer: number; bod: number; secretary: number }} counts
+ * @param {string | null | undefined} dbRole — Prisma StaffUser.role from login (e.g. CHAIRMAN)
  * @returns {null | { lines: string[] }}
  */
-export function staffPipelineInboxSummary(role, counts) {
+export function staffPipelineInboxSummary(role, counts, dbRole) {
   if (!role || !counts) return null;
   const lines = [];
   const isTreasurer = role === "treasurer";
-  const isBod = role === "board_director";
   const isSecretary = role === "secretary";
   const isAdmin = role === "admin" || role === "superuser";
+  const showBodInbox =
+    counts.bod > 0 &&
+    (role === "board_director" ||
+      role === "superuser" ||
+      (role === "admin" && dbRole && BOARD_OFFICER_DB_ROLES.includes(dbRole)));
 
   if (isAdmin || isTreasurer) {
     if (counts.treasurer > 0) {
@@ -34,12 +52,10 @@ export function staffPipelineInboxSummary(role, counts) {
       );
     }
   }
-  if (isAdmin || isBod) {
-    if (counts.bod > 0) {
-      lines.push(
-        `${counts.bod} member application${counts.bod === 1 ? "" : "s"} need Board of Directors approval votes.`,
-      );
-    }
+  if (showBodInbox) {
+    lines.push(
+      `${counts.bod} member application${counts.bod === 1 ? "" : "s"} need Board of Directors approval votes.`,
+    );
   }
   if (isAdmin || isSecretary) {
     if (counts.secretary > 0) {

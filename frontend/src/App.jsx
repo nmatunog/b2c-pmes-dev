@@ -75,7 +75,11 @@ import {
   shouldHidePmesEntry,
 } from "./lib/joinJourney.js";
 import { resolveMemberPortalAccess } from "./lib/membershipAccess.js";
-import { countMembershipInboxByStage, staffPipelineInboxSummary } from "./lib/membershipInboxCounts.js";
+import {
+  canCastBodVote,
+  countMembershipInboxByStage,
+  staffPipelineInboxSummary,
+} from "./lib/membershipInboxCounts.js";
 
 /** Pipeline row flags — BOD votes only while majority not yet reached. */
 function flagsFromPipelineRow(row) {
@@ -140,13 +144,21 @@ function escapeHtmlForPrint(text) {
 const STAFF_SS_TOKEN = "b2c_pmes_staff_jwt";
 const STAFF_SS_ROLE = "b2c_pmes_staff_role";
 const STAFF_SS_EMAIL = "b2c_pmes_staff_email";
+const STAFF_SS_DB_ROLE = "b2c_pmes_staff_db_role";
 
-function persistStaffSession(token, role, email) {
+function persistStaffSession(token, role, email, dbRole) {
   try {
-    if (!token?.trim() || !email?.trim() || (role !== "admin" && role !== "superuser")) return;
+    if (!token?.trim() || !email?.trim()) return;
+    const allowed = ["admin", "superuser", "treasurer", "board_director", "secretary"];
+    if (!allowed.includes(role)) return;
     sessionStorage.setItem(STAFF_SS_TOKEN, token.trim());
     sessionStorage.setItem(STAFF_SS_ROLE, role);
     sessionStorage.setItem(STAFF_SS_EMAIL, email.trim());
+    if (dbRole && typeof dbRole === "string" && String(dbRole).trim()) {
+      sessionStorage.setItem(STAFF_SS_DB_ROLE, String(dbRole).trim());
+    } else {
+      sessionStorage.removeItem(STAFF_SS_DB_ROLE);
+    }
   } catch {
     /* quota / private mode */
   }
@@ -157,19 +169,23 @@ function clearStaffSession() {
     sessionStorage.removeItem(STAFF_SS_TOKEN);
     sessionStorage.removeItem(STAFF_SS_ROLE);
     sessionStorage.removeItem(STAFF_SS_EMAIL);
+    sessionStorage.removeItem(STAFF_SS_DB_ROLE);
   } catch {
     /* noop */
   }
 }
 
-/** @returns {{ token: string; role: 'admin' | 'superuser'; email: string } | null} */
+/** @returns {{ token: string; role: string; email: string; dbRole: string | null } | null} */
 function readStaffSession() {
   try {
     const token = sessionStorage.getItem(STAFF_SS_TOKEN);
     const role = sessionStorage.getItem(STAFF_SS_ROLE);
     const email = sessionStorage.getItem(STAFF_SS_EMAIL);
-    if (!token?.trim() || !email?.trim() || (role !== "admin" && role !== "superuser")) return null;
-    return { token: token.trim(), role, email: email.trim() };
+    const dbRoleRaw = sessionStorage.getItem(STAFF_SS_DB_ROLE);
+    if (!token?.trim() || !email?.trim()) return null;
+    const allowed = ["admin", "superuser", "treasurer", "board_director", "secretary"];
+    if (!role || !allowed.includes(role)) return null;
+    return { token: token.trim(), role, email: email.trim(), dbRole: dbRoleRaw?.trim() || null };
   } catch {
     return null;
   }
@@ -423,6 +439,8 @@ export default function App() {
   const [staffRole, setStaffRole] = useState(
     /** @type {null | "admin" | "superuser" | "treasurer" | "board_director" | "secretary"} */ (null),
   );
+  /** Prisma `StaffUser.role` from login — needed when JWT is `admin` (Chairman / Vice chairman / GM). */
+  const [staffDbRole, setStaffDbRole] = useState(/** @type {string | null} */ (null));
   const [staffAccessToken, setStaffAccessToken] = useState(null);
   const [managedStaffAdmins, setManagedStaffAdmins] = useState([]);
   const [newStaffAdmin, setNewStaffAdmin] = useState({ email: "", password: "" });
@@ -578,6 +596,7 @@ export default function App() {
               const records = await PmesService.fetchAdminRecords(staff.token);
               setStaffAccessToken(staff.token);
               setStaffRole(staff.role);
+              setStaffDbRole(staff.dbRole ?? null);
               setStaffSessionEmail(staff.email);
               setMasterList(records);
               if (staff.role === "superuser") {
@@ -600,6 +619,7 @@ export default function App() {
         }
         setStaffAccessToken(null);
         setStaffRole(null);
+        setStaffDbRole(null);
         setStaffSessionEmail(null);
         setManagedStaffAdmins([]);
         setAppState("landing");
@@ -719,6 +739,7 @@ export default function App() {
         if (cancelled) return;
         setStaffAccessToken(staff.token);
         setStaffRole(staff.role);
+        setStaffDbRole(staff.dbRole ?? null);
         setStaffSessionEmail(staff.email);
         setMasterList(Array.isArray(records) ? records : []);
         if (staff.role === "superuser") {
@@ -1088,6 +1109,7 @@ export default function App() {
             clearStaffSession();
             setStaffAccessToken(null);
             setStaffRole(null);
+            setStaffDbRole(null);
             setStaffSessionEmail(null);
             setAdminToast({
               type: "error",
@@ -1167,6 +1189,7 @@ export default function App() {
     setError(null);
     setAdminCreds({ email: "", password: "" });
     setStaffRole(null);
+    setStaffDbRole(null);
     setStaffAccessToken(null);
     setStaffSessionEmail(null);
     setManagedStaffAdmins([]);
@@ -1200,9 +1223,10 @@ export default function App() {
       const result = await PmesService.getAllRecords(db, appId, { email, password });
       setMasterList(result.records);
       setStaffRole(result.role);
+      setStaffDbRole(result.dbRole ?? null);
       setStaffAccessToken(result.accessToken);
       setStaffSessionEmail(email);
-      persistStaffSession(result.accessToken, result.role, email);
+      persistStaffSession(result.accessToken, result.role, email, result.dbRole ?? null);
       setAdminCreds({ email: "", password: "" });
       if (result.role === "superuser") {
         try {
@@ -1720,8 +1744,8 @@ export default function App() {
     [membershipPipeline],
   );
   const staffInboxSummary = useMemo(
-    () => staffPipelineInboxSummary(staffRole, staffInboxCounts),
-    [staffRole, staffInboxCounts],
+    () => staffPipelineInboxSummary(staffRole, staffInboxCounts, staffDbRole),
+    [staffRole, staffInboxCounts, staffDbRole],
   );
 
   const memberIdentityForBanner =
@@ -3700,6 +3724,7 @@ export default function App() {
                 setRegistryDetail(null);
                 setAdminCreds({ email: "", password: "" });
                 setStaffRole(null);
+                setStaffDbRole(null);
                 setStaffAccessToken(null);
                 setStaffSessionEmail(null);
                 setManagedStaffAdmins([]);
@@ -4928,7 +4953,7 @@ export default function App() {
                       const bodVotes = typeof row.bodApproveVoteCount === "number" ? row.bodApproveVoteCount : 0;
                       const canTreasury =
                         staffRole === "treasurer" || staffRole === "admin" || staffRole === "superuser";
-                      const canBod = staffRole === "board_director" || staffRole === "superuser";
+                      const canBod = canCastBodVote(staffRole, staffDbRole);
                       const canSecretary = staffRole === "secretary" || staffRole === "superuser";
                       const { needFees, needBodVote, needSecretary } = flagsFromPipelineRow(row);
                       return (
@@ -5082,7 +5107,7 @@ export default function App() {
               const bodVotes = typeof row.bodApproveVoteCount === "number" ? row.bodApproveVoteCount : 0;
               const canTreasury =
                 staffRole === "treasurer" || staffRole === "admin" || staffRole === "superuser";
-              const canBod = staffRole === "board_director" || staffRole === "superuser";
+              const canBod = canCastBodVote(staffRole, staffDbRole);
               const canSecretary = staffRole === "secretary" || staffRole === "superuser";
               const { needFees, needBodVote, needSecretary } = flagsFromPipelineRow(row);
               return (

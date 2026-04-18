@@ -72,7 +72,10 @@ export async function POST(request: Request) {
 
     const role = dbRoleToJwt(staff.role);
     const accessToken = await signStaffToken({ sub: staff.id, role });
-    return NextResponse.json({ accessToken, expiresIn: "8h", role }, { headers: EDGE_CORS_HEADERS });
+    return NextResponse.json(
+      { accessToken, expiresIn: "8h", role, dbRole: staff.role },
+      { headers: EDGE_CORS_HEADERS },
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : "Staff sign-in failed";
     return NextResponse.json({ message, statusCode: 500 }, { status: 500, headers: EDGE_CORS_HEADERS });

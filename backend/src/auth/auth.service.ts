@@ -19,6 +19,8 @@ export type StaffLoginResponse = {
   accessToken: string;
   expiresIn: string;
   role: StaffJwtRole;
+  /** Prisma role — distinguishes Chairman / Vice chairman / GM when JWT `role` is `admin`. */
+  dbRole: StaffRole;
 };
 
 function staffRoleToJwt(role: StaffRole): StaffJwtRole {
@@ -260,7 +262,7 @@ export class AuthService {
     }
     const roleJwt = staffRoleToJwt(staff.role);
     const accessToken = this.jwt.sign({ role: roleJwt, sub: staff.id });
-    return { accessToken, expiresIn: "8h", role: roleJwt };
+    return { accessToken, expiresIn: "8h", role: roleJwt, dbRole: staff.role };
   }
 
   /** @deprecated alias */

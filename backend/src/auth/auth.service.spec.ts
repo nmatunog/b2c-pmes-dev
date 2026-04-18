@@ -64,6 +64,7 @@ describe("AuthService", () => {
     });
     const out = await service.staffLogin("admin@example.com", testPassword);
     expect(out.role).toBe("admin");
+    expect(out.dbRole).toBe(StaffRole.ADMIN);
     expect(out.accessToken).toBe("test.jwt.token");
     expect(jwt.sign).toHaveBeenCalledWith({ role: "admin", sub: "u1" });
   });
@@ -77,6 +78,7 @@ describe("AuthService", () => {
     });
     const out = await service.staffLogin("boss@example.com", testPassword);
     expect(out.role).toBe("superuser");
+    expect(out.dbRole).toBe(StaffRole.SUPERUSER);
     expect(jwt.sign).toHaveBeenCalledWith({ role: "superuser", sub: "s1" });
   });
 });

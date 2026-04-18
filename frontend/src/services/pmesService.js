@@ -130,7 +130,7 @@ export const PmesService = {
 
   /**
    * Staff dashboard: PMES master list + role + token for follow-up API calls.
-   * @returns {{ records: unknown[], role: 'admin'|'superuser', accessToken: string }}
+   * @returns {{ records: unknown[], role: string, accessToken: string, dbRole?: string | null }}
    */
   async getAllRecords(db, appId, credentials) {
     if (useRest()) {
@@ -142,6 +142,7 @@ export const PmesService = {
       const login = await staffLoginRequest(email, password);
       const accessToken = login.accessToken;
       const role = login.role;
+      const dbRole = login.dbRole != null ? String(login.dbRole) : null;
       const response = await fetch(`${apiBase()}/pmes/admin/records`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -153,6 +154,7 @@ export const PmesService = {
         records: Array.isArray(records) ? records : [],
         role,
         accessToken,
+        dbRole,
       };
     }
     throw new Error("Staff dashboard requires VITE_API_BASE_URL and the Nest API with a database superuser (npm run create-superuser).");

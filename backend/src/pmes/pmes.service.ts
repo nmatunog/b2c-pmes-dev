@@ -588,15 +588,22 @@ export class PmesService {
     return this.toLifecyclePayload(updated, votes);
   }
 
-  /** Board Director (or Superuser) casts / updates approval vote; majority (3) sets `bodMajorityReachedAt`. */
+  /** Board-eligible staff (directors, Chairman, Vice chairman, GM, Superuser) cast votes; majority sets `bodMajorityReachedAt`. */
   async recordBodVote(participantId: string, approve: boolean, staff: { sub: string; role: StaffJwtRole }) {
-    if (staff.role !== "superuser" && staff.role !== "board_director") {
-      throw new ForbiddenException("Only Board directors (or Superuser) may cast BOD votes.");
-    }
     const actor = await this.prisma.staffUser.findUnique({ where: { id: staff.sub } });
     if (!actor) throw new ForbiddenException("Staff account not found");
-    if (staff.role === "board_director" && actor.role !== StaffRole.BOARD_DIRECTOR) {
-      throw new ForbiddenException("Your account is not a Board director.");
+
+    const bodVoterDbRoles: StaffRole[] = [
+      StaffRole.SUPERUSER,
+      StaffRole.BOARD_DIRECTOR,
+      StaffRole.CHAIRMAN,
+      StaffRole.VICE_CHAIRMAN,
+      StaffRole.GENERAL_MANAGER,
+    ];
+    if (!bodVoterDbRoles.includes(actor.role)) {
+      throw new ForbiddenException(
+        "Only Board-designated officers (directors, Chairman, Vice chairman, General manager) or Superuser may cast BOD votes.",
+      );
     }
 
     const p = await this.prisma.participant.findUnique({ where: { id: participantId } });
