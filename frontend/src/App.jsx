@@ -448,6 +448,9 @@ export default function App() {
   const [staffPasswordForm, setStaffPasswordForm] = useState({ currentPassword: "", newPassword: "" });
   const [staffPasswordError, setStaffPasswordError] = useState(null);
   const [staffPasswordSuccess, setStaffPasswordSuccess] = useState(null);
+  /** Admin dashboard: collapsed by default — only toggle buttons until opened. */
+  const [staffPasswordPanelOpen, setStaffPasswordPanelOpen] = useState(false);
+  const [adminAccountsPanelOpen, setAdminAccountsPanelOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [openCardIndex, setOpenCardIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -622,6 +625,8 @@ export default function App() {
         setStaffDbRole(null);
         setStaffSessionEmail(null);
         setManagedStaffAdmins([]);
+        setStaffPasswordPanelOpen(false);
+        setAdminAccountsPanelOpen(false);
         setAppState("landing");
         setAuthReady(true);
         return;
@@ -1111,6 +1116,8 @@ export default function App() {
             setStaffRole(null);
             setStaffDbRole(null);
             setStaffSessionEmail(null);
+            setStaffPasswordPanelOpen(false);
+            setAdminAccountsPanelOpen(false);
             setAdminToast({
               type: "error",
               message: "Admin session expired or invalid. Sign in to the admin portal again.",
@@ -1198,6 +1205,8 @@ export default function App() {
     setStaffPasswordForm({ currentPassword: "", newPassword: "" });
     setStaffPasswordError(null);
     setStaffPasswordSuccess(null);
+    setStaffPasswordPanelOpen(false);
+    setAdminAccountsPanelOpen(false);
     clearStaffSession();
     setAppState("admin_login");
   };
@@ -3733,6 +3742,8 @@ export default function App() {
                 setStaffPasswordForm({ currentPassword: "", newPassword: "" });
                 setStaffPasswordError(null);
                 setStaffPasswordSuccess(null);
+                setStaffPasswordPanelOpen(false);
+                setAdminAccountsPanelOpen(false);
                 setDeletingMasterListId(null);
                 setDeletingPipelineParticipantId(null);
                 clearStaffSession();
@@ -3763,141 +3774,165 @@ export default function App() {
               </div>
             </div>
           ) : null}
-          <div className="border-b border-slate-200 bg-slate-50 px-6 py-8 lg:px-10">
-            <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Staff password</h2>
-            <p className="mt-1 text-sm font-medium text-slate-600">
-              Change your own admin/superuser password from here.
-            </p>
-            {staffPasswordError ? (
-              <div className="mt-4 rounded-2xl bg-red-50 p-4 text-center text-sm font-bold text-red-800">
-                {staffPasswordError}
-              </div>
-            ) : null}
-            {staffPasswordSuccess ? (
-              <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-center text-sm font-bold text-emerald-800">
-                {staffPasswordSuccess}
-              </div>
-            ) : null}
-            <form onSubmit={handleChangeStaffPasswordSubmit} className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
-              <div className="min-w-0 flex-1">
-                <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="staff-current-password">
-                  Current password
-                </label>
-                <input
-                  id="staff-current-password"
-                  type="password"
-                  autoComplete="current-password"
-                  className="input-field w-full"
-                  placeholder="Current password"
-                  value={staffPasswordForm.currentPassword}
-                  onChange={(e) => {
-                    setStaffPasswordError(null);
-                    setStaffPasswordSuccess(null);
-                    setStaffPasswordForm((s) => ({ ...s, currentPassword: e.target.value }));
-                  }}
-                  minLength={8}
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="staff-new-password">
-                  New password
-                </label>
-                <input
-                  id="staff-new-password"
-                  type="password"
-                  autoComplete="new-password"
-                  className="input-field w-full"
-                  placeholder="Min. 8 characters"
-                  value={staffPasswordForm.newPassword}
-                  onChange={(e) => {
-                    setStaffPasswordError(null);
-                    setStaffPasswordSuccess(null);
-                    setStaffPasswordForm((s) => ({ ...s, newPassword: e.target.value }));
-                  }}
-                  minLength={8}
-                />
-              </div>
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-5 lg:px-10">
+            <div className="flex flex-wrap gap-3">
               <button
-                type="submit"
-                disabled={loading || !staffAccessToken}
-                className="btn-primary inline-flex shrink-0 items-center justify-center gap-2 px-8 py-4 font-black lg:self-stretch"
+                type="button"
+                onClick={() => setStaffPasswordPanelOpen((o) => !o)}
+                aria-expanded={staffPasswordPanelOpen}
+                className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black uppercase tracking-wide text-slate-800 shadow-sm hover:bg-slate-50"
               >
-                Update password
+                {staffPasswordPanelOpen ? "Hide staff password" : "Staff password"}
               </button>
-            </form>
-          </div>
-          {staffRole === "superuser" ? (
-            <div className="border-b border-slate-200 bg-slate-50 px-6 py-8 lg:px-10">
-              <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Admin accounts</h2>
-              <p className="mt-1 text-sm font-medium text-slate-600">
-                Only you (superuser) can add staff admins. They can open this master list but cannot create other accounts.
-              </p>
-              {staffAdminError ? (
-                <div className="mt-4 rounded-2xl bg-red-50 p-4 text-center text-sm font-bold text-red-800">{staffAdminError}</div>
-              ) : null}
-              <form onSubmit={handleCreateStaffAdminSubmit} className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
-                <div className="min-w-0 flex-1">
-                  <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="new-admin-email">
-                    New admin email
-                  </label>
-                  <input
-                    id="new-admin-email"
-                    type="email"
-                    autoComplete="off"
-                    className="input-field w-full"
-                    placeholder="colleague@example.com"
-                    value={newStaffAdmin.email}
-                    onChange={(e) => setNewStaffAdmin((s) => ({ ...s, email: e.target.value }))}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="new-admin-password">
-                    Temporary password
-                  </label>
-                  <input
-                    id="new-admin-password"
-                    type="password"
-                    autoComplete="new-password"
-                    className="input-field w-full"
-                    placeholder="Min. 8 characters"
-                    value={newStaffAdmin.password}
-                    onChange={(e) => setNewStaffAdmin((s) => ({ ...s, password: e.target.value }))}
-                    minLength={8}
-                  />
-                </div>
+              {staffRole === "superuser" ? (
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-primary inline-flex shrink-0 items-center justify-center gap-2 px-8 py-4 font-black lg:self-stretch"
+                  type="button"
+                  onClick={() => setAdminAccountsPanelOpen((o) => !o)}
+                  aria-expanded={adminAccountsPanelOpen}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black uppercase tracking-wide text-slate-800 shadow-sm hover:bg-slate-50"
                 >
-                  <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
-                  Create admin
+                  {adminAccountsPanelOpen ? "Hide admin accounts" : "Admin accounts"}
                 </button>
-              </form>
-              {managedStaffAdmins.length > 0 ? (
-                <ul className="mt-8 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
-                  {managedStaffAdmins.map((a) => (
-                    <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-                      <span className="font-bold text-slate-900">{a.email}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase text-slate-400">{a.role}</span>
-                        <button
-                          type="button"
-                          onClick={() => void handlePromoteAdminToSuperuser(a.email)}
-                          disabled={loading}
-                          className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Make superuser
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-6 text-sm font-medium text-slate-500">No admin accounts yet — add one above.</p>
-              )}
+              ) : null}
             </div>
-          ) : null}
+            {staffPasswordPanelOpen ? (
+              <div className="mt-6 border-t border-slate-200 pt-6">
+                <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Staff password</h2>
+                <p className="mt-1 text-sm font-medium text-slate-600">
+                  Change your own admin/superuser password from here.
+                </p>
+                {staffPasswordError ? (
+                  <div className="mt-4 rounded-2xl bg-red-50 p-4 text-center text-sm font-bold text-red-800">
+                    {staffPasswordError}
+                  </div>
+                ) : null}
+                {staffPasswordSuccess ? (
+                  <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-center text-sm font-bold text-emerald-800">
+                    {staffPasswordSuccess}
+                  </div>
+                ) : null}
+                <form onSubmit={handleChangeStaffPasswordSubmit} className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+                  <div className="min-w-0 flex-1">
+                    <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="staff-current-password">
+                      Current password
+                    </label>
+                    <input
+                      id="staff-current-password"
+                      type="password"
+                      autoComplete="current-password"
+                      className="input-field w-full"
+                      placeholder="Current password"
+                      value={staffPasswordForm.currentPassword}
+                      onChange={(e) => {
+                        setStaffPasswordError(null);
+                        setStaffPasswordSuccess(null);
+                        setStaffPasswordForm((s) => ({ ...s, currentPassword: e.target.value }));
+                      }}
+                      minLength={8}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="staff-new-password">
+                      New password
+                    </label>
+                    <input
+                      id="staff-new-password"
+                      type="password"
+                      autoComplete="new-password"
+                      className="input-field w-full"
+                      placeholder="Min. 8 characters"
+                      value={staffPasswordForm.newPassword}
+                      onChange={(e) => {
+                        setStaffPasswordError(null);
+                        setStaffPasswordSuccess(null);
+                        setStaffPasswordForm((s) => ({ ...s, newPassword: e.target.value }));
+                      }}
+                      minLength={8}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading || !staffAccessToken}
+                    className="btn-primary inline-flex shrink-0 items-center justify-center gap-2 px-8 py-4 font-black lg:self-stretch"
+                  >
+                    Update password
+                  </button>
+                </form>
+              </div>
+            ) : null}
+            {staffRole === "superuser" && adminAccountsPanelOpen ? (
+              <div className="mt-6 border-t border-slate-200 pt-6">
+                <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Admin accounts</h2>
+                <p className="mt-1 text-sm font-medium text-slate-600">
+                  Only you (superuser) can add staff admins. They can open this master list but cannot create other accounts.
+                </p>
+                {staffAdminError ? (
+                  <div className="mt-4 rounded-2xl bg-red-50 p-4 text-center text-sm font-bold text-red-800">{staffAdminError}</div>
+                ) : null}
+                <form onSubmit={handleCreateStaffAdminSubmit} className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+                  <div className="min-w-0 flex-1">
+                    <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="new-admin-email">
+                      New admin email
+                    </label>
+                    <input
+                      id="new-admin-email"
+                      type="email"
+                      autoComplete="off"
+                      className="input-field w-full"
+                      placeholder="colleague@example.com"
+                      value={newStaffAdmin.email}
+                      onChange={(e) => setNewStaffAdmin((s) => ({ ...s, email: e.target.value }))}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <label className="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500" htmlFor="new-admin-password">
+                      Temporary password
+                    </label>
+                    <input
+                      id="new-admin-password"
+                      type="password"
+                      autoComplete="new-password"
+                      className="input-field w-full"
+                      placeholder="Min. 8 characters"
+                      value={newStaffAdmin.password}
+                      onChange={(e) => setNewStaffAdmin((s) => ({ ...s, password: e.target.value }))}
+                      minLength={8}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn-primary inline-flex shrink-0 items-center justify-center gap-2 px-8 py-4 font-black lg:self-stretch"
+                  >
+                    <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
+                    Create admin
+                  </button>
+                </form>
+                {managedStaffAdmins.length > 0 ? (
+                  <ul className="mt-8 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+                    {managedStaffAdmins.map((a) => (
+                      <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+                        <span className="font-bold text-slate-900">{a.email}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold uppercase text-slate-400">{a.role}</span>
+                          <button
+                            type="button"
+                            onClick={() => void handlePromoteAdminToSuperuser(a.email)}
+                            disabled={loading}
+                            className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Make superuser
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-6 text-sm font-medium text-slate-500">No admin accounts yet — add one above.</p>
+                )}
+              </div>
+            ) : null}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[56rem] text-left text-sm">
               <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-600">
