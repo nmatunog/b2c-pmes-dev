@@ -4388,8 +4388,8 @@ export default function App() {
           <div className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-10">
             <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Membership pipeline</h2>
             <p className="mt-1 text-sm font-medium text-slate-600">
-              Treasurer confirms fees → Board directors vote (3 of 5 to recommend) → Secretary issues Board Resolution no. and
-              final approval. Superuser can override or remove rows.
+              Treasurer must confirm fees first; only then can directors vote (3 of 5 to recommend). The Secretary issues the
+              Board Resolution no. and final approval. Superuser can override or remove rows.
             </p>
             <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
               <table className="w-full min-w-[64rem] text-left text-sm">
@@ -4422,7 +4422,7 @@ export default function App() {
                       const canBod = staffRole === "board_director" || staffRole === "superuser";
                       const canSecretary = staffRole === "secretary" || staffRole === "superuser";
                       const needFees = row.loiSubmitted && !row.initialFeesPaid;
-                      const needBodVote = row.initialFeesPaid && !row.boardApproved;
+                      const needBodVote = row.initialFeesPaid && row.loiSubmitted && !row.boardApproved;
                       const needSecretary =
                         row.initialFeesPaid && row.bodMajorityReached && !row.boardApproved;
                       return (

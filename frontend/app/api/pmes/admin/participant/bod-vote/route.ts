@@ -42,11 +42,21 @@ export async function POST(request: Request) {
     }
 
     const pre = await sql`
-      SELECT "boardApprovedAt" FROM "Participant" WHERE id = ${participantId} LIMIT 1
+      SELECT "boardApprovedAt", "initialFeesPaidAt" FROM "Participant" WHERE id = ${participantId} LIMIT 1
     `;
-    const p = (pre as { boardApprovedAt: string | null }[])[0];
+    const p = (pre as { boardApprovedAt: string | null; initialFeesPaidAt: string | null }[])[0];
     if (!p) {
       return NextResponse.json({ message: "Participant not found", statusCode: 404 }, { status: 404, headers: EDGE_CORS_HEADERS });
+    }
+    if (!p.initialFeesPaidAt) {
+      return NextResponse.json(
+        {
+          message:
+            "Treasurer must confirm fee payment before the Board can record votes on this application.",
+          statusCode: 400,
+        },
+        { status: 400, headers: EDGE_CORS_HEADERS },
+      );
     }
     if (p.boardApprovedAt) {
       return NextResponse.json(
@@ -65,10 +75,11 @@ export async function POST(request: Request) {
     await sql`
       UPDATE "Participant" p
       SET "bodMajorityReachedAt" = CASE
-        WHEN (
-          SELECT COUNT(*)::int FROM "BoardApprovalVote" v
-          WHERE v."participantId" = ${participantId} AND v.approve = true
-        ) >= 3
+        WHEN p."initialFeesPaidAt" IS NOT NULL
+          AND (
+            SELECT COUNT(*)::int FROM "BoardApprovalVote" v
+            WHERE v."participantId" = ${participantId} AND v.approve = true
+          ) >= 3
         THEN COALESCE(p."bodMajorityReachedAt", NOW())
         ELSE NULL
       END

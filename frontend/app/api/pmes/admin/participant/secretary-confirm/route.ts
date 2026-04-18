@@ -57,14 +57,27 @@ export async function POST(request: Request) {
     }
 
     const pre = await sql`
-      SELECT "boardApprovedAt", "bodMajorityReachedAt"
+      SELECT "boardApprovedAt", "bodMajorityReachedAt", "initialFeesPaidAt"
       FROM "Participant"
       WHERE id = ${participantId}
       LIMIT 1
     `;
-    const p = (pre as { boardApprovedAt: string | null; bodMajorityReachedAt: string | null }[])[0];
+    const p = (pre as {
+      boardApprovedAt: string | null;
+      bodMajorityReachedAt: string | null;
+      initialFeesPaidAt: string | null;
+    }[])[0];
     if (!p) {
       return NextResponse.json({ message: "Participant not found", statusCode: 404 }, { status: 404, headers: EDGE_CORS_HEADERS });
+    }
+    if (!p.initialFeesPaidAt) {
+      return NextResponse.json(
+        {
+          message: "Treasurer must confirm fee payment before a Board Resolution can be issued.",
+          statusCode: 400,
+        },
+        { status: 400, headers: EDGE_CORS_HEADERS },
+      );
     }
     if (p.boardApprovedAt) {
       return NextResponse.json(

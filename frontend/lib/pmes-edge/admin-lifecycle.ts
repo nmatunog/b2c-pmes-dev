@@ -81,8 +81,12 @@ export function toLifecyclePayload(row: AdminLifecycleRow) {
     registrationDob: row.dob,
     registrationGender: row.gender,
     registrationPhone: row.phone,
-    bodApproveVoteCount: typeof row.bodApproveVoteCount === "number" ? row.bodApproveVoteCount : 0,
-    bodMajorityReached: bodMajority,
+    bodApproveVoteCount: fees
+      ? typeof row.bodApproveVoteCount === "number"
+        ? row.bodApproveVoteCount
+        : 0
+      : 0,
+    bodMajorityReached: fees && bodMajority,
     bodMajorityRequired: BOD_MAJORITY_APPROVALS,
     bodDirectorSeats: BOD_DIRECTOR_SEATS,
     boardResolutionNo: row.boardResolutionNo,

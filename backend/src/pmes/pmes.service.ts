@@ -617,6 +617,11 @@ export class PmesService {
 
     const p = await this.prisma.participant.findUnique({ where: { id: participantId } });
     if (!p) throw new NotFoundException("Participant not found");
+    if (!p.initialFeesPaidAt) {
+      throw new BadRequestException(
+        "Treasurer must confirm fee payment before the Board can record votes on this application.",
+      );
+    }
     if (p.boardApprovedAt) {
       throw new BadRequestException("Board approval is already recorded for this member.");
     }
@@ -658,6 +663,11 @@ export class PmesService {
 
     const p = await this.prisma.participant.findUnique({ where: { id: participantId } });
     if (!p) throw new NotFoundException("Participant not found");
+    if (!p.initialFeesPaidAt) {
+      throw new BadRequestException(
+        "Treasurer must confirm fee payment before a Board Resolution can be issued.",
+      );
+    }
     if (p.boardApprovedAt) {
       throw new BadRequestException("Board approval is already recorded.");
     }
@@ -689,6 +699,13 @@ export class PmesService {
   private async syncBodMajorityFlag(participantId: string) {
     const p = await this.prisma.participant.findUnique({ where: { id: participantId } });
     if (!p || p.boardApprovedAt) return;
+    if (!p.initialFeesPaidAt) {
+      await this.prisma.participant.update({
+        where: { id: participantId },
+        data: { bodMajorityReachedAt: null },
+      });
+      return;
+    }
     const yes = await this.prisma.boardApprovalVote.count({
       where: { participantId, approve: true },
     });
@@ -1290,7 +1307,9 @@ export class PmesService {
         : [];
     const voteMap = new Map(voteGroups.map((v) => [v.participantId, v._count._all]));
     return participants.map((p) => {
-      const life = this.toLifecyclePayload(p, voteMap.get(p.id) ?? 0);
+      const feeOk = Boolean(p.initialFeesPaidAt);
+      const yesVotes = feeOk ? voteMap.get(p.id) ?? 0 : 0;
+      const life = this.toLifecyclePayload(p, yesVotes);
       return {
         fullName: p.fullName,
         phone: p.phone,
@@ -1328,8 +1347,8 @@ export class PmesService {
       boardApproved: board,
       fullProfileCompleted: profile,
       canAccessFullMemberPortal: stage === "FULL_MEMBER",
-      bodApproveVoteCount,
-      bodMajorityReached: bodMajority,
+      bodApproveVoteCount: fees ? bodApproveVoteCount : 0,
+      bodMajorityReached: fees && bodMajority,
       bodMajorityRequired: BOD_MAJORITY_APPROVALS,
       bodDirectorSeats: BOD_DIRECTOR_SEATS,
       boardResolutionNo: participant.boardResolutionNo ?? null,
