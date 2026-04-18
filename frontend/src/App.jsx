@@ -1032,8 +1032,30 @@ export default function App() {
       .then((rows) => {
         if (!cancelled) setMembershipPipeline(Array.isArray(rows) ? rows : []);
       })
-      .catch(() => {
-        if (!cancelled) setMembershipPipeline([]);
+      .catch((e) => {
+        if (!cancelled) {
+          setMembershipPipeline([]);
+          const status =
+            e && typeof e === "object" && "pmesHttpStatus" in e
+              ? Number(/** @type {{ pmesHttpStatus?: number }} */ (e).pmesHttpStatus)
+              : NaN;
+          const msg = e instanceof Error ? e.message : String(e);
+          if (status === 401) {
+            clearStaffSession();
+            setStaffAccessToken(null);
+            setStaffRole(null);
+            setStaffSessionEmail(null);
+            setAdminToast({
+              type: "error",
+              message: "Admin session expired or invalid. Sign in to the admin portal again.",
+            });
+          } else {
+            setAdminToast({
+              type: "error",
+              message: msg?.trim() || "Membership pipeline could not be loaded.",
+            });
+          }
+        }
       });
     return () => {
       cancelled = true;

@@ -353,7 +353,10 @@ export const PmesService = {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!response.ok) {
-      throw new Error((await response.text()) || "Pipeline load failed");
+      const msg = await parseApiErrorMessage(response);
+      const err = new Error(msg || `Pipeline load failed (${response.status})`);
+      /** @type {Error & { pmesHttpStatus?: number }} */ (err).pmesHttpStatus = response.status;
+      throw err;
     }
     return response.json();
   },

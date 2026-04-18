@@ -12,6 +12,11 @@ export function OPTIONS() {
 export async function GET(request: Request) {
   try {
     await requireStaff(request);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Unauthorized";
+    return unauthorized(message);
+  }
+  try {
     const sql = getSql();
     const rows = await selectMembershipPipelineRows(sql);
     return NextResponse.json(
@@ -23,7 +28,11 @@ export async function GET(request: Request) {
       { headers: EDGE_CORS_HEADERS },
     );
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Unauthorized";
-    return unauthorized(message);
+    const message = e instanceof Error ? e.message : "Pipeline query failed";
+    console.error("[membership-pipeline]", message);
+    return NextResponse.json(
+      { message, statusCode: 500 },
+      { status: 500, headers: EDGE_CORS_HEADERS },
+    );
   }
 }

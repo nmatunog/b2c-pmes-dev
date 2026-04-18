@@ -1376,7 +1376,8 @@ export class PmesService {
   /** Admin dashboard: applicants still completing membership (excludes finished full-member profiles). */
   async listMembershipPipeline() {
     const participants = await this.prisma.participant.findMany({
-      where: { fullProfileCompletedAt: null },
+      /** Legacy / roster imports skip the PMES → LOI → payment → BOD journey; keep them out of the pipeline list. */
+      where: { fullProfileCompletedAt: null, legacyPioneerImport: false },
       include: {
         pmesRecords: { orderBy: { timestamp: "desc" }, take: 8 },
         loiSubmission: true,
