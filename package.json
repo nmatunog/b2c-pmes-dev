@@ -1,0 +1,9 @@
+{
+  "name": "b2c-pmes",
+  "private": true,
+  "description": "Monorepo helper scripts (backend/ and frontend/ have their own package.json).",
+  "scripts": {
+    "verify": "bash scripts/debug-verify.sh",
+    "debug": "bash scripts/debug-verify.sh"
+  }
+}
