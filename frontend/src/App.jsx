@@ -97,7 +97,8 @@ function flagsFromPipelineRow(row) {
 const VOICE = "Aoede";
 /** Bump when backend TTS output meaningfully changes — avoids replaying stale blob URLs from an old build. */
 const TTS_CLIENT_CACHE_BUST = "4";
-const REGISTRY_PAGE_SIZE = 50;
+/** Member registry API page size — keep modest so each page fits typical screens; use Next for more rows. */
+const REGISTRY_PAGE_SIZE = 15;
 
 const RESUMABLE_APP_STATES = new Set([
   "consent",
@@ -492,6 +493,10 @@ export default function App() {
   const [registryIncludeAll, setRegistryIncludeAll] = useState(false);
   const [registryLoading, setRegistryLoading] = useState(false);
   const [registryDetail, setRegistryDetail] = useState(/** @type {Record<string, unknown> | null} */ (null));
+  /** Member registry detail modal: split long content into tabs (screen-sized chunks). */
+  const [registryDetailTab, setRegistryDetailTab] = useState(
+    /** @type {"summary" | "edit" | "account" | "json"} */ ("summary"),
+  );
   const [registryProfileDraft, setRegistryProfileDraft] = useState(
     /** @type {null | { fullName: string; email: string; phone: string; dob: string; gender: string; tinNo: string; mailingAddress: string; civilStatus: string }} */ (
       null
@@ -3731,6 +3736,7 @@ export default function App() {
                 setRegistryAppliedSearch("");
                 setRegistryIncludeAll(false);
                 setRegistryDetail(null);
+                setRegistryDetailTab("summary");
                 setAdminCreds({ email: "", password: "" });
                 setStaffRole(null);
                 setStaffDbRole(null);
@@ -4327,18 +4333,19 @@ export default function App() {
                 Include participants without a full profile
               </label>
             </form>
-            <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <table className="w-full min-w-[64rem] text-left text-sm">
-                <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-600">
-                  <tr>
-                    <th className="p-4">Member</th>
-                    <th className="p-4">Contact</th>
-                    <th className="p-4">Civil status</th>
-                    <th className="p-4">Member ID</th>
-                    <th className="p-4">Position</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="max-h-[min(70vh,28rem)] overflow-auto">
+                <table className="w-full min-w-[64rem] text-left text-sm">
+                  <thead className="sticky top-0 z-10 bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-600 shadow-[0_1px_0_0_rgb(226_232_240)]">
+                    <tr>
+                      <th className="p-4">Member</th>
+                      <th className="p-4">Contact</th>
+                      <th className="p-4">Civil status</th>
+                      <th className="p-4">Member ID</th>
+                      <th className="p-4">Position</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                   {registryLoading ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center font-medium text-slate-500">
@@ -4381,8 +4388,10 @@ export default function App() {
                                 ),
                               );
                               setRegistryDetail(detail);
+                              setRegistryDetailTab("summary");
                             } catch {
                               setRegistryDetail(null);
+                              setRegistryDetailTab("summary");
                             }
                           }}
                         >
@@ -4403,35 +4412,48 @@ export default function App() {
                       );
                     })
                   )}
-                </tbody>
-              </table>
-            </div>
-            {registryTotal > REGISTRY_PAGE_SIZE ? (
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-slate-600">
-                <span>
-                  Page {registryPage} — {registryTotal} total
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={registryPage <= 1}
-                    onClick={() => setRegistryPage((p) => Math.max(1, p - 1))}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs uppercase disabled:opacity-40"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    disabled={registryPage * REGISTRY_PAGE_SIZE >= registryTotal}
-                    onClick={() => setRegistryPage((p) => p + 1)}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs uppercase disabled:opacity-40"
-                  >
-                    Next
-                  </button>
-                </div>
+                  </tbody>
+                </table>
               </div>
-            ) : registryTotal > 0 ? (
-              <p className="mt-3 text-sm font-medium text-slate-500">{registryTotal} member(s) in this view.</p>
+            </div>
+            {registryTotal > 0 ? (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm font-bold text-slate-600">
+                <span className="min-w-0">
+                  {(() => {
+                    const start = (registryPage - 1) * REGISTRY_PAGE_SIZE + 1;
+                    const end = Math.min(registryPage * REGISTRY_PAGE_SIZE, registryTotal);
+                    return (
+                      <>
+                        Showing <span className="tabular-nums">{start}</span>–<span className="tabular-nums">{end}</span> of{" "}
+                        <span className="tabular-nums">{registryTotal}</span>
+                        {registryTotal > REGISTRY_PAGE_SIZE ? (
+                          <span className="font-semibold text-slate-500"> — page {registryPage}</span>
+                        ) : null}
+                      </>
+                    );
+                  })()}
+                </span>
+                {registryTotal > REGISTRY_PAGE_SIZE ? (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={registryPage <= 1}
+                      onClick={() => setRegistryPage((p) => Math.max(1, p - 1))}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-wide disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      disabled={registryPage * REGISTRY_PAGE_SIZE >= registryTotal}
+                      onClick={() => setRegistryPage((p) => p + 1)}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-wide disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             ) : null}
           </div>
           {registryDetail ? (
@@ -4443,12 +4465,13 @@ export default function App() {
               onClick={(e) => {
                 if (e.target === e.currentTarget) {
                   setRegistryDetail(null);
+                  setRegistryDetailTab("summary");
                   setSuperuserMemberIdDraft("");
                 }
               }}
             >
-              <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-                <div className="flex items-center justify-between border-b border-slate-200 bg-[#004aad] px-5 py-4 text-white">
+              <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-[#004aad] px-5 py-4 text-white">
                   <h2 id="registry-detail-title" className="text-lg font-black uppercase tracking-tight">
                     Member profile
                   </h2>
@@ -4456,6 +4479,7 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       setRegistryDetail(null);
+                      setRegistryDetailTab("summary");
                       setSuperuserMemberIdDraft("");
                     }}
                     className="rounded-lg bg-white/20 px-3 py-1.5 text-sm font-bold hover:bg-white/30"
@@ -4463,8 +4487,38 @@ export default function App() {
                     Close
                   </button>
                 </div>
-                <div className="max-h-[calc(90vh-5rem)] overflow-y-auto p-5 text-sm text-slate-800">
-                  {/** @type {Record<string, unknown>} */ (registryDetail).registry ? (
+                <div
+                  className="flex shrink-0 flex-wrap gap-1 border-b border-slate-200 bg-slate-100 px-2 py-2"
+                  role="tablist"
+                  aria-label="Member profile sections"
+                >
+                  {(
+                    [
+                      ["summary", "Summary"],
+                      ["edit", "Edit profile"],
+                      ["account", "Account & ID"],
+                      ["json", "JSON"],
+                    ]
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={registryDetailTab === id}
+                      onClick={() => setRegistryDetailTab(/** @type {"summary" | "edit" | "account" | "json"} */ (id))}
+                      className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition-colors ${
+                        registryDetailTab === id
+                          ? "bg-[#004aad] text-white shadow-sm"
+                          : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-5 text-sm text-slate-800">
+                  {registryDetailTab === "summary" ? (
+                    /** @type {Record<string, unknown>} */ (registryDetail).registry ? (
                     <>
                       {(() => {
                         const reg = /** @type {Record<string, unknown>} */ (registryDetail).registry;
@@ -4609,9 +4663,13 @@ export default function App() {
                           ))}
                       </dl>
                     </>
+                  ) : (
+                    <p className="text-sm font-medium text-slate-500">No registry data for this participant.</p>
+                  )
                   ) : null}
-                  {registryProfileDraft && staffAccessToken ? (
-                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
+                  {registryDetailTab === "edit" &&
+                    (registryProfileDraft && staffAccessToken ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
                       <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">Edit member record</h3>
                       <p className="mt-1 text-xs font-medium text-slate-600">
                         Saves to the database. If this member has a linked Firebase account, changing email also updates Firebase
@@ -4729,9 +4787,13 @@ export default function App() {
                         Save changes
                       </button>
                     </div>
-                  ) : null}
+                  ) : (
+                    <p className="text-sm font-medium text-slate-500">Loading editable fields…</p>
+                  ))}
+                  {registryDetailTab === "account" ? (
+                    <div className="space-y-6">
                   {staffAccessToken && registryProfileDraft ? (
-                    <div className="mt-6 rounded-2xl border border-indigo-200 bg-indigo-50/90 p-4">
+                    <div className="rounded-2xl border border-indigo-200 bg-indigo-50/90 p-4">
                       <h3 className="text-xs font-black uppercase tracking-wider text-indigo-950">Reset member password</h3>
                       <p className="mt-1 text-xs font-medium text-indigo-950/90">
                         Sets a new Firebase password immediately. Share it with the member through a secure channel.
@@ -4804,9 +4866,13 @@ export default function App() {
                         </p>
                       )}
                     </div>
-                  ) : null}
+                  ) : (
+                    <p className="text-sm font-medium text-slate-500">
+                      Reset password appears here after member fields load (same as Edit profile).
+                    </p>
+                  )}
                   {staffRole === "superuser" && /** @type {Record<string, unknown>} */ (registryDetail).registry ? (
-                    <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/90 p-4">
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4">
                       <h3 className="text-xs font-black uppercase tracking-wider text-amber-950">Superuser: member ID</h3>
                       <p className="mt-1 text-xs font-medium text-amber-950/90">
                         Correct an auto-generated ID (e.g. wrong birth-year segment). Value must stay unique across all members.
@@ -4867,10 +4933,16 @@ export default function App() {
                       </div>
                     </div>
                   ) : null}
-                  <h3 className="mt-6 text-xs font-black uppercase tracking-wider text-slate-500">Full membership JSON</h3>
-                  <pre className="mt-2 max-h-[min(50vh,28rem)] overflow-auto rounded-xl bg-slate-50 p-3 text-xs leading-relaxed">
-                    {JSON.stringify(/** @type {Record<string, unknown>} */ (registryDetail).memberProfileSnapshot ?? {}, null, 2)}
-                  </pre>
+                    </div>
+                  ) : null}
+                  {registryDetailTab === "json" ? (
+                    <>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Full membership JSON</h3>
+                      <pre className="mt-2 max-h-[min(70vh,36rem)] overflow-auto rounded-xl bg-slate-50 p-3 text-xs leading-relaxed">
+                        {JSON.stringify(/** @type {Record<string, unknown>} */ (registryDetail).memberProfileSnapshot ?? {}, null, 2)}
+                      </pre>
+                    </>
+                  ) : null}
                 </div>
               </div>
             </div>
