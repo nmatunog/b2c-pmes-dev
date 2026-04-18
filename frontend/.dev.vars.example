@@ -1,2 +1,10 @@
-# Local preview only (wrangler / opennextjs-cloudflare preview). Not used in production.
+# Copy to frontend/.dev.vars (gitignored) for `npm run cf:preview` / local Worker runtime.
+# Never commit real secrets.
+
 NEXTJS_ENV=development
+
+# Required: same rules as backend — min 32 chars. Staff JWT sign/verify for /api/auth/admin/login and admin routes.
+ADMIN_JWT_SECRET=change-me-to-a-secret-at-least-32-chars-long
+
+# Required for API routes that hit Postgres (e.g. admin login, pipeline).
+# DATABASE_URL=postgresql://...

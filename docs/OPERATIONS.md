@@ -48,7 +48,7 @@ Both run **`preflight:api`** first (`scripts/preflight-prod-api.sh`) to reduce �
 ## Environment variables
 
 - **Vite (built into static bundle):** set at **build time** via `frontend/.env` / `.env.production` (files are gitignored except examples). Key: **`VITE_API_BASE_URL`** → Worker origin.
-- **Worker (OpenNext):** **`DATABASE_URL`** (Neon), **`FIREBASE_PROJECT_ID`**, optional **`MEMBER_SYNC_SECRET`**, AI keys for server routes, etc. Configure in the Worker dashboard or Wrangler secrets—see **[CLOUDFLARE.md](../frontend/CLOUDFLARE.md)**.
+- **Worker (OpenNext):** **`ADMIN_JWT_SECRET`** (required for staff admin API), **`DATABASE_URL`** (Neon), **`FIREBASE_PROJECT_ID`**, optional **`MEMBER_SYNC_SECRET`**, AI keys for server routes, etc. Configure in the Worker dashboard or Wrangler secrets—see **[CLOUDFLARE.md](../frontend/CLOUDFLARE.md)**.
 
 Never commit secrets. Use `.env.example` files as templates only.
 

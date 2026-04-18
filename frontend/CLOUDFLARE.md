@@ -96,6 +96,7 @@ Configure in the Worker → **Settings** → **Variables** and **Secrets**.
 
 **Treat as Secrets (encrypted):**
 
+- **`ADMIN_JWT_SECRET`** — **Required** (min 32 characters). Signs and verifies **staff** JWTs for `POST /api/auth/admin/login` and every staff-protected route (`/api/pmes/admin/*`, etc.). Must be the **same** value in **Production** and **Preview** if you expect admin login on both; if you use the Nest backend for staff login in another environment, use the **same** secret there too so tokens verify. Rotating this secret **invalidates existing staff sessions** until admins sign in again. It does **not** affect member Firebase auth or ordinary PMES/LOI flows.
 - `DATABASE_URL` — Neon connection string  
 - `GEMINI_API_KEY` — landing FAQ AI  
 - Optional: `MEMBER_SYNC_SECRET`; `FIREBASE_PRIVATE_KEY` / `FIREBASE_CLIENT_EMAIL` if you use Nest-style Admin verification  
