@@ -1015,6 +1015,105 @@ export class PmesService {
   }
 
   /**
+   * Core insert for one legacy pioneer row (same path as bulk import). Returns skip reason if not created.
+   */
+  private async tryCreateLegacyPioneerParticipant(
+    row: ImportLegacyPioneerRowDto,
+  ): Promise<{ ok: true; email: string } | { ok: false; email: string; reason: string }> {
+    const fullName = composeLegacyFullName(row);
+    if (!fullName || fullName.length < 2) {
+      return { ok: false, email: row.email ?? "(no email)", reason: "fullName_or_name_parts_required" };
+    }
+
+    const genderRaw = resolveLegacyGender(row);
+    const gender = (genderRaw && genderRaw.length > 0 ? genderRaw : "Unknown").slice(0, 80);
+
+    const email = synthesizeLegacyImportEmail(row);
+    const existing = await this.prisma.participant.findUnique({ where: { email } });
+    if (existing) {
+      return {
+        ok: false,
+        email,
+        reason: existing.legacyPioneerImport ? "already_imported" : "email_already_registered",
+      };
+    }
+
+    const dobRaw = row.dob?.trim();
+    const dobPlaceholder = !dobRaw || dobRaw.length < 4;
+    const dob = dobPlaceholder ? "1900-01-01" : dobRaw.slice(0, 64);
+
+    const phone = row.phone?.trim() && row.phone.trim().length >= 5 ? row.phone.trim().slice(0, 80) : "+639000000000";
+
+    const mailing = buildLegacyMailingAddress(row);
+    const tinDigitsRaw = normalizeTinDigits(row.tinNo);
+    /** Missing TIN on sheet: store nine zeroes so reclaim can match name + 000000000 (email may still be UUID if no TIN for synthesis). */
+    const tinStored = (tinDigitsRaw.length > 0 ? tinDigitsRaw : "000000000").slice(0, 80);
+    const civil = row.civilStatus?.trim().slice(0, 80) ?? null;
+
+    const snapshot = buildRegistryImportSnapshot(row, { resolvedEmail: email, dobPlaceholder });
+
+    const loiAddress =
+      mailing?.trim() ||
+      "(Imported — confirm or update in your membership form)";
+
+    try {
+      await this.prisma.participant.create({
+        data: {
+          email,
+          fullName: fullName.slice(0, 500),
+          phone,
+          dob,
+          gender,
+          civilStatus: civil,
+          tinNo: tinStored,
+          memberIdNo: null,
+          mailingAddress: mailing,
+          legacyPioneerImport: true,
+          registryImportSnapshot: snapshot,
+          initialFeesPaidAt: new Date(),
+          boardApprovedAt: new Date(),
+          pmesRecords: {
+            create: {
+              score: 10,
+              passed: true,
+            },
+          },
+          loiSubmission: {
+            create: {
+              address: loiAddress.slice(0, 2000),
+              occupation: "Legacy pioneer",
+              employer: "—",
+              initialCapital: 0,
+            },
+          },
+        },
+      });
+      return { ok: true, email };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "create_failed";
+      return { ok: false, email, reason: msg };
+    }
+  }
+
+  /**
+   * Superuser: add one legacy pioneer not included in the bulk roster (minimal row — same reclaim flow as bulk import).
+   */
+  async addLegacyPioneer(row: ImportLegacyPioneerRowDto) {
+    const result = await this.tryCreateLegacyPioneerParticipant(row);
+    if (!result.ok) {
+      throw new BadRequestException(
+        `Could not create legacy member (${result.email}): ${result.reason}.`,
+      );
+    }
+    return {
+      success: true as const,
+      email: result.email,
+      message:
+        "Member can use Pioneer roster — link your account with the same full name + TIN stored here. Sign-in email is returned by eligibility check.",
+    };
+  }
+
+  /**
    * Admin: bulk-create participants positioned at AWAITING_FULL_PROFILE (PMES passed, LOI/fees/board satisfied).
    * Accepts B2C registry columns: typically **`lastName` / `firstName` / `middleName`** (not a single `fullName`),
    * plus address, TIN, amounts, religion, `sheet` passthrough — optional email/phone/dob; missing email is
@@ -1024,79 +1123,11 @@ export class PmesService {
     const created: string[] = [];
     const skipped: { email: string; reason: string }[] = [];
     for (const row of rows) {
-      const fullName = composeLegacyFullName(row);
-      if (!fullName || fullName.length < 2) {
-        skipped.push({ email: row.email ?? "(no email)", reason: "fullName_or_name_parts_required" });
-        continue;
-      }
-
-      const genderRaw = resolveLegacyGender(row);
-      const gender = (genderRaw && genderRaw.length > 0 ? genderRaw : "Unknown").slice(0, 80);
-
-      const email = synthesizeLegacyImportEmail(row);
-      const existing = await this.prisma.participant.findUnique({ where: { email } });
-      if (existing) {
-        skipped.push({
-          email,
-          reason: existing.legacyPioneerImport ? "already_imported" : "email_already_registered",
-        });
-        continue;
-      }
-
-      const dobRaw = row.dob?.trim();
-      const dobPlaceholder = !dobRaw || dobRaw.length < 4;
-      const dob = dobPlaceholder ? "1900-01-01" : dobRaw.slice(0, 64);
-
-      const phone = row.phone?.trim() && row.phone.trim().length >= 5 ? row.phone.trim().slice(0, 80) : "+639000000000";
-
-      const mailing = buildLegacyMailingAddress(row);
-      const tinDigitsRaw = normalizeTinDigits(row.tinNo);
-      /** Missing TIN on sheet: store nine zeroes so reclaim can match name + 000000000 (email may still be UUID if no TIN for synthesis). */
-      const tinStored = (tinDigitsRaw.length > 0 ? tinDigitsRaw : "000000000").slice(0, 80);
-      const civil = row.civilStatus?.trim().slice(0, 80) ?? null;
-
-      const snapshot = buildRegistryImportSnapshot(row, { resolvedEmail: email, dobPlaceholder });
-
-      const loiAddress =
-        mailing?.trim() ||
-        "(Imported — confirm or update in your membership form)";
-
-      try {
-        await this.prisma.participant.create({
-          data: {
-            email,
-            fullName: fullName.slice(0, 500),
-            phone,
-            dob,
-            gender,
-            civilStatus: civil,
-            tinNo: tinStored,
-            memberIdNo: null,
-            mailingAddress: mailing,
-            legacyPioneerImport: true,
-            registryImportSnapshot: snapshot,
-            initialFeesPaidAt: new Date(),
-            boardApprovedAt: new Date(),
-            pmesRecords: {
-              create: {
-                score: 10,
-                passed: true,
-              },
-            },
-            loiSubmission: {
-              create: {
-                address: loiAddress.slice(0, 2000),
-                occupation: "Legacy pioneer",
-                employer: "—",
-                initialCapital: 0,
-              },
-            },
-          },
-        });
-        created.push(email);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "create_failed";
-        skipped.push({ email, reason: msg });
+      const result = await this.tryCreateLegacyPioneerParticipant(row);
+      if (result.ok) {
+        created.push(result.email);
+      } else {
+        skipped.push({ email: result.email, reason: result.reason });
       }
     }
     return { created, skipped, totalInput: rows.length };

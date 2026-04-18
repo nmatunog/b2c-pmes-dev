@@ -28,6 +28,7 @@ const nextConfig = {
       { source: "/pmes/admin/membership-pipeline", destination: "/api/pmes/admin/membership-pipeline" },
       { source: "/pmes/admin/participant/membership", destination: "/api/pmes/admin/participant/membership" },
       { source: "/pmes/admin/member-registry", destination: "/api/pmes/admin/member-registry" },
+      { source: "/pmes/admin/legacy-pioneer", destination: "/api/pmes/admin/legacy-pioneer" },
       { source: "/pmes/admin/participants/:path*", destination: "/api/pmes/admin/participants/:path*" },
       { source: "/pmes/submit", destination: "/api/pmes/submit" },
       { source: "/pmes/full-profile", destination: "/api/pmes/full-profile" },

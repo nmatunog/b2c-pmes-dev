@@ -390,6 +390,22 @@ export default function App() {
   /** `"error"` when `legacyImportMsg` is a failure message; otherwise success / parse result. */
   const [legacyImportMsgKind, setLegacyImportMsgKind] = useState(/** @type {"success" | "error" | null} */ (null));
   const [legacyImportLoading, setLegacyImportLoading] = useState(false);
+  /** Superuser: modal to add one legacy pioneer not on the bulk roster. */
+  const [addLegacyOpen, setAddLegacyOpen] = useState(false);
+  const [addLegacyLoading, setAddLegacyLoading] = useState(false);
+  const [addLegacyForm, setAddLegacyForm] = useState({
+    firstName: "",
+    lastName: "",
+    middleName: "",
+    tinNo: "",
+    phone: "",
+    dob: "",
+    email: "",
+    civilStatus: "",
+    sexGender: "",
+  });
+  /** Bump after add-legacy success to refetch member registry. */
+  const [registryRefreshNonce, setRegistryRefreshNonce] = useState(0);
   const [adminToast, setAdminToast] = useState(/** @type {null | { type: "success" | "error"; message: string }} */ (null));
   const [adminCreds, setAdminCreds] = useState({ email: "", password: "" });
   /** Staff JWT role after admin dashboard login; JWT also in sessionStorage for this tab (refresh-safe). */
@@ -1036,7 +1052,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [appState, staffAccessToken, registryAppliedSearch, registryIncludeAll, registryPage]);
+  }, [appState, staffAccessToken, registryAppliedSearch, registryIncludeAll, registryPage, registryRefreshNonce]);
 
   const handleLoiSubmit = async () => {
     if (!loiData.address || !loiData.occupation || !loiData.initialCapital || !loiData.agreement) {
@@ -3839,6 +3855,16 @@ export default function App() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                {staffRole === "superuser" ? (
+                  <button
+                    type="button"
+                    onClick={() => setAddLegacyOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#004aad] px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm hover:bg-[#003d99]"
+                  >
+                    <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
+                    Add legacy member
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => printMemberRegistryTable(registryRows, "B2C member registry")}
@@ -3849,6 +3875,213 @@ export default function App() {
                 </button>
               </div>
             </div>
+            {addLegacyOpen ? (
+              <div
+                className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-900/50 p-4 sm:items-center"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="add-legacy-title"
+              >
+                <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+                  <h3 id="add-legacy-title" className="text-lg font-black uppercase tracking-tight text-slate-900">
+                    Add legacy pioneer
+                  </h3>
+                  <p className="mt-2 text-sm font-medium text-slate-600">
+                    Creates the same database row as the bulk import: member can use <strong>Pioneer roster — link your account</strong> with{" "}
+                    <strong>name + TIN</strong>. Leave email blank to synthesize one (or set a real email if known).
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-fn">
+                        First name *
+                      </label>
+                      <input
+                        id="add-leg-fn"
+                        className="input-field w-full"
+                        value={addLegacyForm.firstName}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, firstName: e.target.value }))}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-mn">
+                        Middle name
+                      </label>
+                      <input
+                        id="add-leg-mn"
+                        className="input-field w-full"
+                        value={addLegacyForm.middleName}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, middleName: e.target.value }))}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-ln">
+                        Last name *
+                      </label>
+                      <input
+                        id="add-leg-ln"
+                        className="input-field w-full"
+                        value={addLegacyForm.lastName}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, lastName: e.target.value }))}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-tin">
+                        TIN (9 digits)
+                      </label>
+                      <input
+                        id="add-leg-tin"
+                        className="input-field w-full font-mono"
+                        placeholder="000000000 if unknown"
+                        value={addLegacyForm.tinNo}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, tinNo: e.target.value }))}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-dob">
+                        Date of birth
+                      </label>
+                      <input
+                        id="add-leg-dob"
+                        type="text"
+                        className="input-field w-full"
+                        placeholder="YYYY-MM-DD"
+                        value={addLegacyForm.dob}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, dob: e.target.value }))}
+                        autoComplete="bday"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-phone">
+                        Phone
+                      </label>
+                      <input
+                        id="add-leg-phone"
+                        className="input-field w-full"
+                        placeholder="+639…"
+                        value={addLegacyForm.phone}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, phone: e.target.value }))}
+                        autoComplete="tel"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-email">
+                        Email (optional)
+                      </label>
+                      <input
+                        id="add-leg-email"
+                        type="email"
+                        className="input-field w-full"
+                        value={addLegacyForm.email}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, email: e.target.value }))}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-civil">
+                        Civil status
+                      </label>
+                      <input
+                        id="add-leg-civil"
+                        className="input-field w-full"
+                        value={addLegacyForm.civilStatus}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, civilStatus: e.target.value }))}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-black uppercase text-slate-500" htmlFor="add-leg-sg">
+                        Sex / gender
+                      </label>
+                      <input
+                        id="add-leg-sg"
+                        className="input-field w-full"
+                        value={addLegacyForm.sexGender}
+                        onChange={(e) => setAddLegacyForm((s) => ({ ...s, sexGender: e.target.value }))}
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-6 flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold uppercase text-slate-700 hover:bg-slate-50"
+                      onClick={() => {
+                        setAddLegacyOpen(false);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={addLegacyLoading || !staffAccessToken}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#004aad] px-5 py-2.5 text-sm font-black uppercase text-white hover:bg-[#003d99] disabled:opacity-50"
+                      onClick={async () => {
+                        if (!staffAccessToken) return;
+                        const fn = addLegacyForm.firstName.trim();
+                        const ln = addLegacyForm.lastName.trim();
+                        if (!fn || !ln) {
+                          setAdminToast({ type: "error", message: "First name and last name are required." });
+                          return;
+                        }
+                        setAddLegacyLoading(true);
+                        try {
+                          const row = {
+                            firstName: fn,
+                            lastName: ln,
+                            ...(addLegacyForm.middleName.trim() ? { middleName: addLegacyForm.middleName.trim() } : {}),
+                            ...(addLegacyForm.tinNo.trim() ? { tinNo: addLegacyForm.tinNo.trim() } : {}),
+                            ...(addLegacyForm.dob.trim() ? { dob: addLegacyForm.dob.trim() } : {}),
+                            ...(addLegacyForm.phone.trim() ? { phone: addLegacyForm.phone.trim() } : {}),
+                            ...(addLegacyForm.email.trim() ? { email: addLegacyForm.email.trim() } : {}),
+                            ...(addLegacyForm.civilStatus.trim() ? { civilStatus: addLegacyForm.civilStatus.trim() } : {}),
+                            ...(addLegacyForm.sexGender.trim() ? { sexGender: addLegacyForm.sexGender.trim() } : {}),
+                          };
+                          const result = await PmesService.addLegacyPioneer(staffAccessToken, row);
+                          const em = result && typeof result === "object" && "email" in result ? String(result.email) : "";
+                          setAdminToast({
+                            type: "success",
+                            message: em
+                              ? `Legacy member created. Sign-in / roster email: ${em}`
+                              : "Legacy member created.",
+                          });
+                          setAddLegacyOpen(false);
+                          setAddLegacyForm({
+                            firstName: "",
+                            lastName: "",
+                            middleName: "",
+                            tinNo: "",
+                            phone: "",
+                            dob: "",
+                            email: "",
+                            civilStatus: "",
+                            sexGender: "",
+                          });
+                          setRegistryRefreshNonce((n) => n + 1);
+                          try {
+                            const next = await PmesService.fetchMembershipPipeline(staffAccessToken);
+                            setMembershipPipeline(Array.isArray(next) ? next : []);
+                          } catch {
+                            /* ignore */
+                          }
+                        } catch (e) {
+                          const msg = e instanceof Error ? e.message : String(e);
+                          setAdminToast({ type: "error", message: msg });
+                        } finally {
+                          setAddLegacyLoading(false);
+                        }
+                      }}
+                    >
+                      {addLegacyLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                      Save member
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <form
               className="mt-6 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end"
               onSubmit={(e) => {

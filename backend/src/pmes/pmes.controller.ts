@@ -18,7 +18,7 @@ import { Throttle } from "@nestjs/throttler";
 import { CertificateQueryDto } from "./dto/certificate-query.dto";
 import { CreateLoiDto } from "./dto/create-loi.dto";
 import { CreatePmesDto } from "./dto/create-pmes.dto";
-import { ImportLegacyPioneersDto } from "./dto/import-legacy-pioneers.dto";
+import { ImportLegacyPioneerRowDto, ImportLegacyPioneersDto } from "./dto/import-legacy-pioneers.dto";
 import { PioneerEligibilityDto } from "./dto/pioneer-eligibility.dto";
 import { SetCallsignDto } from "./dto/set-callsign.dto";
 import { UpdateMemberLoginEmailDto } from "./dto/update-member-login-email.dto";
@@ -132,6 +132,14 @@ export class PmesController {
   @UseGuards(StaffJwtGuard)
   importLegacyPioneers(@Body() dto: ImportLegacyPioneersDto) {
     return this.pmes.importLegacyPioneers(dto.rows);
+  }
+
+  /** Superuser only: add one legacy pioneer row (same reclaim flow as bulk import — for roster gaps). */
+  @Post("admin/legacy-pioneer")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @UseGuards(StaffJwtGuard, SuperuserGuard)
+  addLegacyPioneer(@Body() dto: ImportLegacyPioneerRowDto) {
+    return this.pmes.addLegacyPioneer(dto);
   }
 
   @Get("admin/records")

@@ -575,4 +575,21 @@ export const PmesService = {
     }
     return response.json();
   },
+
+  /** Superuser: add one legacy pioneer row (same reclaim flow as bulk import). */
+  async addLegacyPioneer(accessToken, row) {
+    if (!useRest()) throw new Error("API required");
+    const response = await fetch(`${apiBase()}/pmes/admin/legacy-pioneer`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(row && typeof row === "object" ? row : {}),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiErrorMessage(response));
+    }
+    return response.json();
+  },
 };
