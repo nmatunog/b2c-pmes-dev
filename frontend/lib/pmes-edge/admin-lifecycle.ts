@@ -2,6 +2,8 @@ import { BOD_DIRECTOR_SEATS, BOD_MAJORITY_APPROVALS } from "@/lib/pmes-edge/boar
 
 export type AdminLifecycleRow = {
   id: string;
+  /** Participant row creation (member since). */
+  createdAt?: string | Date | null;
   email: string;
   legacyPioneerImport: boolean | null;
   memberIdNo: string | null;

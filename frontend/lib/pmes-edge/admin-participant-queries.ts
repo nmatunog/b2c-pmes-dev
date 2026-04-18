@@ -50,6 +50,7 @@ export async function selectMembershipPipelineRows(sql: Sql): Promise<AdminLifec
           WHERE ls."participantId" = p.id
         ) AS "loiSubmitted"
       FROM "Participant" p
+      WHERE p."fullProfileCompletedAt" IS NULL
       ORDER BY p."createdAt" DESC
     `) as AdminLifecycleRowWithOptionalStamp[];
     return rows.map((r) => normalizeAdminRow(r));
@@ -80,6 +81,7 @@ export async function selectMembershipPipelineRows(sql: Sql): Promise<AdminLifec
           WHERE ls."participantId" = p.id
         ) AS "loiSubmitted"
       FROM "Participant" p
+      WHERE p."fullProfileCompletedAt" IS NULL
       ORDER BY p."createdAt" DESC
     `) as AdminLifecycleRowWithOptionalStamp[];
     return rows.map((r) => normalizeAdminRow(r));
@@ -197,6 +199,7 @@ export async function selectParticipantDetailRow(
     const rows = (await sql`
       SELECT
         p.id,
+        p."createdAt",
         p.email,
         p."legacyPioneerImport",
         p."memberIdNo",
@@ -243,6 +246,7 @@ export async function selectParticipantDetailRow(
     const rows = (await sql`
       SELECT
         p.id,
+        p."createdAt",
         p.email,
         p."legacyPioneerImport",
         p."memberIdNo",

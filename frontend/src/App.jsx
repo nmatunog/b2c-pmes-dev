@@ -464,6 +464,8 @@ export default function App() {
     ),
   );
   const [registryProfileSaving, setRegistryProfileSaving] = useState(false);
+  const [registryStaffRoleSelect, setRegistryStaffRoleSelect] = useState("ADMIN");
+  const [registryStaffPositionSaving, setRegistryStaffPositionSaving] = useState(false);
   const [memberResetPwd, setMemberResetPwd] = useState({ newPassword: "", confirm: "" });
   const [memberResetPwdSaving, setMemberResetPwdSaving] = useState(false);
   const [superuserMemberIdDraft, setSuperuserMemberIdDraft] = useState("");
@@ -899,6 +901,19 @@ export default function App() {
       civilStatus: String(g.civilStatus ?? ""),
     });
     setMemberResetPwd({ newPassword: "", confirm: "" });
+  }, [registryDetail]);
+
+  useEffect(() => {
+    const r =
+      registryDetail && typeof registryDetail === "object"
+        ? /** @type {Record<string, unknown>} */ (registryDetail).registry
+        : null;
+    const sr = r && typeof r === "object" && r.staffRole != null ? String(r.staffRole) : "";
+    if (sr && ["ADMIN", "TREASURER", "SECRETARY", "BOARD_DIRECTOR", "SUPERUSER"].includes(sr)) {
+      setRegistryStaffRoleSelect(sr === "SUPERUSER" ? "ADMIN" : sr);
+    } else {
+      setRegistryStaffRoleSelect("ADMIN");
+    }
   }, [registryDetail]);
 
   const setCourseAudioEnabled = (enabled) => {
@@ -4128,22 +4143,21 @@ export default function App() {
                   <tr>
                     <th className="p-4">Member</th>
                     <th className="p-4">Contact</th>
-                    <th className="p-4">Mailing address</th>
                     <th className="p-4">Civil status</th>
                     <th className="p-4">Member ID</th>
-                    <th className="p-4 text-center">Profile</th>
+                    <th className="p-4">Position</th>
                   </tr>
                 </thead>
                 <tbody>
                   {registryLoading ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center font-medium text-slate-500">
+                      <td colSpan={5} className="p-8 text-center font-medium text-slate-500">
                         <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#004aad]" aria-hidden />
                       </td>
                     </tr>
                   ) : registryRows.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center font-medium text-slate-500">
+                      <td colSpan={5} className="p-8 text-center font-medium text-slate-500">
                         No registry rows yet. Completed full profiles appear here (or enable “include all” to browse
                         participants).
                       </td>
@@ -4151,8 +4165,37 @@ export default function App() {
                   ) : (
                     registryRows.map((row) => {
                       const r = /** @type {Record<string, unknown>} */ (row);
+                      const pid = String(r.participantId ?? "");
                       return (
-                        <tr key={String(r.participantId)} className="border-t border-slate-100">
+                        <tr
+                          key={pid}
+                          className="cursor-pointer border-t border-slate-100 hover:bg-slate-50/90"
+                          tabIndex={0}
+                          role="button"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.currentTarget.click();
+                            }
+                          }}
+                          onClick={async () => {
+                            if (!staffAccessToken) return;
+                            try {
+                              const detail = await PmesService.fetchParticipantAdminDetail(staffAccessToken, pid);
+                              const d = /** @type {Record<string, unknown>} */ (detail);
+                              setSuperuserMemberIdDraft(
+                                String(
+                                  /** @type {Record<string, unknown> | undefined} */ (d.lifecycle)?.memberIdNo ??
+                                    /** @type {Record<string, unknown> | undefined} */ (d.registry)?.memberIdNo ??
+                                    "",
+                                ),
+                              );
+                              setRegistryDetail(detail);
+                            } catch {
+                              setRegistryDetail(null);
+                            }
+                          }}
+                        >
                           <td className="p-4 align-top">
                             <p className="font-bold text-slate-900">{String(r.fullName ?? "—")}</p>
                             <p className="text-xs text-slate-500">DOB: {String(r.dob ?? "—")}</p>
@@ -4161,37 +4204,10 @@ export default function App() {
                             <p className="break-all text-slate-800">{String(r.email ?? "")}</p>
                             <p className="text-slate-600">{String(r.phone ?? "—")}</p>
                           </td>
-                          <td className="p-4 align-top text-slate-700">{String(r.mailingAddress ?? "—")}</td>
                           <td className="p-4 align-top">{String(r.civilStatus ?? "—")}</td>
                           <td className="p-4 align-top font-mono text-xs">{String(r.memberIdNo ?? "—")}</td>
-                          <td className="p-4 align-top text-center">
-                            <button
-                              type="button"
-                              className="inline-flex items-center gap-1 rounded-lg bg-[#004aad]/10 px-3 py-1.5 text-xs font-bold uppercase text-[#004aad] hover:bg-[#004aad]/20"
-                              onClick={async () => {
-                                if (!staffAccessToken) return;
-                                try {
-                                  const detail = await PmesService.fetchParticipantAdminDetail(
-                                    staffAccessToken,
-                                    String(r.participantId),
-                                  );
-                                  const d = /** @type {Record<string, unknown>} */ (detail);
-                                  setSuperuserMemberIdDraft(
-                                    String(
-                                      /** @type {Record<string, unknown> | undefined} */ (d.lifecycle)?.memberIdNo ??
-                                        /** @type {Record<string, unknown> | undefined} */ (d.registry)?.memberIdNo ??
-                                        "",
-                                    ),
-                                  );
-                                  setRegistryDetail(detail);
-                                } catch {
-                                  setRegistryDetail(null);
-                                }
-                              }}
-                            >
-                              <Eye className="h-4 w-4 shrink-0" aria-hidden />
-                              View
-                            </button>
+                          <td className="p-4 align-top text-sm font-medium text-slate-800">
+                            {r.staffPosition != null && String(r.staffPosition).trim() ? String(r.staffPosition) : "—"}
                           </td>
                         </tr>
                       );
@@ -4259,14 +4275,131 @@ export default function App() {
                 </div>
                 <div className="max-h-[calc(90vh-5rem)] overflow-y-auto p-5 text-sm text-slate-800">
                   {/** @type {Record<string, unknown>} */ (registryDetail).registry ? (
-                    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {Object.entries(/** @type {Record<string, unknown>} */ (registryDetail).registry).map(([k, v]) => (
-                        <div key={k}>
-                          <dt className="text-xs font-black uppercase text-slate-500">{k}</dt>
-                          <dd className="font-medium break-words">{v === null || v === undefined ? "—" : String(v)}</dd>
-                        </div>
-                      ))}
-                    </dl>
+                    <>
+                      {(() => {
+                        const reg = /** @type {Record<string, unknown>} */ (registryDetail).registry;
+                        const life = /** @type {Record<string, unknown> | undefined} */ (registryDetail).lifecycle;
+                        const createdRaw = reg.createdAt;
+                        let memberSince = "—";
+                        if (createdRaw != null && String(createdRaw).trim()) {
+                          const d = new Date(String(createdRaw));
+                          memberSince = Number.isNaN(d.getTime())
+                            ? "—"
+                            : d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+                        }
+                        const stage = life && life.stage != null ? String(life.stage) : "—";
+                        const posLabel =
+                          reg.staffPosition != null && String(reg.staffPosition).trim()
+                            ? String(reg.staffPosition)
+                            : "—";
+                        const emailForStaff = String(reg.email ?? "").trim();
+                        const staffRoleRaw = reg.staffRole != null ? String(reg.staffRole) : "";
+                        const hasStaff = staffRoleRaw.length > 0;
+                        const isSuperStaff = staffRoleRaw === "SUPERUSER";
+                        return (
+                          <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p className="text-sm font-semibold text-slate-900">
+                              <span className="font-black uppercase tracking-wide text-slate-500">Member since </span>
+                              {memberSince}
+                            </p>
+                            <p className="mt-2 text-sm font-semibold text-slate-900">
+                              <span className="font-black uppercase tracking-wide text-slate-500">Application stage </span>
+                              {stage}
+                            </p>
+                            {staffRole === "superuser" ? (
+                              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/90 p-3">
+                                <p className="text-xs font-black uppercase text-amber-900">Staff position</p>
+                                <p className="mt-1 text-xs text-amber-950/90">
+                                  Updates the staff login that uses the same email as this member. Create the staff account first
+                                  under Admin accounts if needed.
+                                </p>
+                                <div className="mt-3 flex flex-wrap items-end gap-2">
+                                  <label className="text-xs font-bold text-slate-800">
+                                    Role
+                                    <select
+                                      className="mt-1 block w-full min-w-[12rem] rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm"
+                                      value={registryStaffRoleSelect}
+                                      onChange={(e) => setRegistryStaffRoleSelect(e.target.value)}
+                                      disabled={registryStaffPositionSaving || !hasStaff || isSuperStaff}
+                                    >
+                                      <option value="ADMIN">Admin</option>
+                                      <option value="TREASURER">Treasurer</option>
+                                      <option value="SECRETARY">Secretary</option>
+                                      <option value="BOARD_DIRECTOR">Board director</option>
+                                    </select>
+                                  </label>
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      registryStaffPositionSaving ||
+                                      !staffAccessToken ||
+                                      !hasStaff ||
+                                      !emailForStaff ||
+                                      isSuperStaff
+                                    }
+                                    className="rounded-lg bg-[#004aad] px-4 py-2 text-xs font-black uppercase text-white hover:bg-[#003d99] disabled:opacity-50"
+                                    onClick={async () => {
+                                      if (!staffAccessToken || !emailForStaff) return;
+                                      setRegistryStaffPositionSaving(true);
+                                      try {
+                                        await PmesService.patchMemberStaffPosition(
+                                          staffAccessToken,
+                                          emailForStaff,
+                                          registryStaffRoleSelect,
+                                        );
+                                        const pid = String(reg.participantId ?? "");
+                                        const detail = await PmesService.fetchParticipantAdminDetail(
+                                          staffAccessToken,
+                                          pid,
+                                        );
+                                        setRegistryDetail(detail);
+                                        setRegistryRefreshNonce((n) => n + 1);
+                                        setAdminToast({ type: "success", message: "Staff position updated." });
+                                      } catch (e) {
+                                        const msg = e instanceof Error ? e.message : String(e);
+                                        setAdminToast({ type: "error", message: msg });
+                                      } finally {
+                                        setRegistryStaffPositionSaving(false);
+                                      }
+                                    }}
+                                  >
+                                    {registryStaffPositionSaving ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                                    ) : null}
+                                    Save position
+                                  </button>
+                                </div>
+                                {!hasStaff ? (
+                                  <p className="mt-2 text-xs font-medium text-amber-900">
+                                    No staff login on this email — add one in Admin accounts, then assign a role here.
+                                  </p>
+                                ) : null}
+                                {isSuperStaff ? (
+                                  <p className="mt-2 text-xs font-medium text-amber-900">
+                                    Superuser staff accounts cannot be changed from this screen.
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-sm">
+                                <span className="font-black uppercase tracking-wide text-slate-500">Position </span>
+                                {posLabel}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {Object.entries(/** @type {Record<string, unknown>} */ (registryDetail).registry)
+                          .filter(([k]) => k !== "staffRole")
+                          .map(([k, v]) => (
+                            <div key={k}>
+                              <dt className="text-xs font-black uppercase text-slate-500">{k}</dt>
+                              <dd className="font-medium break-words">{v === null || v === undefined ? "—" : String(v)}</dd>
+                            </div>
+                          ))}
+                      </dl>
+                    </>
                   ) : null}
                   {registryProfileDraft && staffAccessToken ? (
                     <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">

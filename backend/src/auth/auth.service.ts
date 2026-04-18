@@ -472,4 +472,43 @@ export class AuthService {
       orderBy: { createdAt: "desc" },
     });
   }
+
+  /**
+   * Superuser: update `StaffUser.role` for the account whose email matches `memberEmail`
+   * (member must already have a staff login — use Admin accounts to create one at that email).
+   */
+  async setStaffRoleByMemberEmail(actingStaffId: string, memberEmailRaw: string, role: StaffRole) {
+    const actor = await this.prisma.staffUser.findUnique({ where: { id: actingStaffId } });
+    if (!actor || actor.role !== StaffRole.SUPERUSER) {
+      throw new ForbiddenException("Only a superuser can change staff positions");
+    }
+    const allowed: StaffRole[] = [
+      StaffRole.ADMIN,
+      StaffRole.TREASURER,
+      StaffRole.BOARD_DIRECTOR,
+      StaffRole.SECRETARY,
+    ];
+    if (!allowed.includes(role)) {
+      throw new BadRequestException("Choose Admin, Treasurer, Secretary, or Board director.");
+    }
+    const memberEmail = memberEmailRaw.trim().toLowerCase();
+    const participant = await this.prisma.participant.findUnique({ where: { email: memberEmail } });
+    if (!participant) {
+      throw new BadRequestException("No member record exists for that email.");
+    }
+    const staff = await this.prisma.staffUser.findUnique({ where: { email: memberEmail } });
+    if (!staff) {
+      throw new BadRequestException(
+        "No staff login exists for this email. Create an account in Admin accounts using the same email, then assign a position.",
+      );
+    }
+    if (staff.role === StaffRole.SUPERUSER) {
+      throw new BadRequestException("Cannot change role for a superuser account here.");
+    }
+    return this.prisma.staffUser.update({
+      where: { id: staff.id },
+      data: { role },
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
+  }
 }

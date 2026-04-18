@@ -577,6 +577,23 @@ export const PmesService = {
   },
 
   /** Superuser: add one legacy pioneer row (same reclaim flow as bulk import). */
+  /** Superuser: set staff login role for a member email (Treasurer, Secretary, BOD, Admin). */
+  async patchMemberStaffPosition(accessToken, memberEmail, role) {
+    if (!useRest()) throw new Error("API required");
+    const response = await fetch(`${apiBase()}/auth/staff/member-position`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ memberEmail: String(memberEmail || "").trim(), role: String(role || "").trim() }),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiErrorMessage(response));
+    }
+    return response.json();
+  },
+
   async addLegacyPioneer(accessToken, row) {
     if (!useRest()) throw new Error("API required");
     const response = await fetch(`${apiBase()}/pmes/admin/legacy-pioneer`, {

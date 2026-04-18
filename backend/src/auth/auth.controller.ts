@@ -6,6 +6,7 @@ import { AdminCredentialsDto } from "./dto/admin-credentials.dto";
 import { ChangeStaffPasswordDto } from "./dto/change-staff-password.dto";
 import { CreateStaffAdminDto } from "./dto/create-staff-admin.dto";
 import { PromoteStaffSuperuserDto } from "./dto/promote-staff-superuser.dto";
+import { SetMemberStaffPositionDto } from "./dto/set-member-staff-position.dto";
 import { SyncMemberDto } from "./dto/sync-member.dto";
 import { StaffJwtGuard, type StaffJwtPayload } from "./staff-jwt.guard";
 import { SuperuserGuard } from "./superuser.guard";
@@ -69,5 +70,13 @@ export class AuthController {
   @UseGuards(StaffJwtGuard, SuperuserGuard)
   listStaffAdmins(@Req() req: StaffRequest) {
     return this.auth.listManagedAdmins(req.staffUser.sub);
+  }
+
+  /** Superuser only: set staff role for the login whose email matches a member (Treasurer, Secretary, BOD, Admin). */
+  @Patch("staff/member-position")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @UseGuards(StaffJwtGuard, SuperuserGuard)
+  setMemberStaffPosition(@Req() req: StaffRequest, @Body() dto: SetMemberStaffPositionDto) {
+    return this.auth.setStaffRoleByMemberEmail(req.staffUser.sub, dto.memberEmail, dto.role);
   }
 }

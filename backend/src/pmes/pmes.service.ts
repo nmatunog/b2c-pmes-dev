@@ -225,6 +225,12 @@ export type MemberRegistryRow = {
   firebaseUid: string | null;
   loiAddress: string | null;
   fullProfileCompletedAt: string | null;
+  /** Account creation time (ISO). */
+  createdAt: string;
+  /** `StaffUser.role` when a staff login exists for the same email as this member. */
+  staffRole: string | null;
+  /** Human-readable officer/admin label for the registry table. */
+  staffPosition: string | null;
 };
 
 @Injectable()
@@ -1172,8 +1178,26 @@ export class PmesService {
       }),
     ]);
 
+    const emails = [...new Set(rows.map((r) => normalizeEmail(r.email)))];
+    const staffRows =
+      emails.length > 0
+        ? await this.prisma.staffUser.findMany({
+            where: { email: { in: emails } },
+            select: { email: true, role: true },
+          })
+        : [];
+    const staffByEmail = new Map(staffRows.map((s) => [normalizeEmail(s.email), s.role]));
+
     return {
-      rows: rows.map((p) => this.buildRegistryRow(p)),
+      rows: rows.map((p) => {
+        const base = this.buildRegistryRow(p);
+        const sr = staffByEmail.get(normalizeEmail(p.email)) ?? null;
+        return {
+          ...base,
+          staffRole: sr,
+          staffPosition: sr != null ? this.formatStaffPositionLabel(sr) : null,
+        };
+      }),
       total,
       page,
       pageSize,
@@ -1194,8 +1218,19 @@ export class PmesService {
     const envelope = parseFullProfileEnvelope(p.fullProfileJson);
     const snapshot = p.memberProfileSnapshot ?? envelope?.profile ?? null;
 
+    const staffLogin = await this.prisma.staffUser.findUnique({
+      where: { email: normalizeEmail(p.email) },
+      select: { id: true, role: true },
+    });
+    const regBase = this.buildRegistryRow(p);
+    const registry = {
+      ...regBase,
+      staffRole: staffLogin?.role ?? null,
+      staffPosition: staffLogin ? this.formatStaffPositionLabel(staffLogin.role) : null,
+    };
+
     return {
-      registry: this.buildRegistryRow(p),
+      registry,
       lifecycle: this.toLifecyclePayload(p),
       registryImportSnapshot: p.registryImportSnapshot ?? null,
       loiSubmission: p.loiSubmission,
@@ -1315,12 +1350,33 @@ export class PmesService {
       firebaseUid: p.firebaseUid ?? null,
       loiAddress: p.loiSubmission?.address ?? null,
       fullProfileCompletedAt: p.fullProfileCompletedAt?.toISOString() ?? null,
+      createdAt: p.createdAt.toISOString(),
+      staffRole: null,
+      staffPosition: null,
     };
   }
 
-  /** Admin dashboard: one row per participant with pipeline flags */
+  private formatStaffPositionLabel(role: StaffRole): string {
+    switch (role) {
+      case StaffRole.SUPERUSER:
+        return "Superuser";
+      case StaffRole.ADMIN:
+        return "Admin";
+      case StaffRole.TREASURER:
+        return "Treasurer";
+      case StaffRole.BOARD_DIRECTOR:
+        return "Board director";
+      case StaffRole.SECRETARY:
+        return "Secretary";
+      default:
+        return String(role);
+    }
+  }
+
+  /** Admin dashboard: applicants still completing membership (excludes finished full-member profiles). */
   async listMembershipPipeline() {
     const participants = await this.prisma.participant.findMany({
+      where: { fullProfileCompletedAt: null },
       include: {
         pmesRecords: { orderBy: { timestamp: "desc" }, take: 8 },
         loiSubmission: true,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { EDGE_CORS_HEADERS, edgeCorsOptions } from "@/lib/edge-cors";
 import { requireStaff, unauthorized } from "@/lib/staff-edge-auth";
+import { staffPositionLabel } from "@/lib/pmes-edge/staff-position-label";
 
 type RegistryRow = {
   participantId: string;
@@ -15,6 +16,9 @@ type RegistryRow = {
   memberIdNo: string | null;
   loiAddress: string | null;
   fullProfileCompletedAt: string | null;
+  createdAt: string;
+  staffRole: string | null;
+  staffPosition: string | null;
 };
 
 export function OPTIONS() {
@@ -64,9 +68,12 @@ export async function GET(request: Request) {
         p."civilStatus",
         p."memberIdNo",
         ls.address AS "loiAddress",
-        p."fullProfileCompletedAt"
+        p."fullProfileCompletedAt",
+        p."createdAt",
+        s.role AS "staffRole"
       FROM "Participant" p
       LEFT JOIN "LoiSubmission" ls ON ls."participantId" = p.id
+      LEFT JOIN "StaffUser" s ON LOWER(TRIM(s.email)) = LOWER(TRIM(p.email))
       WHERE (${includeAll} OR p."fullProfileCompletedAt" IS NOT NULL)
       AND (
         NOT ${filterSearch}
@@ -79,9 +86,19 @@ export async function GET(request: Request) {
       )
       ORDER BY p."fullProfileCompletedAt" DESC NULLS LAST, p."createdAt" DESC
       LIMIT ${pageSize} OFFSET ${offset}
-    `) as RegistryRow[];
+    `) as Array<Omit<RegistryRow, "staffPosition"> & { staffRole: string | null }>;
 
-    return NextResponse.json({ rows, total, page, pageSize }, { headers: EDGE_CORS_HEADERS });
+    const mapped: RegistryRow[] = rows.map((r) => {
+      const createdRaw = r.createdAt as unknown;
+      return {
+        ...r,
+        createdAt:
+          createdRaw instanceof Date ? createdRaw.toISOString() : String(createdRaw ?? ""),
+        staffPosition: staffPositionLabel(r.staffRole),
+      };
+    });
+
+    return NextResponse.json({ rows: mapped, total, page, pageSize }, { headers: EDGE_CORS_HEADERS });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unauthorized";
     return unauthorized(message);
