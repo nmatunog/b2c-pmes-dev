@@ -513,7 +513,13 @@ export class AuthService {
     }
     let staff = await this.prisma.staffUser.findUnique({ where: { email: memberEmail } });
     if (!staff) {
-      const legacyUnclaimed = participant.legacyPioneerImport && !participant.firebaseUid;
+      /** Roster imports set `registryImportSnapshot`; older rows may lack `legacyPioneerImport` but still be imports. */
+      const noFirebaseLink =
+        participant.firebaseUid == null ||
+        (typeof participant.firebaseUid === "string" && participant.firebaseUid.trim() === "");
+      const importedRosterRow =
+        participant.legacyPioneerImport || participant.registryImportSnapshot != null;
+      const legacyUnclaimed = noFirebaseLink && importedRosterRow;
       if (!legacyUnclaimed) {
         throw new BadRequestException(
           "No staff login exists for this email. Create an account in Admin accounts using the same email, then assign a position.",

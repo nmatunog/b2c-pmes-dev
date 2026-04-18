@@ -49,11 +49,16 @@ export async function PATCH(request: Request) {
 
     const sql = getSql();
     const pRows = (await sql`
-      SELECT id, "legacyPioneerImport", "firebaseUid"
+      SELECT id, "legacyPioneerImport", "firebaseUid", "registryImportSnapshot"
       FROM "Participant"
       WHERE LOWER(TRIM(email)) = ${memberEmail}
       LIMIT 1
-    `) as Array<{ id: string; legacyPioneerImport: boolean | null; firebaseUid: string | null }>;
+    `) as Array<{
+      id: string;
+      legacyPioneerImport: boolean | null;
+      firebaseUid: string | null;
+      registryImportSnapshot: unknown;
+    }>;
     const participant = pRows[0];
     if (!participant) {
       return NextResponse.json(
@@ -68,7 +73,12 @@ export async function PATCH(request: Request) {
     let s = (sRows as { id: string; role: string }[])[0];
 
     if (!s) {
-      const legacyUnclaimed = Boolean(participant.legacyPioneerImport) && !participant.firebaseUid;
+      const noFirebaseLink =
+        participant.firebaseUid == null ||
+        (typeof participant.firebaseUid === "string" && participant.firebaseUid.trim() === "");
+      const importedRosterRow =
+        Boolean(participant.legacyPioneerImport) || participant.registryImportSnapshot != null;
+      const legacyUnclaimed = noFirebaseLink && importedRosterRow;
       if (!legacyUnclaimed) {
         return NextResponse.json(
           {

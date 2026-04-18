@@ -4451,9 +4451,15 @@ export default function App() {
                         const staffRoleRaw = reg.staffRole != null ? String(reg.staffRole) : "";
                         const hasStaff = staffRoleRaw.length > 0;
                         const isSuperStaff = staffRoleRaw === "SUPERUSER";
-                        const legacyUnclaimed =
-                          Boolean(reg.legacyPioneerImport) &&
-                          (reg.firebaseUid == null || String(reg.firebaseUid).trim() === "");
+                        const importSnap =
+                          registryDetail && typeof registryDetail === "object"
+                            ? /** @type {Record<string, unknown>} */ (registryDetail).registryImportSnapshot
+                            : undefined;
+                        const importedRosterRow =
+                          Boolean(reg.legacyPioneerImport) || importSnap != null;
+                        const noFirebaseLink =
+                          reg.firebaseUid == null || String(reg.firebaseUid ?? "").trim() === "";
+                        const legacyUnclaimed = importedRosterRow && noFirebaseLink;
                         const canAssignPosition =
                           (hasStaff && !isSuperStaff) || (legacyUnclaimed && !isSuperStaff);
                         return (
