@@ -909,7 +909,19 @@ export default function App() {
         ? /** @type {Record<string, unknown>} */ (registryDetail).registry
         : null;
     const sr = r && typeof r === "object" && r.staffRole != null ? String(r.staffRole) : "";
-    if (sr && ["ADMIN", "TREASURER", "SECRETARY", "BOARD_DIRECTOR", "SUPERUSER"].includes(sr)) {
+    if (
+      sr &&
+      [
+        "ADMIN",
+        "TREASURER",
+        "SECRETARY",
+        "BOARD_DIRECTOR",
+        "CHAIRMAN",
+        "VICE_CHAIRMAN",
+        "GENERAL_MANAGER",
+        "SUPERUSER",
+      ].includes(sr)
+    ) {
       setRegistryStaffRoleSelect(sr === "SUPERUSER" ? "ADMIN" : sr);
     } else {
       setRegistryStaffRoleSelect("ADMIN");
@@ -4318,6 +4330,11 @@ export default function App() {
                         const staffRoleRaw = reg.staffRole != null ? String(reg.staffRole) : "";
                         const hasStaff = staffRoleRaw.length > 0;
                         const isSuperStaff = staffRoleRaw === "SUPERUSER";
+                        const legacyUnclaimed =
+                          Boolean(reg.legacyPioneerImport) &&
+                          (reg.firebaseUid == null || String(reg.firebaseUid).trim() === "");
+                        const canAssignPosition =
+                          (hasStaff && !isSuperStaff) || (legacyUnclaimed && !isSuperStaff);
                         return (
                           <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                             <p className="text-sm font-semibold text-slate-900">
@@ -4332,8 +4349,8 @@ export default function App() {
                               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/90 p-3">
                                 <p className="text-xs font-black uppercase text-amber-900">Staff position</p>
                                 <p className="mt-1 text-xs text-amber-950/90">
-                                  Updates the staff login that uses the same email as this member. Create the staff account first
-                                  under Admin accounts if needed.
+                                  Chairman, Vice chairman, and General manager use admin authorization when signing in. For
+                                  unclaimed legacy roster rows, saving creates a staff record for this email automatically.
                                 </p>
                                 <div className="mt-3 flex flex-wrap items-end gap-2">
                                   <label className="text-xs font-bold text-slate-800">
@@ -4342,9 +4359,12 @@ export default function App() {
                                       className="mt-1 block w-full min-w-[12rem] rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm"
                                       value={registryStaffRoleSelect}
                                       onChange={(e) => setRegistryStaffRoleSelect(e.target.value)}
-                                      disabled={registryStaffPositionSaving || !hasStaff || isSuperStaff}
+                                      disabled={registryStaffPositionSaving || !canAssignPosition || isSuperStaff}
                                     >
                                       <option value="ADMIN">Admin</option>
+                                      <option value="CHAIRMAN">Chairman</option>
+                                      <option value="VICE_CHAIRMAN">Vice chairman</option>
+                                      <option value="GENERAL_MANAGER">General manager</option>
                                       <option value="TREASURER">Treasurer</option>
                                       <option value="SECRETARY">Secretary</option>
                                       <option value="BOARD_DIRECTOR">Board director</option>
@@ -4355,7 +4375,7 @@ export default function App() {
                                     disabled={
                                       registryStaffPositionSaving ||
                                       !staffAccessToken ||
-                                      !hasStaff ||
+                                      !canAssignPosition ||
                                       !emailForStaff ||
                                       isSuperStaff
                                     }
@@ -4391,9 +4411,14 @@ export default function App() {
                                     Save position
                                   </button>
                                 </div>
-                                {!hasStaff ? (
+                                {!hasStaff && !legacyUnclaimed ? (
                                   <p className="mt-2 text-xs font-medium text-amber-900">
                                     No staff login on this email — add one in Admin accounts, then assign a role here.
+                                  </p>
+                                ) : null}
+                                {legacyUnclaimed && !hasStaff ? (
+                                  <p className="mt-2 text-xs font-medium text-amber-900">
+                                    Legacy member not yet claimed — choose a position and save to create the staff record.
                                   </p>
                                 ) : null}
                                 {isSuperStaff ? (

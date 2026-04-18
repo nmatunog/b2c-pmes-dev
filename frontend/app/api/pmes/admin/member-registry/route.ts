@@ -17,6 +17,8 @@ type RegistryRow = {
   loiAddress: string | null;
   fullProfileCompletedAt: string | null;
   createdAt: string;
+  legacyPioneerImport: boolean;
+  firebaseUid: string | null;
   staffRole: string | null;
   staffPosition: string | null;
 };
@@ -43,7 +45,11 @@ export async function GET(request: Request) {
       SELECT COUNT(*)::int AS total
       FROM "Participant" p
       LEFT JOIN "LoiSubmission" ls ON ls."participantId" = p.id
-      WHERE (${includeAll} OR p."fullProfileCompletedAt" IS NOT NULL)
+      WHERE (
+        ${includeAll}
+        OR p."fullProfileCompletedAt" IS NOT NULL
+        OR (COALESCE(p."legacyPioneerImport", false) = true AND p."firebaseUid" IS NULL)
+      )
       AND (
         NOT ${filterSearch}
         OR p."fullName" ILIKE ${like}
@@ -70,11 +76,17 @@ export async function GET(request: Request) {
         ls.address AS "loiAddress",
         p."fullProfileCompletedAt",
         p."createdAt",
+        COALESCE(p."legacyPioneerImport", false) AS "legacyPioneerImport",
+        p."firebaseUid",
         s.role AS "staffRole"
       FROM "Participant" p
       LEFT JOIN "LoiSubmission" ls ON ls."participantId" = p.id
       LEFT JOIN "StaffUser" s ON LOWER(TRIM(s.email)) = LOWER(TRIM(p.email))
-      WHERE (${includeAll} OR p."fullProfileCompletedAt" IS NOT NULL)
+      WHERE (
+        ${includeAll}
+        OR p."fullProfileCompletedAt" IS NOT NULL
+        OR (COALESCE(p."legacyPioneerImport", false) = true AND p."firebaseUid" IS NULL)
+      )
       AND (
         NOT ${filterSearch}
         OR p."fullName" ILIKE ${like}

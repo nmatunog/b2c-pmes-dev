@@ -48,6 +48,7 @@ export async function buildAdminParticipantDetailJson(participantId: string) {
       phone: row.phone,
       dob: row.dob,
       gender: row.gender,
+      legacyPioneerImport: Boolean(row.legacyPioneerImport),
       mailingAddress: row.mailingAddress ?? null,
       civilStatus: row.civilStatus ?? null,
       tinNo: row.tinNo ?? null,

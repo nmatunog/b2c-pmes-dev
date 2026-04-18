@@ -231,6 +231,8 @@ export type MemberRegistryRow = {
   staffRole: string | null;
   /** Human-readable officer/admin label for the registry table. */
   staffPosition: string | null;
+  /** Preloaded roster import; unclaimed when no Firebase uid. */
+  legacyPioneerImport: boolean;
 };
 
 @Injectable()
@@ -319,31 +321,15 @@ export class PmesService {
    * attempt, but older or hand-edited data can leave `legacyPioneerImport` participants with no
    * PMES row — they would be invisible here. Backfill one passing record so they appear like imports.
    */
+  /** Legacy roster members are listed in Member Registry / Pipeline, not the PMES master list. */
   private async ensurePmesRowsForLegacyFoundersWithoutAttempt() {
-    const orphans = await this.prisma.participant.findMany({
-      where: {
-        legacyPioneerImport: true,
-        pmesRecords: { none: {} },
-      },
-      select: { id: true },
-    });
-    if (orphans.length === 0) return;
-    await this.prisma.$transaction(
-      orphans.map((p) =>
-        this.prisma.pmesRecord.create({
-          data: {
-            participantId: p.id,
-            score: 10,
-            passed: true,
-          },
-        }),
-      ),
-    );
+    return;
   }
 
   async listAllPmesForAdmin() {
     await this.ensurePmesRowsForLegacyFoundersWithoutAttempt();
     const rows = await this.prisma.pmesRecord.findMany({
+      where: { participant: { legacyPioneerImport: false } },
       include: { participant: true },
       orderBy: { timestamp: "desc" },
     });
@@ -1163,7 +1149,14 @@ export class PmesService {
       : undefined;
 
     const where: Prisma.ParticipantWhereInput = {
-      ...(includeAll ? {} : { fullProfileCompletedAt: { not: null } }),
+      ...(includeAll
+        ? {}
+        : {
+            OR: [
+              { fullProfileCompletedAt: { not: null } },
+              { AND: [{ legacyPioneerImport: true }, { firebaseUid: null }] },
+            ],
+          }),
       ...(searchFilter ? searchFilter : {}),
     };
 
@@ -1353,6 +1346,7 @@ export class PmesService {
       createdAt: p.createdAt.toISOString(),
       staffRole: null,
       staffPosition: null,
+      legacyPioneerImport: Boolean(p.legacyPioneerImport),
     };
   }
 
@@ -1368,6 +1362,12 @@ export class PmesService {
         return "Board director";
       case StaffRole.SECRETARY:
         return "Secretary";
+      case StaffRole.CHAIRMAN:
+        return "Chairman";
+      case StaffRole.VICE_CHAIRMAN:
+        return "Vice chairman";
+      case StaffRole.GENERAL_MANAGER:
+        return "General manager";
       default:
         return String(role);
     }
@@ -1376,8 +1376,14 @@ export class PmesService {
   /** Admin dashboard: applicants still completing membership (excludes finished full-member profiles). */
   async listMembershipPipeline() {
     const participants = await this.prisma.participant.findMany({
-      /** Legacy / roster imports skip the PMES → LOI → payment → BOD journey; keep them out of the pipeline list. */
-      where: { fullProfileCompletedAt: null, legacyPioneerImport: false },
+      /** In pipeline: normal applicants, plus legacy imports not yet claimed (no Firebase uid). */
+      where: {
+        fullProfileCompletedAt: null,
+        OR: [
+          { legacyPioneerImport: false },
+          { AND: [{ legacyPioneerImport: true }, { firebaseUid: null }] },
+        ],
+      },
       include: {
         pmesRecords: { orderBy: { timestamp: "desc" }, take: 8 },
         loiSubmission: true,

@@ -8,6 +8,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { StaffRole } from "@prisma/client";
+import { randomUUID } from "crypto";
 import * as bcrypt from "bcryptjs";
 import * as admin from "firebase-admin";
 import { PrismaService } from "../prisma/prisma.service";
@@ -30,6 +31,10 @@ function staffRoleToJwt(role: StaffRole): StaffJwtRole {
       return "board_director";
     case StaffRole.SECRETARY:
       return "secretary";
+    /** Chairman / Vice chairman / GM use Admin JWT claims; DB role still distinguishes titles in registry. */
+    case StaffRole.CHAIRMAN:
+    case StaffRole.VICE_CHAIRMAN:
+    case StaffRole.GENERAL_MANAGER:
     case StaffRole.ADMIN:
     default:
       return "admin";
@@ -293,6 +298,9 @@ export class AuthService {
       StaffRole.TREASURER,
       StaffRole.BOARD_DIRECTOR,
       StaffRole.SECRETARY,
+      StaffRole.CHAIRMAN,
+      StaffRole.VICE_CHAIRMAN,
+      StaffRole.GENERAL_MANAGER,
     ];
     if (!allowed.includes(role)) {
       throw new BadRequestException("Invalid staff role for new account");
@@ -487,20 +495,41 @@ export class AuthService {
       StaffRole.TREASURER,
       StaffRole.BOARD_DIRECTOR,
       StaffRole.SECRETARY,
+      StaffRole.CHAIRMAN,
+      StaffRole.VICE_CHAIRMAN,
+      StaffRole.GENERAL_MANAGER,
     ];
     if (!allowed.includes(role)) {
-      throw new BadRequestException("Choose Admin, Treasurer, Secretary, or Board director.");
+      throw new BadRequestException(
+        "Choose Admin, Treasurer, Secretary, Board director, Chairman, Vice chairman, or General manager.",
+      );
     }
     const memberEmail = memberEmailRaw.trim().toLowerCase();
     const participant = await this.prisma.participant.findUnique({ where: { email: memberEmail } });
     if (!participant) {
       throw new BadRequestException("No member record exists for that email.");
     }
-    const staff = await this.prisma.staffUser.findUnique({ where: { email: memberEmail } });
+    let staff = await this.prisma.staffUser.findUnique({ where: { email: memberEmail } });
     if (!staff) {
-      throw new BadRequestException(
-        "No staff login exists for this email. Create an account in Admin accounts using the same email, then assign a position.",
-      );
+      const legacyUnclaimed = participant.legacyPioneerImport && !participant.firebaseUid;
+      if (!legacyUnclaimed) {
+        throw new BadRequestException(
+          "No staff login exists for this email. Create an account in Admin accounts using the same email, then assign a position.",
+        );
+      }
+      const passwordHash = await bcrypt.hash(`unclaimed-legacy-${randomUUID()}`, 12);
+      staff = await this.prisma.staffUser.create({
+        data: {
+          email: memberEmail,
+          passwordHash,
+          role,
+          createdById: actingStaffId,
+        },
+      });
+      return this.prisma.staffUser.findUniqueOrThrow({
+        where: { id: staff.id },
+        select: { id: true, email: true, role: true, createdAt: true },
+      });
     }
     if (staff.role === StaffRole.SUPERUSER) {
       throw new BadRequestException("Cannot change role for a superuser account here.");

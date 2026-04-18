@@ -32,6 +32,9 @@ enum StaffRole {
   BOARD_DIRECTOR
   /** Issues Board Resolution number and final board approval gate */
   SECRETARY
+  CHAIRMAN
+  VICE_CHAIRMAN
+  GENERAL_MANAGER
 }
 
 model Participant {

@@ -38,6 +38,7 @@ export async function GET(request: Request) {
         p.gender
       FROM "PmesRecord" pr
       INNER JOIN "Participant" p ON p.id = pr."participantId"
+      WHERE NOT COALESCE(p."legacyPioneerImport", false)
       ORDER BY pr.timestamp DESC
     `) as AdminRecordRow[];
     return NextResponse.json(rows, { headers: EDGE_CORS_HEADERS });

@@ -51,7 +51,10 @@ export async function selectMembershipPipelineRows(sql: Sql): Promise<AdminLifec
         ) AS "loiSubmitted"
       FROM "Participant" p
       WHERE p."fullProfileCompletedAt" IS NULL
-        AND NOT COALESCE(p."legacyPioneerImport", false)
+        AND (
+          NOT COALESCE(p."legacyPioneerImport", false)
+          OR (COALESCE(p."legacyPioneerImport", false) AND p."firebaseUid" IS NULL)
+        )
       ORDER BY p."createdAt" DESC
     `) as AdminLifecycleRowWithOptionalStamp[];
     return rows.map((r) => normalizeAdminRow(r));
@@ -83,7 +86,10 @@ export async function selectMembershipPipelineRows(sql: Sql): Promise<AdminLifec
         ) AS "loiSubmitted"
       FROM "Participant" p
       WHERE p."fullProfileCompletedAt" IS NULL
-        AND NOT COALESCE(p."legacyPioneerImport", false)
+        AND (
+          NOT COALESCE(p."legacyPioneerImport", false)
+          OR (COALESCE(p."legacyPioneerImport", false) AND p."firebaseUid" IS NULL)
+        )
       ORDER BY p."createdAt" DESC
     `) as AdminLifecycleRowWithOptionalStamp[];
     return rows.map((r) => normalizeAdminRow(r));
