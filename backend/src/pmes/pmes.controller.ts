@@ -22,6 +22,7 @@ import { ImportLegacyPioneerRowDto, ImportLegacyPioneersDto } from "./dto/import
 import { PioneerEligibilityDto } from "./dto/pioneer-eligibility.dto";
 import { SetCallsignDto } from "./dto/set-callsign.dto";
 import { UpdateMemberLoginEmailDto } from "./dto/update-member-login-email.dto";
+import { UpdateMemberBasicProfileDto } from "./dto/update-member-basic-profile.dto";
 import { SubmitFullProfileDto } from "./dto/submit-full-profile.dto";
 import { SuperuserSetMemberIdDto } from "./dto/superuser-set-member-id.dto";
 import { BodVoteDto } from "./dto/bod-vote.dto";
@@ -105,6 +106,20 @@ export class PmesController {
   ) {
     await this.auth.assertMemberEmailMatchesFirebaseToken(authorization, dto.email);
     return this.pmes.setMemberCallsign(dto);
+  }
+
+  /**
+   * Update name, mobile, DOB, gender, and mailing address from the portal member profile screen.
+   * Requires Firebase ID token for the same email.
+   */
+  @Patch("member/basic-profile")
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async updateMemberBasicProfile(
+    @Headers("authorization") authorization: string | undefined,
+    @Body() dto: UpdateMemberBasicProfileDto,
+  ) {
+    await this.auth.assertMemberEmailMatchesFirebaseToken(authorization, dto.email);
+    return this.pmes.updateMemberBasicProfile(dto);
   }
 
   /**

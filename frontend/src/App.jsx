@@ -3192,7 +3192,7 @@ export default function App() {
             />
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 const composed =
                   composeFullName(formData.firstName, formData.middleName, formData.lastName).trim() ||
                   String(formData.fullName || "").trim();
@@ -3210,10 +3210,30 @@ export default function App() {
                 }
                 setError(null);
                 setFormData((prev) => ({ ...prev, fullName: composed }));
+                const from = registrationNavRef.current;
+
+                if (from === "portal" && useApiMembership && user?.email) {
+                  try {
+                    const token = await user.getIdToken(true);
+                    await PmesService.patchMemberBasicProfile({
+                      email: user.email,
+                      idToken: token,
+                      fullName: composed.trim(),
+                      phone: String(formData.phone || "").trim(),
+                      dob: String(formData.dob || "").trim(),
+                      gender: String(formData.gender || "").trim(),
+                      mailingAddress: String(formData.residenceAddress || "").trim(),
+                    });
+                    void refreshMembershipLifecycle();
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "Could not save your profile to the server.");
+                    return;
+                  }
+                }
+
                 if (user) {
                   void updateProfile(user, { displayName: composed.trim() }).catch(() => null);
                 }
-                const from = registrationNavRef.current;
                 registrationNavRef.current = "menu";
                 if (from === "exam") {
                   setAppState("exam");

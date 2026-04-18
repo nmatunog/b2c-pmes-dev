@@ -19,10 +19,47 @@ function asObject(v: unknown): Record<string, unknown> | null {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
 }
 
-function deriveFields(profile: unknown): { mailingAddress: string; civilStatus: string; memberIdNo: string; callsign: string } {
+function composeLegalFullName(personal: ReturnType<typeof asObject>): string {
+  if (!personal) return "";
+  const first = typeof personal.firstName === "string" ? personal.firstName.trim() : "";
+  const mid = typeof personal.middleName === "string" ? personal.middleName.trim() : "";
+  const last = typeof personal.lastName === "string" ? personal.lastName.trim() : "";
+  const suf = typeof personal.suffixName === "string" ? personal.suffixName.trim() : "";
+  const core = [first, mid, last]
+    .filter(Boolean)
+    .join(" ");
+  if (!core) return "";
+  return suf ? `${core} ${suf}`.trim() : core;
+}
+
+function normalizeProfileDob(raw: string): string | undefined {
+  const t = raw.trim();
+  const iso = t.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (iso) return iso[1]!;
+  const us = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (us) {
+    const mm = us[1]!.padStart(2, "0");
+    const dd = us[2]!.padStart(2, "0");
+    return `${us[3]!}-${mm}-${dd}`;
+  }
+  return undefined;
+}
+
+function deriveFields(profile: unknown): {
+  mailingAddress: string;
+  civilStatus: string;
+  memberIdNo: string;
+  callsign: string;
+  phone: string;
+  displayFullName: string;
+  sexGender: string;
+} {
   const p = asObject(profile);
-  if (!p) return { mailingAddress: "", civilStatus: "", memberIdNo: "", callsign: "" };
+  if (!p) {
+    return { mailingAddress: "", civilStatus: "", memberIdNo: "", callsign: "", phone: "", displayFullName: "", sexGender: "" };
+  }
   const personal = asObject(p.personal);
+  const contact = asObject(p.contact);
   const present = asObject(p.presentAddress);
   const parts = [
     present?.houseNo,
@@ -42,6 +79,9 @@ function deriveFields(profile: unknown): { mailingAddress: string; civilStatus: 
     civilStatus: typeof personal?.civilStatus === "string" ? personal.civilStatus.trim() : "",
     memberIdNo: typeof personal?.memberIdNo === "string" ? personal.memberIdNo.trim() : "",
     callsign: typeof personal?.callsign === "string" ? personal.callsign.trim() : "",
+    phone: typeof contact?.mobileNo === "string" ? contact.mobileNo.trim() : "",
+    displayFullName: composeLegalFullName(personal),
+    sexGender: typeof personal?.sexGender === "string" ? personal.sexGender.trim() : "",
   };
 }
 
@@ -123,6 +163,19 @@ export async function POST(request: Request) {
 
   const withId = await ensureMemberPublicId(sql, participant, parsed);
   const derived = deriveFields(parsed);
+  const personalForDob = asObject(asObject(parsed)?.personal);
+  const birthDateRaw =
+    personalForDob && typeof personalForDob.birthDate === "string" ? personalForDob.birthDate.trim() : "";
+  const dobIso = birthDateRaw ? normalizeProfileDob(birthDateRaw) : undefined;
+  const phoneOut = (derived.phone.trim() ? derived.phone.trim().slice(0, 64) : participant.phone).slice(0, 64);
+  const fullNameOut = (
+    derived.displayFullName.trim() ? derived.displayFullName.trim().slice(0, 500) : participant.fullName
+  ).slice(0, 500);
+  const genderOut = (derived.sexGender.trim() ? derived.sexGender.trim().slice(0, 32) : participant.gender).slice(
+    0,
+    32,
+  );
+  const dobOut = (dobIso ?? participant.dob).slice(0, 32);
   let callsignOut: string | null = null;
   if (derived.callsign) {
     try {
@@ -168,6 +221,10 @@ export async function POST(request: Request) {
             "mailingAddress" = ${derived.mailingAddress || null},
             "civilStatus" = ${derived.civilStatus || null},
             "memberIdNo" = ${withId.memberIdNo?.trim() || derived.memberIdNo || null},
+            phone = ${phoneOut},
+            "fullName" = ${fullNameOut},
+            dob = ${dobOut},
+            gender = ${genderOut},
             callsign = ${callsignOut},
             "memberProfileConcurrencyStamp" = "memberProfileConcurrencyStamp" + 1
           WHERE id = ${withId.id}
@@ -195,6 +252,10 @@ export async function POST(request: Request) {
             "mailingAddress" = ${derived.mailingAddress || null},
             "civilStatus" = ${derived.civilStatus || null},
             "memberIdNo" = ${withId.memberIdNo?.trim() || derived.memberIdNo || null},
+            phone = ${phoneOut},
+            "fullName" = ${fullNameOut},
+            dob = ${dobOut},
+            gender = ${genderOut},
             callsign = ${callsignOut}
           WHERE id = ${withId.id}
         `;
@@ -210,6 +271,10 @@ export async function POST(request: Request) {
             "mailingAddress" = ${derived.mailingAddress || null},
             "civilStatus" = ${derived.civilStatus || null},
             "memberIdNo" = ${withId.memberIdNo?.trim() || derived.memberIdNo || null},
+            phone = ${phoneOut},
+            "fullName" = ${fullNameOut},
+            dob = ${dobOut},
+            gender = ${genderOut},
             callsign = ${callsignOut},
             "memberProfileConcurrencyStamp" = "memberProfileConcurrencyStamp" + 1
           WHERE id = ${withId.id}
@@ -225,6 +290,10 @@ export async function POST(request: Request) {
             "mailingAddress" = ${derived.mailingAddress || null},
             "civilStatus" = ${derived.civilStatus || null},
             "memberIdNo" = ${withId.memberIdNo?.trim() || derived.memberIdNo || null},
+            phone = ${phoneOut},
+            "fullName" = ${fullNameOut},
+            dob = ${dobOut},
+            gender = ${genderOut},
             callsign = ${callsignOut}
           WHERE id = ${withId.id}
         `;

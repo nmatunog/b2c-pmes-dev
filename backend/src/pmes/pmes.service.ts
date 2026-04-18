@@ -18,12 +18,18 @@ import type { ImportLegacyPioneerRowDto } from "./dto/import-legacy-pioneers.dto
 import type { PioneerEligibilityDto } from "./dto/pioneer-eligibility.dto";
 import { UpdateParticipantMembershipDto } from "./dto/update-participant-membership.dto";
 import type { AdminUpdateParticipantDto } from "./dto/admin-update-participant.dto";
+import type { UpdateMemberBasicProfileDto } from "./dto/update-member-basic-profile.dto";
 import {
   computeAlternatePublicHandle,
   normalizeLastNameKey,
   validateAndNormalizeCallsignInput,
 } from "./callsign.util";
-import { asObject, deriveFromMemberProfile, parseFullProfileEnvelope } from "./member-profile.extract";
+import {
+  asObject,
+  deriveFromMemberProfile,
+  normalizeProfileDobForParticipantColumn,
+  parseFullProfileEnvelope,
+} from "./member-profile.extract";
 import {
   buildMemberPublicId,
   cohortYYFromDob,
@@ -73,20 +79,6 @@ function contactEmailFromProfile(profile: unknown): string | null {
 
 function digitsOnly(s: string | null | undefined): string {
   return String(s ?? "").replace(/\D/g, "");
-}
-
-/** Normalize profile birthDate to `YYYY-MM-DD` for the Participant.dob column when possible. */
-function normalizeProfileDobForParticipantColumn(raw: string): string | undefined {
-  const t = raw.trim();
-  const iso = t.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (iso) return iso[1]!;
-  const us = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (us) {
-    const mm = us[1]!.padStart(2, "0");
-    const dd = us[2]!.padStart(2, "0");
-    return `${us[3]!}-${mm}-${dd}`;
-  }
-  return undefined;
 }
 
 /** Legacy pioneer import stored PH TIN in `memberIdNo` for reclaim — blocks real B2C public ID until moved to `tinNo`. */
@@ -870,6 +862,9 @@ export class PmesService {
             civilStatus: derived.civilStatus.trim() || null,
             memberIdNo: withMemberId.memberIdNo?.trim() || derived.memberIdNo.trim() || null,
             ...(dobFromProfile ? { dob: dobFromProfile } : {}),
+            ...(derived.phone.trim() ? { phone: derived.phone.trim().slice(0, 64) } : {}),
+            ...(derived.displayFullName.trim() ? { fullName: derived.displayFullName.trim().slice(0, 500) } : {}),
+            ...(derived.sexGender.trim() ? { gender: derived.sexGender.trim().slice(0, 32) } : {}),
             callsign: callsignOut,
             lastNameKey,
             lastNameSeq,
@@ -1570,6 +1565,53 @@ export class PmesService {
         lastNameSeq: updated.lastNameSeq,
       }),
     };
+  }
+
+  /**
+   * Member: update core participant fields from the portal “Member profile” screen (Firebase Bearer required in controller).
+   */
+  async updateMemberBasicProfile(dto: UpdateMemberBasicProfileDto) {
+    const email = normalizeEmail(dto.email);
+    const participant = await this.prisma.participant.findUnique({ where: { email } });
+    if (!participant) throw new NotFoundException("Participant not found");
+
+    const data: Prisma.ParticipantUpdateInput = {};
+
+    if (dto.fullName !== undefined) {
+      const t = dto.fullName.trim();
+      if (!t) throw new BadRequestException("fullName cannot be empty");
+      data.fullName = t.slice(0, 500);
+    }
+    if (dto.phone !== undefined) {
+      const t = dto.phone.trim();
+      if (!t) throw new BadRequestException("phone cannot be empty");
+      data.phone = t.slice(0, 64);
+    }
+    if (dto.dob !== undefined) {
+      const t = dto.dob.trim();
+      if (!t) throw new BadRequestException("dob cannot be empty");
+      data.dob = t.slice(0, 32);
+    }
+    if (dto.gender !== undefined) {
+      const t = dto.gender.trim();
+      if (!t) throw new BadRequestException("gender cannot be empty");
+      data.gender = t.slice(0, 32);
+    }
+    if (dto.mailingAddress !== undefined) {
+      const t = dto.mailingAddress.trim();
+      data.mailingAddress = t ? t.slice(0, 4000) : null;
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException("Provide at least one field to update.");
+    }
+
+    await this.prisma.participant.update({
+      where: { id: participant.id },
+      data: { ...data, memberProfileConcurrencyStamp: { increment: 1 } },
+    });
+
+    return { success: true as const };
   }
 
   /**

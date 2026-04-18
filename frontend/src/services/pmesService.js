@@ -347,6 +347,32 @@ export const PmesService = {
     return response.json();
   },
 
+  /**
+   * Persist portal “Member profile” fields (name, mobile, DOB, gender, residence as mailing) to the participant row.
+   * Requires Firebase Bearer for the same email.
+   */
+  async patchMemberBasicProfile({ email, fullName, phone, dob, gender, mailingAddress, idToken }) {
+    if (!useRest()) throw new Error("API required");
+    const body = { email: String(email || "").trim() };
+    if (fullName !== undefined) body.fullName = fullName;
+    if (phone !== undefined) body.phone = phone;
+    if (dob !== undefined) body.dob = dob;
+    if (gender !== undefined) body.gender = gender;
+    if (mailingAddress !== undefined) body.mailingAddress = mailingAddress;
+    const response = await fetch(`${apiBase()}/pmes/member/basic-profile`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiErrorMessage(response));
+    }
+    return response.json();
+  },
+
   async fetchMembershipPipeline(accessToken) {
     if (!useRest()) return [];
     const response = await fetch(`${apiBase()}/pmes/admin/membership-pipeline`, {
