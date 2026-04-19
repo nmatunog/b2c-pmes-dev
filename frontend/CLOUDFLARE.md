@@ -103,7 +103,7 @@ Configure in the Worker → **Settings** → **Variables** and **Secrets**.
 
 **Typical non-secret / public:**
 
-- `FIREBASE_PROJECT_ID` — server-side token verification  
+- **`FIREBASE_PROJECT_ID`** — **Required** for `POST /api/auth/staff/firebase-session` (Google sign-in → staff JWT when email matches `StaffUser`) and for verifying Firebase bearer tokens on sync-member and related routes. Use the **same** project id as `VITE_FIREBASE_PROJECT_ID` in the Pages build.  
 - `GEMINI_CHAT_MODEL` — optional  
 - `NEXT_PUBLIC_FIREBASE_*` — whatever `app/page.jsx` and client code need  
 

@@ -8,3 +8,7 @@ ADMIN_JWT_SECRET=change-me-to-a-secret-at-least-32-chars-long
 
 # Required for API routes that hit Postgres (e.g. admin login, pipeline).
 # DATABASE_URL=postgresql://...
+
+# Required for POST /auth/staff/firebase-session (admin portal without staff password) and Firebase ID token checks.
+# Same string as VITE_FIREBASE_PROJECT_ID in the Vite bundle (public Firebase project id).
+# FIREBASE_PROJECT_ID=your-firebase-project-id

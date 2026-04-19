@@ -31,7 +31,11 @@ export async function POST(request: Request) {
   const projectId = String(process.env.FIREBASE_PROJECT_ID ?? "").trim();
   if (!projectId) {
     return NextResponse.json(
-      { message: "FIREBASE_PROJECT_ID is not configured on API", statusCode: 503 },
+      {
+        message:
+          "FIREBASE_PROJECT_ID is not set on the API Worker. In Cloudflare → b2c-pmes-web → Settings → Variables, add it (same value as VITE_FIREBASE_PROJECT_ID on Pages). No redeploy needed after saving.",
+        statusCode: 503,
+      },
       { status: 503, headers: EDGE_CORS_HEADERS },
     );
   }
