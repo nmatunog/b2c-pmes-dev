@@ -35,6 +35,7 @@ import {
   ShieldAlert,
   Trash2,
   Sparkles,
+  ChevronDown,
   User,
   UserPlus,
   X,
@@ -452,6 +453,11 @@ export default function App() {
   /** Admin dashboard: collapsed by default — only toggle buttons until opened. */
   const [staffPasswordPanelOpen, setStaffPasswordPanelOpen] = useState(false);
   const [adminAccountsPanelOpen, setAdminAccountsPanelOpen] = useState(false);
+  /** Large admin lists start collapsed so officers open only the section they need. */
+  const [adminDashPmesRecordsOpen, setAdminDashPmesRecordsOpen] = useState(false);
+  const [adminDashMemberRegistryOpen, setAdminDashMemberRegistryOpen] = useState(false);
+  const [adminDashLegacyImportOpen, setAdminDashLegacyImportOpen] = useState(false);
+  const [adminDashPipelineOpen, setAdminDashPipelineOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [openCardIndex, setOpenCardIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -3896,7 +3902,7 @@ export default function App() {
                     ))}
                   </ul>
                   <p className="mt-3 text-xs font-medium text-amber-900/80">
-                    Use the <strong>Membership pipeline</strong> table below to open a member and record the action.
+                    Open the <strong>Membership pipeline</strong> section (expand below) to pick a member and record the action.
                   </p>
                 </div>
               </div>
@@ -4061,7 +4067,24 @@ export default function App() {
               </div>
             ) : null}
           </div>
-          <div className="overflow-x-auto">
+          <div className="border-t border-slate-200 bg-white px-6 py-3 lg:px-10">
+            <button
+              type="button"
+              onClick={() => setAdminDashPmesRecordsOpen((o) => !o)}
+              aria-expanded={adminDashPmesRecordsOpen}
+              className="flex w-full items-center justify-between gap-3 rounded-xl py-2 text-left text-slate-900 hover:bg-slate-50"
+            >
+              <div className="min-w-0">
+                <span className="text-base font-black uppercase tracking-tight sm:text-lg">PMES exam records</span>
+                <span className="ml-2 text-sm font-medium text-slate-500">({masterList.length} loaded)</span>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 shrink-0 text-slate-500 transition-transform ${adminDashPmesRecordsOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+            </button>
+            {adminDashPmesRecordsOpen ? (
+              <div className="mt-3 overflow-x-auto border-t border-slate-100 pt-4">
             <table className="w-full min-w-[56rem] text-left text-sm">
               <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-600">
                 <tr>
@@ -4177,12 +4200,32 @@ export default function App() {
                 )}
               </tbody>
             </table>
+              </div>
+            ) : null}
           </div>
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-10">
+          <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 lg:px-10">
+            <button
+              type="button"
+              onClick={() => setAdminDashMemberRegistryOpen((o) => !o)}
+              aria-expanded={adminDashMemberRegistryOpen}
+              className="flex w-full items-center justify-between gap-3 rounded-xl py-2 text-left hover:bg-slate-100/80"
+            >
+              <div className="min-w-0">
+                <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Member registry</h2>
+                <p className="mt-0.5 text-xs font-medium text-slate-600 sm:text-sm">
+                  {registryTotal} in index · expand to search, print, or add a legacy member
+                </p>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 shrink-0 text-slate-600 transition-transform ${adminDashMemberRegistryOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+            </button>
+            {adminDashMemberRegistryOpen ? (
+              <div className="mt-4 border-t border-slate-200 pt-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Member registry</h2>
-                <p className="mt-1 text-sm font-medium text-slate-600">
+                <p className="text-sm font-medium text-slate-600">
                   Full membership profiles stored in the database (searchable mailing address, civil status, member ID). Use
                   Print / Save as PDF from the print dialog.
                 </p>
@@ -4575,6 +4618,8 @@ export default function App() {
                     </button>
                   </div>
                 ) : null}
+              </div>
+            ) : null}
               </div>
             ) : null}
           </div>
@@ -5078,9 +5123,27 @@ export default function App() {
               </div>
             </div>
           ) : null}
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-10">
-            <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Legacy pioneer import</h2>
-            <p className="mt-1 text-sm font-medium text-slate-600">
+          <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 lg:px-10">
+            <button
+              type="button"
+              onClick={() => setAdminDashLegacyImportOpen((o) => !o)}
+              aria-expanded={adminDashLegacyImportOpen}
+              className="flex w-full items-center justify-between gap-3 rounded-xl py-2 text-left hover:bg-slate-100/80"
+            >
+              <div className="min-w-0">
+                <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Legacy pioneer import</h2>
+                <p className="mt-0.5 text-xs font-medium text-slate-600 sm:text-sm">
+                  Bulk JSON roster import · expand to edit draft and save to the database
+                </p>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 shrink-0 text-slate-600 transition-transform ${adminDashLegacyImportOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+            </button>
+            {adminDashLegacyImportOpen ? (
+              <div className="mt-4 border-t border-slate-200 pt-6">
+            <p className="text-sm font-medium text-slate-600">
               Preload roster members so they can use <strong>Pioneer roster — link your account</strong> on the home menu. Paste a
               JSON array: full B2C registry shape (<code className="rounded bg-slate-200 px-1">lastName</code>,{" "}
               <code className="rounded bg-slate-200 px-1">firstName</code>, <code className="rounded bg-slate-200 px-1">middleName</code>,{" "}
@@ -5162,10 +5225,30 @@ export default function App() {
                 {legacyImportMsg}
               </pre>
             ) : null}
+              </div>
+            ) : null}
           </div>
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-10 lg:px-10">
-            <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Membership pipeline</h2>
-            <p className="mt-1 text-sm font-medium text-slate-600">
+          <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 lg:px-10">
+            <button
+              type="button"
+              onClick={() => setAdminDashPipelineOpen((o) => !o)}
+              aria-expanded={adminDashPipelineOpen}
+              className="flex w-full items-center justify-between gap-3 rounded-xl py-2 text-left hover:bg-slate-100/80"
+            >
+              <div className="min-w-0">
+                <h2 className="text-lg font-black uppercase tracking-tight text-slate-900">Membership pipeline</h2>
+                <p className="mt-0.5 text-xs font-medium text-slate-600 sm:text-sm">
+                  {membershipPipeline.length} participant{membershipPipeline.length === 1 ? "" : "s"} · expand for fees, BOD votes, and actions
+                </p>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 shrink-0 text-slate-600 transition-transform ${adminDashPipelineOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+            </button>
+            {adminDashPipelineOpen ? (
+              <div className="mt-4 border-t border-slate-200 pt-6">
+            <p className="text-sm font-medium text-slate-600">
               Treasurer must confirm fees first; only then can directors vote (3 of 5 to recommend). The Secretary issues the
               Board Resolution no. and final approval. Superuser can override or remove rows.
             </p>
@@ -5319,6 +5402,8 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
