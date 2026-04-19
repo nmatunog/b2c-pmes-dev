@@ -20,6 +20,7 @@ const nextConfig = {
       { source: "/auth/admin/login", destination: "/api/auth/admin/login" },
       { source: "/auth/staff/admins", destination: "/api/auth/staff/admins" },
       { source: "/auth/staff/password", destination: "/api/auth/staff/password" },
+      { source: "/auth/staff/firebase-session", destination: "/api/auth/staff/firebase-session" },
       { source: "/auth/staff/member-position", destination: "/api/auth/staff/member-position" },
       { source: "/auth/staff/superusers/promote", destination: "/api/auth/staff/superusers/promote" },
       { source: "/auth/sync-member", destination: "/api/auth/sync-member" },

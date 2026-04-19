@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getSql } from "@/lib/db";
 import { EDGE_CORS_HEADERS, edgeCorsOptions } from "@/lib/edge-cors";
-import { signStaffToken, type StaffRoleJwt } from "@/lib/staff-edge-auth";
+import { dbStaffRoleToJwtRole, signStaffToken } from "@/lib/staff-edge-auth";
 
 type StaffRow = {
   id: string;
@@ -10,26 +10,6 @@ type StaffRow = {
   role: string;
   passwordHash: string;
 };
-
-/** Chairperson / Vice Chairperson / GM sign in with the same admin authorization as ADMIN (JWT role `admin`). */
-function dbRoleToJwt(role: string): StaffRoleJwt {
-  switch (role) {
-    case "SUPERUSER":
-      return "superuser";
-    case "TREASURER":
-      return "treasurer";
-    case "BOARD_DIRECTOR":
-      return "board_director";
-    case "SECRETARY":
-      return "secretary";
-    case "CHAIRMAN":
-    case "VICE_CHAIRMAN":
-    case "GENERAL_MANAGER":
-    case "ADMIN":
-    default:
-      return "admin";
-  }
-}
 
 export function OPTIONS() {
   return edgeCorsOptions();
@@ -70,7 +50,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const role = dbRoleToJwt(staff.role);
+    const role = dbStaffRoleToJwtRole(staff.role);
     const accessToken = await signStaffToken({ sub: staff.id, role });
     return NextResponse.json(
       { accessToken, expiresIn: "8h", role, dbRole: staff.role },

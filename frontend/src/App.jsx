@@ -514,6 +514,8 @@ export default function App() {
   const currentAudio = useRef(null);
   /** Prevents duplicate POST /auth/admin/login if the staff form is submitted twice quickly. */
   const adminLoginInFlightRef = useRef(false);
+  /** Prevents double navigation when opening the admin portal from the landing page. */
+  const adminPortalNavInFlightRef = useRef(false);
 
   const ensureTtsUrl = useCallback(async (text, cacheKey) => {
     const cacheId = `${VOICE}::${TTS_CLIENT_CACHE_BUST}::${cacheKey}`;
@@ -1197,12 +1199,39 @@ export default function App() {
     }
   };
 
-  const handleAdminPortal = () => {
-    setError(null);
+  const hydrateStaffDashboardFromToken = useCallback(async (accessToken, role, emailForStaff, dbRole, preloadedRecords) => {
+    const records =
+      preloadedRecords != null
+        ? preloadedRecords
+        : await PmesService.fetchAdminRecords(accessToken);
+    setMasterList(Array.isArray(records) ? records : []);
+    setStaffAccessToken(accessToken);
+    setStaffRole(role);
+    setStaffDbRole(dbRole ?? null);
+    const em = String(emailForStaff ?? "").trim();
+    setStaffSessionEmail(em);
+    persistStaffSession(accessToken, role, em, dbRole ?? null);
     setAdminCreds({ email: "", password: "" });
+    if (role === "superuser") {
+      try {
+        const admins = await PmesService.listStaffAdmins(accessToken);
+        setManagedStaffAdmins(Array.isArray(admins) ? admins : []);
+      } catch {
+        setManagedStaffAdmins([]);
+      }
+    } else {
+      setManagedStaffAdmins([]);
+    }
+    setStaffPasswordPanelOpen(false);
+    setAdminAccountsPanelOpen(false);
+    setAppState("admin_dashboard");
+  }, []);
+
+  const resetStaffPortalToPasswordForm = useCallback((prefillEmail = "") => {
+    clearStaffSession();
+    setStaffAccessToken(null);
     setStaffRole(null);
     setStaffDbRole(null);
-    setStaffAccessToken(null);
     setStaffSessionEmail(null);
     setManagedStaffAdmins([]);
     setNewStaffAdmin({ email: "", password: "" });
@@ -1212,8 +1241,71 @@ export default function App() {
     setStaffPasswordSuccess(null);
     setStaffPasswordPanelOpen(false);
     setAdminAccountsPanelOpen(false);
-    clearStaffSession();
+    setAdminCreds({ email: prefillEmail, password: "" });
     setAppState("admin_login");
+  }, []);
+
+  const handleAdminPortal = () => {
+    setError(null);
+    const useApi = Boolean((import.meta.env.VITE_API_BASE_URL || "").trim());
+    if (!useApi) {
+      resetStaffPortalToPasswordForm("");
+      return;
+    }
+    if (adminPortalNavInFlightRef.current) return;
+    adminPortalNavInFlightRef.current = true;
+    setLoading(true);
+
+    void (async () => {
+      try {
+        const existing = readStaffSession();
+        if (existing?.token) {
+          try {
+            await hydrateStaffDashboardFromToken(existing.token, existing.role, existing.email, existing.dbRole);
+            return;
+          } catch {
+            clearStaffSession();
+          }
+        }
+
+        const u = user ?? auth.currentUser;
+        const withEmail = u?.email?.trim();
+        if (withEmail) {
+          try {
+            const idToken = await u.getIdToken();
+            const session = await PmesService.staffSessionFromFirebase(idToken);
+            const staffEmail = String(session?.email ?? withEmail).trim();
+            await hydrateStaffDashboardFromToken(
+              session.accessToken,
+              session.role,
+              staffEmail,
+              session.dbRole != null ? String(session.dbRole) : null,
+            );
+            return;
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            const noStaff =
+              /\b404\b/i.test(msg) ||
+              msg.toLowerCase().includes("no cooperative staff account") ||
+              msg.toLowerCase().includes("no staff account");
+            resetStaffPortalToPasswordForm(withEmail);
+            if (noStaff) {
+              setError(
+                "No cooperative staff profile on this Google email yet. Sign in with staff email and password below, or ask a superuser to create your admin account.",
+              );
+            } else {
+              setError(msg?.trim() || "Could not open the admin portal with your Google sign-in.");
+            }
+            return;
+          }
+        }
+
+        resetStaffPortalToPasswordForm("");
+      } finally {
+        adminPortalNavInFlightRef.current = false;
+        setLoading(false);
+      }
+    })();
   };
 
   const handleAdminLoginSubmit = async (event) => {
@@ -1235,24 +1327,13 @@ export default function App() {
     setLoading(true);
     try {
       const result = await PmesService.getAllRecords(db, appId, { email, password });
-      setMasterList(result.records);
-      setStaffRole(result.role);
-      setStaffDbRole(result.dbRole ?? null);
-      setStaffAccessToken(result.accessToken);
-      setStaffSessionEmail(email);
-      persistStaffSession(result.accessToken, result.role, email, result.dbRole ?? null);
-      setAdminCreds({ email: "", password: "" });
-      if (result.role === "superuser") {
-        try {
-          const admins = await PmesService.listStaffAdmins(result.accessToken);
-          setManagedStaffAdmins(Array.isArray(admins) ? admins : []);
-        } catch {
-          setManagedStaffAdmins([]);
-        }
-      } else {
-        setManagedStaffAdmins([]);
-      }
-      setAppState("admin_dashboard");
+      await hydrateStaffDashboardFromToken(
+        result.accessToken,
+        result.role,
+        email,
+        result.dbRole != null ? String(result.dbRole) : null,
+        result.records,
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Admin sign-in failed.");
     } finally {
@@ -3690,7 +3771,8 @@ export default function App() {
                 />
                 <p className="mt-2 text-xs font-medium leading-snug text-slate-500">
                   Staff sign-in uses the email on your cooperative admin account (StaffUser), not your member callsign.
-                  The browser requires a normal email shape (include @).
+                  The browser requires a normal email shape (include @). From Home, Admin portal can open without this
+                  form when you are already signed in to Google and that email has a staff profile.
                 </p>
               </div>
               <div className="relative">

@@ -37,6 +37,23 @@ async function staffLoginRequest(email, password) {
   return response.json();
 }
 
+/**
+ * Staff JWT when Firebase ID token email matches a `StaffUser` row (no staff password).
+ * @returns {Promise<{ accessToken: string, role: string, dbRole?: string | null, email: string }>}
+ */
+async function staffSessionFromFirebaseRequest(firebaseIdToken) {
+  const response = await fetch(`${apiBase()}/auth/staff/firebase-session`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${String(firebaseIdToken ?? "").trim()}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiErrorMessage(response));
+  }
+  return response.json();
+}
+
 export const PmesService = {
   async saveRecord(db, appId, user, data) {
     if (!useRest() && !user) throw new Error("Auth Required");
@@ -132,6 +149,13 @@ export const PmesService = {
    * Staff dashboard: PMES master list + role + token for follow-up API calls.
    * @returns {{ records: unknown[], role: string, accessToken: string, dbRole?: string | null }}
    */
+  async staffSessionFromFirebase(firebaseIdToken) {
+    if (!useRest()) throw new Error("API required");
+    const t = String(firebaseIdToken ?? "").trim();
+    if (!t) throw new Error("Firebase ID token required");
+    return staffSessionFromFirebaseRequest(t);
+  },
+
   async getAllRecords(db, appId, credentials) {
     if (useRest()) {
       const email = String(credentials?.email ?? "").trim();

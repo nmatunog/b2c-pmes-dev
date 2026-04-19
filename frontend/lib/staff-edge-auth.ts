@@ -5,6 +5,26 @@ import { EDGE_CORS_HEADERS } from "@/lib/edge-cors";
 export type StaffRoleJwt = "admin" | "superuser" | "treasurer" | "board_director" | "secretary";
 export type StaffJwtPayload = { sub: string; role: StaffRoleJwt };
 
+/** Map Postgres `StaffUser.role` enum label to the compact JWT `role` claim (same rules as `POST /auth/admin/login`). */
+export function dbStaffRoleToJwtRole(dbRole: string): StaffRoleJwt {
+  switch (String(dbRole || "").trim()) {
+    case "SUPERUSER":
+      return "superuser";
+    case "TREASURER":
+      return "treasurer";
+    case "BOARD_DIRECTOR":
+      return "board_director";
+    case "SECRETARY":
+      return "secretary";
+    case "CHAIRMAN":
+    case "VICE_CHAIRMAN":
+    case "GENERAL_MANAGER":
+    case "ADMIN":
+    default:
+      return "admin";
+  }
+}
+
 const enc = new TextEncoder();
 
 function jwtSecret(): Uint8Array {
