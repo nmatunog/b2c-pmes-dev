@@ -1720,7 +1720,7 @@ export default function App() {
         staffAccessToken={staffAccessToken}
         onGoAdmin={() => setAppState("admin_dashboard")}
       />
-    ) : appState !== "landing" ? (
+    ) : appState !== "landing" && appState !== "admin_dashboard" ? (
       <PortalHomeBar
         onGoHome={() => setAppState("landing")}
         staffAccessToken={staffAccessToken}
@@ -3726,40 +3726,51 @@ export default function App() {
                 <h1 className="text-2xl font-black uppercase tracking-tight sm:text-3xl">PMES master list</h1>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setMasterList([]);
-                setRegistryRows([]);
-                setRegistryTotal(0);
-                setRegistryPage(1);
-                setRegistrySearchInput("");
-                setRegistryAppliedSearch("");
-                setRegistryIncludeAll(false);
-                setRegistryDetail(null);
-                setRegistryDetailTab("summary");
-                setAdminCreds({ email: "", password: "" });
-                setStaffRole(null);
-                setStaffDbRole(null);
-                setStaffAccessToken(null);
-                setStaffSessionEmail(null);
-                setManagedStaffAdmins([]);
-                setNewStaffAdmin({ email: "", password: "" });
-                setStaffAdminError(null);
-                setStaffPasswordForm({ currentPassword: "", newPassword: "" });
-                setStaffPasswordError(null);
-                setStaffPasswordSuccess(null);
-                setStaffPasswordPanelOpen(false);
-                setAdminAccountsPanelOpen(false);
-                setDeletingMasterListId(null);
-                setDeletingPipelineParticipantId(null);
-                clearStaffSession();
-                setAppState("landing");
-              }}
-              className="shrink-0 rounded-xl bg-white/20 px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-white/30"
-            >
-              Logout
-            </button>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+              {staffAccessToken ? (
+                <button
+                  type="button"
+                  onClick={() => setAppState("landing")}
+                  className="rounded-xl bg-white/15 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-white ring-1 ring-white/30 hover:bg-white/25"
+                >
+                  Member site
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  setMasterList([]);
+                  setRegistryRows([]);
+                  setRegistryTotal(0);
+                  setRegistryPage(1);
+                  setRegistrySearchInput("");
+                  setRegistryAppliedSearch("");
+                  setRegistryIncludeAll(false);
+                  setRegistryDetail(null);
+                  setRegistryDetailTab("summary");
+                  setAdminCreds({ email: "", password: "" });
+                  setStaffRole(null);
+                  setStaffDbRole(null);
+                  setStaffAccessToken(null);
+                  setStaffSessionEmail(null);
+                  setManagedStaffAdmins([]);
+                  setNewStaffAdmin({ email: "", password: "" });
+                  setStaffAdminError(null);
+                  setStaffPasswordForm({ currentPassword: "", newPassword: "" });
+                  setStaffPasswordError(null);
+                  setStaffPasswordSuccess(null);
+                  setStaffPasswordPanelOpen(false);
+                  setAdminAccountsPanelOpen(false);
+                  setDeletingMasterListId(null);
+                  setDeletingPipelineParticipantId(null);
+                  clearStaffSession();
+                  setAppState("landing");
+                }}
+                className="shrink-0 rounded-xl bg-white/20 px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-white/30"
+              >
+                Logout
+              </button>
+            </div>
           </div>
           {staffInboxSummary && useApiMembership ? (
             <div className="border-b border-amber-200 bg-amber-50/95 px-6 py-4 lg:px-10">
