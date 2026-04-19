@@ -19,12 +19,18 @@ export function OPTIONS() {
 }
 
 export async function PATCH(request: Request) {
+  let staff;
   try {
-    const staff = await requireStaff(request);
-    if (staff.role !== "superuser") {
-      return forbidden("Only a superuser can change staff positions.", EDGE_CORS_HEADERS);
-    }
+    staff = await requireStaff(request);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Unauthorized";
+    return unauthorized(message);
+  }
+  if (staff.role !== "superuser") {
+    return forbidden("Only a superuser can change staff positions.", EDGE_CORS_HEADERS);
+  }
 
+  try {
     const body = (await request.json().catch(() => null)) as { memberEmail?: string; role?: string } | null;
     const memberEmail = String(body?.memberEmail ?? "")
       .trim()
@@ -116,7 +122,10 @@ export async function PATCH(request: Request) {
     `;
     return NextResponse.json((out as object[])[0] ?? { success: true }, { headers: EDGE_CORS_HEADERS });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Unauthorized";
-    return unauthorized(message);
+    const message = e instanceof Error ? e.message : "Server error";
+    return NextResponse.json(
+      { message, statusCode: 500 },
+      { status: 500, headers: EDGE_CORS_HEADERS },
+    );
   }
 }
