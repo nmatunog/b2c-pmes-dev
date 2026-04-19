@@ -3688,6 +3688,10 @@ export default function App() {
                   onChange={(e) => setAdminCreds((c) => ({ ...c, email: e.target.value }))}
                   required
                 />
+                <p className="mt-2 text-xs font-medium leading-snug text-slate-500">
+                  Staff sign-in uses the email on your cooperative admin account (StaffUser), not your member callsign.
+                  The browser requires a normal email shape (include @).
+                </p>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden />
