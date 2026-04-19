@@ -440,7 +440,7 @@ export default function App() {
   const [staffRole, setStaffRole] = useState(
     /** @type {null | "admin" | "superuser" | "treasurer" | "board_director" | "secretary"} */ (null),
   );
-  /** Prisma `StaffUser.role` from login — needed when JWT is `admin` (Chairman / Vice chairman / GM). */
+  /** Prisma `StaffUser.role` from login — needed when JWT is `admin` (Chairperson / Vice Chairperson / GM). */
   const [staffDbRole, setStaffDbRole] = useState(/** @type {string | null} */ (null));
   const [staffAccessToken, setStaffAccessToken] = useState(null);
   const [managedStaffAdmins, setManagedStaffAdmins] = useState([]);
@@ -4566,7 +4566,7 @@ export default function App() {
                               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/90 p-3">
                                 <p className="text-xs font-black uppercase text-amber-900">Staff position</p>
                                 <p className="mt-1 text-xs text-amber-950/90">
-                                  Chairman, Vice chairman, and General manager use admin authorization when signing in. For
+                                  Chairperson, Vice Chairperson, and General manager use admin authorization when signing in. For
                                   unclaimed legacy roster rows, saving creates a staff record for this email automatically.
                                 </p>
                                 <div className="mt-3 flex flex-wrap items-end gap-2">
@@ -4579,8 +4579,8 @@ export default function App() {
                                       disabled={registryStaffPositionSaving || !canAssignPosition || isSuperStaff}
                                     >
                                       <option value="ADMIN">Admin</option>
-                                      <option value="CHAIRMAN">Chairman</option>
-                                      <option value="VICE_CHAIRMAN">Vice chairman</option>
+                                      <option value="CHAIRMAN">Chairperson</option>
+                                      <option value="VICE_CHAIRMAN">Vice Chairperson</option>
                                       <option value="GENERAL_MANAGER">General manager</option>
                                       <option value="TREASURER">Treasurer</option>
                                       <option value="SECRETARY">Secretary</option>

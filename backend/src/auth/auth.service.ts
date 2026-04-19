@@ -19,7 +19,7 @@ export type StaffLoginResponse = {
   accessToken: string;
   expiresIn: string;
   role: StaffJwtRole;
-  /** Prisma role — distinguishes Chairman / Vice chairman / GM when JWT `role` is `admin`. */
+  /** Prisma role — distinguishes Chairperson / Vice Chairperson / GM when JWT `role` is `admin`. */
   dbRole: StaffRole;
 };
 
@@ -33,7 +33,7 @@ function staffRoleToJwt(role: StaffRole): StaffJwtRole {
       return "board_director";
     case StaffRole.SECRETARY:
       return "secretary";
-    /** Chairman / Vice chairman / GM use Admin JWT claims; DB role still distinguishes titles in registry. */
+    /** Chairperson / Vice Chairperson / GM use Admin JWT claims; DB role still distinguishes titles in registry. */
     case StaffRole.CHAIRMAN:
     case StaffRole.VICE_CHAIRMAN:
     case StaffRole.GENERAL_MANAGER:
@@ -503,7 +503,7 @@ export class AuthService {
     ];
     if (!allowed.includes(role)) {
       throw new BadRequestException(
-        "Choose Admin, Treasurer, Secretary, Board director, Chairman, Vice chairman, or General manager.",
+        "Choose Admin, Treasurer, Secretary, Board director, Chairperson, Vice Chairperson, or General manager.",
       );
     }
     const memberEmail = memberEmailRaw.trim().toLowerCase();

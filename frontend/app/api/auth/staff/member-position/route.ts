@@ -40,7 +40,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json(
         {
           message:
-            "Choose ADMIN, TREASURER, SECRETARY, BOARD_DIRECTOR, CHAIRMAN, VICE_CHAIRMAN, or GENERAL_MANAGER.",
+            "Choose ADMIN, TREASURER, SECRETARY, BOARD_DIRECTOR, CHAIRMAN (Chairperson), VICE_CHAIRMAN (Vice Chairperson), or GENERAL_MANAGER.",
           statusCode: 400,
         },
         { status: 400, headers: EDGE_CORS_HEADERS },

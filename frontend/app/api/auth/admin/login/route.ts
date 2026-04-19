@@ -11,7 +11,7 @@ type StaffRow = {
   passwordHash: string;
 };
 
-/** Chairman / Vice chairman / GM sign in with the same admin authorization as ADMIN (JWT role `admin`). */
+/** Chairperson / Vice Chairperson / GM sign in with the same admin authorization as ADMIN (JWT role `admin`). */
 function dbRoleToJwt(role: string): StaffRoleJwt {
   switch (role) {
     case "SUPERUSER":

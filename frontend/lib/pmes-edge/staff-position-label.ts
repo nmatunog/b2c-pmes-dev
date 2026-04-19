@@ -13,9 +13,9 @@ export function staffPositionLabel(role: string | null | undefined): string | nu
     case "SECRETARY":
       return "Secretary";
     case "CHAIRMAN":
-      return "Chairman";
+      return "Chairperson";
     case "VICE_CHAIRMAN":
-      return "Vice chairman";
+      return "Vice Chairperson";
     case "GENERAL_MANAGER":
       return "General manager";
     default:

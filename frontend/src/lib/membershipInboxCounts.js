@@ -1,4 +1,4 @@
-/** Chairman / Vice chairman / GM use JWT `admin` but may cast BOD votes (see staff login `dbRole`). */
+/** Chairperson / Vice Chairperson / GM use JWT `admin` but may cast BOD votes (see staff login `dbRole`). */
 const BOARD_OFFICER_DB_ROLES = ["CHAIRMAN", "VICE_CHAIRMAN", "GENERAL_MANAGER"];
 
 /**

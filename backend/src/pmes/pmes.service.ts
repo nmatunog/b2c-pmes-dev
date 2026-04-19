@@ -588,7 +588,7 @@ export class PmesService {
     return this.toLifecyclePayload(updated, votes);
   }
 
-  /** Board-eligible staff (directors, Chairman, Vice chairman, GM, Superuser) cast votes; majority sets `bodMajorityReachedAt`. */
+  /** Board-eligible staff (directors, Chairperson, Vice Chairperson, GM, Superuser) cast votes; majority sets `bodMajorityReachedAt`. */
   async recordBodVote(participantId: string, approve: boolean, staff: { sub: string; role: StaffJwtRole }) {
     const actor = await this.prisma.staffUser.findUnique({ where: { id: staff.sub } });
     if (!actor) throw new ForbiddenException("Staff account not found");
@@ -602,7 +602,7 @@ export class PmesService {
     ];
     if (!bodVoterDbRoles.includes(actor.role)) {
       throw new ForbiddenException(
-        "Only Board-designated officers (directors, Chairman, Vice chairman, General manager) or Superuser may cast BOD votes.",
+        "Only Board-designated officers (directors, Chairperson, Vice Chairperson, General manager) or Superuser may cast BOD votes.",
       );
     }
 
@@ -1365,9 +1365,9 @@ export class PmesService {
       case StaffRole.SECRETARY:
         return "Secretary";
       case StaffRole.CHAIRMAN:
-        return "Chairman";
+        return "Chairperson";
       case StaffRole.VICE_CHAIRMAN:
-        return "Vice chairman";
+        return "Vice Chairperson";
       case StaffRole.GENERAL_MANAGER:
         return "General manager";
       default:
