@@ -109,6 +109,8 @@ Configure in the Worker → **Settings** → **Variables** and **Secrets**.
 
 Mirror what you use in `frontend/.env` / `.env.local`. **Never commit secrets.**
 
+**Wrangler vs dashboard:** `wrangler deploy --config wrangler.b2c-pmes-web.jsonc` **replaces** Worker metadata from the config file. Without `--keep-vars`, variables you set only in the Cloudflare UI can disappear on the next deploy. This repo uses **`--keep-vars`** on `cf:deploy:web*` and declares **`FIREBASE_PROJECT_ID`** under `vars` in `wrangler.b2c-pmes-web.jsonc` so `firebase-session` and sync-member keep working after each deploy. Change that id in the file if your Firebase project differs.
+
 Local Wrangler preview can use **`frontend/.dev.vars.example`** as a template for **`.dev.vars`** (gitignored).
 
 ---

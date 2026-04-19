@@ -2,6 +2,10 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
 	"name": "b2c-pmes-web",
+	// Public Firebase project id (same as VITE_FIREBASE_PROJECT_ID on Pages); avoids losing it on deploy.
+	"vars": {
+		"FIREBASE_PROJECT_ID": "b2ccoop-87114"
+	},
 	"compatibility_date": "2026-04-13",
 	"compatibility_flags": [
 		"nodejs_compat",
