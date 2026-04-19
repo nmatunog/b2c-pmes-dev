@@ -1,5 +1,6 @@
 import { jwtVerify, SignJWT } from "jose";
 import { NextResponse } from "next/server";
+import { EDGE_CORS_HEADERS } from "@/lib/edge-cors";
 
 export type StaffRoleJwt = "admin" | "superuser" | "treasurer" | "board_director" | "secretary";
 export type StaffJwtPayload = { sub: string; role: StaffRoleJwt };
@@ -49,7 +50,7 @@ export async function requireStaff(request: Request): Promise<StaffJwtPayload> {
 }
 
 export function unauthorized(message: string) {
-  return NextResponse.json({ message, statusCode: 401 }, { status: 401 });
+  return NextResponse.json({ message, statusCode: 401 }, { status: 401, headers: EDGE_CORS_HEADERS });
 }
 
 export function forbidden(message: string, headers?: Record<string, string>) {
