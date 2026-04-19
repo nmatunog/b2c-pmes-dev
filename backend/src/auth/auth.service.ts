@@ -484,8 +484,7 @@ export class AuthService {
   }
 
   /**
-   * Superuser: update `StaffUser.role` for the account whose email matches `memberEmail`
-   * (member must already have a staff login — use Admin accounts to create one at that email).
+   * Superuser: set `StaffUser.role` for `memberEmail`. Creates a staff row when missing (random password until Admin accounts).
    */
   async setStaffRoleByMemberEmail(actingStaffId: string, memberEmailRaw: string, role: StaffRole) {
     const actor = await this.prisma.staffUser.findUnique({ where: { id: actingStaffId } });
@@ -520,12 +519,9 @@ export class AuthService {
       const importedRosterRow =
         participant.legacyPioneerImport || participant.registryImportSnapshot != null;
       const legacyUnclaimed = noFirebaseLink && importedRosterRow;
-      if (!legacyUnclaimed) {
-        throw new BadRequestException(
-          "No staff login exists for this email. Create an account in Admin accounts using the same email, then assign a position.",
-        );
-      }
-      const passwordHash = await bcrypt.hash(`unclaimed-legacy-${randomUUID()}`, 12);
+      /** Superuser: bootstrap staff for any participant email (pipeline / awaiting profile), not only unclaimed legacy. */
+      const passwordPrefix = legacyUnclaimed ? "unclaimed-legacy" : "bootstrap-staff";
+      const passwordHash = await bcrypt.hash(`${passwordPrefix}-${randomUUID()}`, 12);
       staff = await this.prisma.staffUser.create({
         data: {
           email: memberEmail,

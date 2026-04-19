@@ -85,17 +85,9 @@ export async function PATCH(request: Request) {
       const importedRosterRow =
         Boolean(participant.legacyPioneerImport) || participant.registryImportSnapshot != null;
       const legacyUnclaimed = noFirebaseLink && importedRosterRow;
-      if (!legacyUnclaimed) {
-        return NextResponse.json(
-          {
-            message:
-              "No staff login exists for this email. Create an account in Admin accounts using the same email first.",
-            statusCode: 400,
-          },
-          { status: 400, headers: EDGE_CORS_HEADERS },
-        );
-      }
-      const passwordHash = await bcrypt.hash(`unclaimed-legacy-${crypto.randomUUID()}`, 12);
+      /** Superuser: create `StaffUser` for any existing participant (not only unclaimed legacy rows). */
+      const passwordPrefix = legacyUnclaimed ? "unclaimed-legacy" : "bootstrap-staff";
+      const passwordHash = await bcrypt.hash(`${passwordPrefix}-${crypto.randomUUID()}`, 12);
       const created = (await sql`
         INSERT INTO "StaffUser"(id, email, "passwordHash", role, "createdAt", "createdById")
         VALUES (gen_random_uuid()::text, ${memberEmail}, ${passwordHash}, ${role}::"StaffRole", NOW(), ${staff.sub})

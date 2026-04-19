@@ -4672,7 +4672,9 @@ export default function App() {
                           reg.firebaseUid == null || String(reg.firebaseUid ?? "").trim() === "";
                         const legacyUnclaimed = importedRosterRow && noFirebaseLink;
                         const canAssignPosition =
-                          (hasStaff && !isSuperStaff) || (legacyUnclaimed && !isSuperStaff);
+                          (hasStaff && !isSuperStaff) ||
+                          (legacyUnclaimed && !isSuperStaff) ||
+                          (staffRole === "superuser" && !isSuperStaff && Boolean(emailForStaff));
                         return (
                           <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                             <p className="text-sm font-semibold text-slate-900">
@@ -4749,9 +4751,16 @@ export default function App() {
                                     Save position
                                   </button>
                                 </div>
-                                {!hasStaff && !legacyUnclaimed ? (
+                                {!hasStaff && !legacyUnclaimed && staffRole !== "superuser" ? (
                                   <p className="mt-2 text-xs font-medium text-amber-900">
                                     No staff login on this email — add one in Admin accounts, then assign a role here.
+                                  </p>
+                                ) : null}
+                                {!hasStaff && !legacyUnclaimed && staffRole === "superuser" ? (
+                                  <p className="mt-2 text-xs font-medium text-amber-900">
+                                    No staff row yet. Choose a role and save — a staff login is created for this email
+                                    (random password until you set one in Admin accounts). Same Google email can use Admin
+                                    portal without the staff password.
                                   </p>
                                 ) : null}
                                 {legacyUnclaimed && !hasStaff ? (
