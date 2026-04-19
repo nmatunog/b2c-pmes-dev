@@ -1775,7 +1775,12 @@ export default function App() {
               : "",
         }
       : null;
-  const identityRibbon = <IdentityBanner member={memberIdentityForBanner} staff={staffForBanner} />;
+  const identityRibbon = (
+    <IdentityBanner
+      member={memberIdentityForBanner}
+      staff={appState === "admin_dashboard" ? null : staffForBanner}
+    />
+  );
 
   /** Admins preview certificates via API rows — no Firebase member session; do not force the public sign-in gate. */
   const staffBypassMemberAuthGate =
@@ -3772,6 +3777,25 @@ export default function App() {
               </button>
             </div>
           </div>
+          {staffForBanner ? (
+            <div
+              className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-slate-200 bg-slate-50 px-6 py-1.5 text-slate-800 sm:gap-x-3 sm:px-10"
+              role="status"
+              aria-live="polite"
+            >
+              <Briefcase className="h-3.5 w-3.5 shrink-0 text-[#004aad] sm:h-4 sm:w-4" aria-hidden />
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 sm:text-[10px]">
+                Staff signed in
+              </span>
+              <span className="font-black text-slate-900 sm:text-sm">
+                {staffForBanner.role === "superuser" ? "Superuser" : "Admin"}
+              </span>
+              <span className="text-slate-300" aria-hidden>
+                ·
+              </span>
+              <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-600">{staffForBanner.email}</span>
+            </div>
+          ) : null}
           {staffInboxSummary && useApiMembership ? (
             <div className="border-b border-amber-200 bg-amber-50/95 px-6 py-4 lg:px-10">
               <div className="flex gap-3">
