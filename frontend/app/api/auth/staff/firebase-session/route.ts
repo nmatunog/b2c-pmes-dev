@@ -61,16 +61,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (decoded.email_verified === false) {
-    return NextResponse.json(
-      {
-        message: "Verify your Google email before opening the admin portal without a staff password.",
-        statusCode: 403,
-      },
-      { status: 403, headers: EDGE_CORS_HEADERS },
-    );
-  }
-
+  /** Do not require `email_verified`: many legitimate Firebase users still have it false; the token is already Google-issued and we gate on `StaffUser` email match. */
   const norm = rawEmail.toLowerCase();
 
   try {
