@@ -1677,6 +1677,16 @@ export default function App() {
     return () => window.clearTimeout(t);
   }, [authReady, user?.uid, goJoinUnified]);
 
+  /** Must run before any early return — same hook order when `authReady` flips from false → true. */
+  const staffInboxCounts = useMemo(
+    () => countMembershipInboxByStage(membershipPipeline),
+    [membershipPipeline],
+  );
+  const staffInboxSummary = useMemo(
+    () => staffPipelineInboxSummary(staffRole, staffInboxCounts, staffDbRole),
+    [staffRole, staffInboxCounts, staffDbRole],
+  );
+
   if (!authReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -1752,15 +1762,6 @@ export default function App() {
     lifecycle: membershipLifecycle,
     pmesExamPassed,
   });
-
-  const staffInboxCounts = useMemo(
-    () => countMembershipInboxByStage(membershipPipeline),
-    [membershipPipeline],
-  );
-  const staffInboxSummary = useMemo(
-    () => staffPipelineInboxSummary(staffRole, staffInboxCounts, staffDbRole),
-    [staffRole, staffInboxCounts, staffDbRole],
-  );
 
   const memberIdentityForBanner =
     user && appState !== "member_auth" && !staffForBanner
