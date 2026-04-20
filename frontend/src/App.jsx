@@ -1862,9 +1862,18 @@ export default function App() {
               : "",
         }
       : null;
+  /** Member portal / pending use in-flow identity so the fixed ribbon does not cover the hero on small screens. */
+  const memberIdentityFixedRibbon =
+    memberIdentityForBanner && appState !== "member_portal" && appState !== "member_pending"
+      ? memberIdentityForBanner
+      : null;
+  const memberPortalIdentityInline =
+    (appState === "member_portal" || appState === "member_pending") && memberIdentityForBanner ? (
+      <IdentityBanner member={memberIdentityForBanner} staff={null} memberLayout="inline" />
+    ) : null;
   const identityRibbon = (
     <IdentityBanner
-      member={memberIdentityForBanner}
+      member={memberIdentityFixedRibbon}
       staff={appState === "admin_dashboard" ? null : staffForBanner}
     />
   );
@@ -3487,6 +3496,7 @@ export default function App() {
         <div className="flex min-h-screen flex-col items-center bg-slate-100/80 p-4 pb-24 pt-8 sm:p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
           <div className="flex w-full max-w-5xl flex-col gap-10">
+            {memberPortalIdentityInline}
             <MemberLifecyclePortal
               lifecycle={membershipLifecycle}
               displayName={memberDisplayName}
@@ -3661,6 +3671,7 @@ export default function App() {
         <div className="flex min-h-screen flex-col items-center gap-10 p-4 pb-20 pt-8 sm:p-8">
           <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
           <div className="w-full max-w-5xl space-y-8">
+            {memberPortalIdentityInline}
             <div className="text-center">
               <B2CLogo size="lg" align="center" className="mb-4" />
               <h1 className="text-4xl font-black uppercase tracking-tighter text-[#004aad] sm:text-5xl">Member portal</h1>
