@@ -1,7 +1,7 @@
 import { Briefcase, User } from "lucide-react";
 
 /**
- * @param {{ fullName: string, email: string, callsign?: string, ribbonStatus?: 'full' | 'pending' | 'prospect' } | null} member
+ * @param {{ fullName: string, email: string, callsign?: string, positionLabel?: string, ribbonStatus?: 'full' | 'pending' | 'prospect' } | null} member
  * @param {{ email: string, role?: string } | null} staff
  * @param {'fixed' | 'inline'} [memberLayout] — `inline` = in-flow strip (e.g. member portal); default fixed top-left.
  */
@@ -31,6 +31,7 @@ export function IdentityBanner({ member, staff, memberLayout = "fixed" }) {
   if (member?.email) {
     const displayName = String(member.fullName || "").trim() || "Member";
     const callsign = String(member.callsign || "").trim();
+    const positionLabel = String(member.positionLabel || "").trim();
     const status = member.ribbonStatus || "prospect";
     const badge =
       status === "full" ? (
@@ -65,6 +66,11 @@ export function IdentityBanner({ member, staff, memberLayout = "fixed" }) {
                 <span className="hidden sm:inline">{badge}</span>
               </div>
               <span className="sm:hidden">{badge}</span>
+              {positionLabel ? (
+                <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                  Position: <span className="text-slate-800">{positionLabel}</span>
+                </p>
+              ) : null}
               {callsign ? (
                 <div className="mt-2 rounded-xl border-2 border-[#004aad]/25 bg-[#004aad]/5 px-3 py-2 text-center sm:mt-2 sm:text-left">
                   <p className="text-[9px] font-black uppercase tracking-widest text-[#004aad]/80">Callsign</p>
@@ -91,6 +97,11 @@ export function IdentityBanner({ member, staff, memberLayout = "fixed" }) {
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Signed in as</p>
             <p className="truncate text-sm font-black text-slate-900">{displayName}</p>
+            {positionLabel ? (
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                Position: <span className="text-slate-800">{positionLabel}</span>
+              </p>
+            ) : null}
             {callsign ? (
               <div className="mt-2 rounded-xl border-2 border-[#004aad]/25 bg-[#004aad]/5 px-3 py-2 text-center">
                 <p className="text-[9px] font-black uppercase tracking-widest text-[#004aad]/80">Callsign</p>

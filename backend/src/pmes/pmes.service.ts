@@ -519,6 +519,8 @@ export class PmesService {
         registrationDob: null as string | null,
         registrationGender: null as string | null,
         registrationPhone: null as string | null,
+        staffRole: null as string | null,
+        staffPosition: null as string | null,
         referralRewards,
         bodApproveVoteCount: 0,
         bodMajorityReached: false,
@@ -531,9 +533,18 @@ export class PmesService {
     const yesVotes = await this.prisma.boardApprovalVote.count({
       where: { participantId: withMemberId.id, approve: true },
     });
+    const staffLogin = await this.prisma.staffUser.findUnique({
+      where: { email },
+      select: { role: true },
+    });
     const life = this.toLifecyclePayload(withMemberId, yesVotes);
     const referralRewards = await this.referralRewardsForParticipant(withMemberId.id);
-    return { ...life, referralRewards };
+    return {
+      ...life,
+      staffRole: staffLogin?.role ?? null,
+      staffPosition: staffLogin ? this.formatStaffPositionLabel(staffLogin.role) : null,
+      referralRewards,
+    };
   }
 
   async updateParticipantMembership(

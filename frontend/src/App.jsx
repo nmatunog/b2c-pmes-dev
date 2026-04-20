@@ -134,6 +134,28 @@ function composeFullName(first, middle, last) {
     .join(" ");
 }
 
+function formatMemberPositionLabel(rawRole) {
+  const key = String(rawRole || "").trim().toUpperCase();
+  if (!key) return "";
+  const labels = {
+    SUPERUSER: "Superuser",
+    ADMIN: "Admin",
+    TREASURER: "Treasurer",
+    SECRETARY: "Secretary",
+    BOARD_DIRECTOR: "Board Director",
+    CHAIRMAN: "Chairperson",
+    VICE_CHAIRMAN: "Vice Chairperson",
+    GENERAL_MANAGER: "General Manager",
+  };
+  if (labels[key]) return labels[key];
+  return key
+    .toLowerCase()
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function escapeHtmlForPrint(text) {
   return String(text ?? "")
     .replace(/&/g, "&amp;")
@@ -1860,6 +1882,10 @@ export default function App() {
           fullName: memberDisplayNameForBanner,
           email: user.email || String(formData.email || "").trim() || "",
           ribbonStatus: accessForRibbon.ribbonStatus,
+          positionLabel:
+            typeof membershipLifecycle?.staffPosition === "string" && String(membershipLifecycle.staffPosition).trim()
+              ? String(membershipLifecycle.staffPosition).trim()
+              : formatMemberPositionLabel(membershipLifecycle?.staffRole),
           callsign:
             typeof membershipLifecycle?.callsign === "string" && String(membershipLifecycle.callsign).trim()
               ? String(membershipLifecycle.callsign).trim()
