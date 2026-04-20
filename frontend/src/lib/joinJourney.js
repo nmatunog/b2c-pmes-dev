@@ -17,7 +17,7 @@ export function getJoinPipelineBanner({ useApi, lifecycle, pmesExamPassed }) {
       };
     }
     return {
-      step: "LOI",
+      step: "Intent",
       message:
         "Next step: submit your Letter of Intent, then payment. Connect the API for treasury/Board tracking.",
       tone: "info",
@@ -26,7 +26,7 @@ export function getJoinPipelineBanner({ useApi, lifecycle, pmesExamPassed }) {
 
   if (lifecycle.canAccessFullMemberPortal === true || lifecycle.stage === "FULL_MEMBER") {
     return {
-      step: "VERIFIED",
+      step: "Active",
       message: "You have full member portal access.",
       tone: "success",
     };
@@ -34,28 +34,28 @@ export function getJoinPipelineBanner({ useApi, lifecycle, pmesExamPassed }) {
 
   const st = lifecycle.stage;
   if (st === "AWAITING_LOI") {
-    return { step: "LOI", message: "Next step: submit your Letter of Intent.", tone: "info" };
+    return { step: "Intent", message: "Next step: submit your Letter of Intent.", tone: "info" };
   }
   if (st === "AWAITING_PAYMENT") {
-    return { step: "PAYMENT", message: "Next step: pay share capital and membership fee.", tone: "info" };
+    return { step: "Payment", message: "Next step: pay share capital and membership fee.", tone: "info" };
   }
   if (st === "AWAITING_BOD_VOTE") {
     return {
-      step: "BOD",
+      step: "Board review",
       message: "Directors are voting on your application — we will notify you by email.",
       tone: "info",
     };
   }
   if (st === "AWAITING_SECRETARY_RESOLUTION") {
     return {
-      step: "BOD",
+      step: "Board review",
       message: "Awaiting Secretary Board Resolution — then you can complete your membership form.",
       tone: "info",
     };
   }
   if (st === "AWAITING_FULL_PROFILE") {
     return {
-      step: "PROFILE",
+      step: "Profile",
       message: "Next step: complete your official B2C membership form.",
       tone: "info",
     };
@@ -63,7 +63,7 @@ export function getJoinPipelineBanner({ useApi, lifecycle, pmesExamPassed }) {
   if (st === "PMES_NOT_PASSED" || st === "NO_PARTICIPANT") {
     if (pmesExamPassed) {
       return {
-        step: "SYNC",
+        step: "Syncing",
         message:
           "PMES is complete on this device — continue with membership steps below. If something looks out of date, refresh or contact the office.",
         tone: "warning",
@@ -76,7 +76,7 @@ export function getJoinPipelineBanner({ useApi, lifecycle, pmesExamPassed }) {
     };
   }
   if (st === "UNKNOWN") {
-    return { step: "UNKNOWN", message: "Could not load membership status — try again or contact support.", tone: "warning" };
+    return { step: "Status check", message: "Could not load membership status — try again or contact support.", tone: "warning" };
   }
   return null;
 }

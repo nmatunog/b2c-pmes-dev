@@ -976,7 +976,7 @@ export default function LandingPage({
                     <span className="truncate">{landingIdentityLabel}</span>
                   </span>
                 ) : null}
-                <span>Membership journey · {joinPipelineBanner.step}</span>
+                <span>Member status · {joinPipelineBanner.step}</span>
               </div>
               <p className="mt-1.5 text-sm font-semibold leading-snug sm:text-base">{joinPipelineBanner.message}</p>
             </div>
