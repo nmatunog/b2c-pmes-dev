@@ -1864,7 +1864,10 @@ export default function App() {
       : null;
   /** Member portal / pending use in-flow identity so the fixed ribbon does not cover the hero on small screens. */
   const memberIdentityFixedRibbon =
-    memberIdentityForBanner && appState !== "member_portal" && appState !== "member_pending"
+    memberIdentityForBanner &&
+    appState !== "member_portal" &&
+    appState !== "member_pending" &&
+    appState !== "landing"
       ? memberIdentityForBanner
       : null;
   const memberPortalIdentityInline =
