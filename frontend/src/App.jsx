@@ -1843,6 +1843,10 @@ export default function App() {
           pmesExamPassed,
         })
       : null;
+  const landingIdentityLabel =
+    typeof membershipLifecycle?.callsign === "string" && String(membershipLifecycle.callsign).trim()
+      ? String(membershipLifecycle.callsign).trim()
+      : memberDisplayNameForBanner;
 
   const hidePmesEntry = shouldHidePmesEntry({
     useApi: useApiMembership,
@@ -2546,6 +2550,7 @@ export default function App() {
           resumePmesSuggested={resumePmesSuggested}
           pmesExamPassed={pmesExamPassed}
           joinPipelineBanner={joinPipelineBanner}
+          landingIdentityLabel={landingIdentityLabel}
           hidePmesEntry={hidePmesEntry}
           onJoinUs={() => {
             if (!isFirebaseConfigured) return;

@@ -52,6 +52,8 @@ export default function LandingPage({
   pmesExamPassed = false,
   /** Pipeline status strip for signed-in users (PMES → LOI → Payment → BOD → …). */
   joinPipelineBanner = null,
+  /** Optional signed-in identity shown inline in the journey status bar (callsign preferred, fallback first+last). */
+  landingIdentityLabel = "",
   /** When true, hide PMES entry points — user has moved past PMES in the pipeline. */
   hidePmesEntry = false,
   onJoinUs,
@@ -968,9 +970,14 @@ export default function LandingPage({
               }`}
               role="status"
             >
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                Membership journey · {joinPipelineBanner.step}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                {landingIdentityLabel ? (
+                  <span className="inline-flex max-w-full items-center rounded-full bg-white/70 px-2 py-0.5 text-slate-700">
+                    <span className="truncate">{landingIdentityLabel}</span>
+                  </span>
+                ) : null}
+                <span>Membership journey · {joinPipelineBanner.step}</span>
+              </div>
               <p className="mt-1.5 text-sm font-semibold leading-snug sm:text-base">{joinPipelineBanner.message}</p>
             </div>
           )}
