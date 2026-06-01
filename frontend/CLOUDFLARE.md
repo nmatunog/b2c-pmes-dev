@@ -105,7 +105,9 @@ Configure in the Worker → **Settings** → **Variables** and **Secrets**.
 
 - `LANDING_CHAT_PROVIDER` — `gemini` \| `noop` (landing Ka-uban text; uses server + browser cache)  
 - `AI_PROVIDER` — `noop` in production by default (TTS off to preserve free-tier quota); set `gemini` \| `openai` \| `grok` when enabling voice  
-- Optional: `MEMBER_SYNC_SECRET`; `FIREBASE_PRIVATE_KEY` / `FIREBASE_CLIENT_EMAIL` if you use Nest-style Admin verification  
+- **`FIREBASE_CLIENT_EMAIL`** + **`FIREBASE_PRIVATE_KEY`** — **Required** for superuser/admin **member email change** and **password reset** on linked Firebase accounts (`PATCH .../profile`, `POST .../reset-password`). From Firebase Console → Project settings → Service accounts → Generate new private key (same project as `FIREBASE_PROJECT_ID`). **Both values must come from the same JSON file** — if OAuth returns `Invalid grant: account not found`, the email and key do not match or the account was deleted; download a new key and set both secrets again.
+- In **Google Cloud Console** → APIs & Services → enable **Identity Toolkit API** for the same project (otherwise email updates return 404).
+- Optional: `MEMBER_SYNC_SECRET` for legacy sync header auth  
 
 **Typical non-secret / public:**
 

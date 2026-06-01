@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { EDGE_CORS_HEADERS, edgeCorsOptions } from "@/lib/edge-cors";
-import { identityToolkitPatchUser, normalizeMemberEmail } from "@/lib/firebase-admin-rest";
+import {
+  FIREBASE_ADMIN_MISSING_MSG,
+  hasFirebaseServiceAccountConfig,
+  identityToolkitLookupByEmail,
+  identityToolkitPatchUser,
+  normalizeMemberEmail,
+} from "@/lib/firebase-admin-rest";
 import { buildAdminParticipantDetailJson } from "@/lib/pmes-edge/build-admin-participant-detail";
 import { requireStaff, unauthorized } from "@/lib/staff-edge-auth";
 
@@ -150,11 +156,29 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
               { status: 503, headers: EDGE_CORS_HEADERS },
             );
           }
+          if (!hasFirebaseServiceAccountConfig()) {
+            return NextResponse.json(
+              { message: FIREBASE_ADMIN_MISSING_MSG, statusCode: 503 },
+              { status: 503, headers: EDGE_CORS_HEADERS },
+            );
+          }
           try {
+            const existingFb = await identityToolkitLookupByEmail(projectId, nextEmail);
+            if (existingFb && existingFb.localId !== uid) {
+              return NextResponse.json(
+                { message: "That email is already used by another Firebase account.", statusCode: 409 },
+                { status: 409, headers: EDGE_CORS_HEADERS },
+              );
+            }
             await identityToolkitPatchUser(projectId, uid, { email: nextEmail });
           } catch (e) {
             const msg = e instanceof Error ? e.message : "Firebase email update failed";
-            return NextResponse.json({ message: msg, statusCode: 502 }, { status: 502, headers: EDGE_CORS_HEADERS });
+            const status = /already registered|EMAIL_EXISTS|USER_NOT_FOUND/i.test(msg)
+              ? /USER_NOT_FOUND/i.test(msg)
+                ? 400
+                : 409
+              : 502;
+            return NextResponse.json({ message: msg, statusCode: status }, { status, headers: EDGE_CORS_HEADERS });
           }
         }
         email = nextEmail;
