@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { B2CLogo, BRAND_SUBTITLE_CLASS, BRAND_TITLE_CLASS } from "../components/B2CLogo.jsx";
-import { COOPERATIVE_NAME, COOPERATIVE_REGION, PUBLIC_MEMBER_COUNT } from "../constants/cooperativeBrand.js";
+import { COOPERATIVE_NAME, COOPERATIVE_REGION, PUBLIC_MEMBER_COUNT, B2C_VISION, B2C_MISSION_LINES } from "../constants/cooperativeBrand.js";
 import { PRIVACY_NOTICE_HEADING, PRIVACY_NOTICE_PARAGRAPHS } from "../constants/privacyAgreement.js";
 import { EarningsSimulator } from "./EarningsSimulator.jsx";
 import { MarketingAuthModal } from "./MarketingAuthModal.jsx";
 import { BylawsModal } from "./BylawsModal.jsx";
 import { LandingFaqAssistant } from "./LandingFaqAssistant.jsx";
+import { VisionMissionSection } from "./VisionMissionSection.jsx";
 import { ctaOutlineLight, ctaPrimary, ctaPrimaryFocus, ctaSecondary, ctaSecondaryFocus } from "./brandCta.js";
 import { pickRandomActivityMessage } from "./cebuActivityMock.js";
 import { SIGNUP_LIVE_ACTIVITY_KEY } from "../lib/signupLiveActivity.js";
@@ -31,6 +32,8 @@ import {
   GraduationCap,
   IdCard,
   ShoppingBag,
+  Sparkles,
+  Target,
 } from "lucide-react";
 
 /** Primary bylaws PDF: place file at `frontend/public/documents/b2c-bylaws-primary.pdf`. */
@@ -316,16 +319,22 @@ export default function LandingPage({
       highlight: "Access • Ownership • Control",
     },
     {
+      title: "B2C Coop Vision",
+      desc: B2C_VISION,
+      icon: <Sparkles className="w-12 h-12" />,
+      highlight: "Best value · Sustainable · Ethical",
+    },
+    {
+      title: "B2C Coop Mission",
+      missionLines: B2C_MISSION_LINES,
+      icon: <Target className="w-12 h-12" />,
+      highlight: "Technology · Cooperative principles",
+    },
+    {
       title: "The Rewards of Ownership",
       desc: "As a member, you aren't just a shopper. You enjoy Patronage Refunds on every purchase, Super Discounts, and annual Dividends on your share capital.",
       icon: <Wallet className="w-12 h-12" />,
       highlight: "Your Investment Grows for You",
-    },
-    {
-      title: "Sustainable & Ethical",
-      desc: "Our ambition goes beyond commerce. We source products with ethics in mind, ensuring a seamless shopping experience that makes a positive impact.",
-      icon: <HeartHandshake className="w-12 h-12" />,
-      highlight: "Leading Online Consumer Co-op",
     },
     {
       title: "Investment for Impact",
@@ -643,7 +652,24 @@ export default function LandingPage({
             <h2 className="mb-5 text-2xl font-bold leading-tight tracking-tight text-stone-900 sm:mb-6 sm:text-4xl md:text-5xl">
               {orientationContent[orientationStep].title}
             </h2>
-            {orientationContent[orientationStep].pathSteps ? (
+            {orientationContent[orientationStep].missionLines ? (
+              <div className="mx-auto mb-8 max-w-xl space-y-0.5 text-left text-base leading-snug sm:text-lg sm:leading-snug md:text-xl">
+                {orientationContent[orientationStep].missionLines.map((line, index) => (
+                  <p
+                    key={line}
+                    className={
+                      index === 0
+                        ? "font-semibold text-stone-900"
+                        : index === 3
+                          ? "pt-1 font-semibold text-stone-800"
+                          : "text-stone-600"
+                    }
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+            ) : orientationContent[orientationStep].pathSteps ? (
               <>
                 <p className="mb-6 text-base font-normal leading-relaxed text-stone-600 sm:text-lg md:text-xl">
                   {orientationContent[orientationStep].desc}
@@ -1191,6 +1217,8 @@ export default function LandingPage({
         </div>
       </section>
 
+      <VisionMissionSection />
+
       <EarningsSimulator onJoinClick={() => joinCta()} />
 
       <section id="your-path" className="mesh-path relative py-16 text-white sm:py-24 lg:py-28" aria-labelledby="path-heading">
@@ -1320,6 +1348,11 @@ export default function LandingPage({
                 <button type="button" onClick={() => setBylawsActive(true)} className="transition-colors hover:text-blue-600">
                   By-Laws
                 </button>
+              </li>
+              <li>
+                <a href="#vision-mission" className="transition-colors hover:text-blue-600">
+                  Vision &amp; Mission
+                </a>
               </li>
               <li>
                 <a href="#earnings-simulator" className="transition-colors hover:text-blue-600">
