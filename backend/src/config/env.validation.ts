@@ -47,6 +47,9 @@ export const envValidationSchema = Joi.object({
 
   /** External store checkout webhook → accounting (optional until store is live). */
   STORE_CHECKOUT_WEBHOOK_SECRET: Joi.string().allow(""),
+
+  /** B2C-Store service auth — GET /integrations/v1/members/resolve */
+  STORE_INTEGRATION_SECRET: Joi.string().allow(""),
 })
   .custom((value, helpers) => {
     const v = value as {
