@@ -1145,22 +1145,32 @@ export default function App() {
     void refreshMembershipLifecycle();
   }, [authReady, user?.email, refreshMembershipLifecycle]);
 
+  const coopStoreExternalUrl = (import.meta.env.VITE_COOP_STORE_URL ?? "").trim();
+
   useEffect(() => {
     if (!user?.email) return;
     if (sessionStorage.getItem("b2ccoop_open_coop_store") !== "1") return;
     sessionStorage.removeItem("b2ccoop_open_coop_store");
+    if (coopStoreExternalUrl) {
+      window.open(coopStoreExternalUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
     setAppState("coop_store");
-  }, [user?.email]);
+  }, [user?.email, coopStoreExternalUrl]);
 
   const openCoopStore = useCallback(() => {
     if (user?.email) {
+      if (coopStoreExternalUrl) {
+        window.open(coopStoreExternalUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
       setAppState("coop_store");
       return;
     }
     sessionStorage.setItem("b2ccoop_open_coop_store", "1");
     setMemberAuthMode("login");
     setAppState("member_auth");
-  }, [user?.email]);
+  }, [user?.email, coopStoreExternalUrl]);
 
   const coopStoreBackTarget = useCallback(() => {
     if (membershipLifecycle?.canAccessFullMemberPortal) return "member_portal";
